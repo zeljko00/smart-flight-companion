@@ -27,6 +27,8 @@ services:
       - ../proxy/config/.env
     volumes:
       - ../proxy/config/nginx.conf:/etc/nginx/templates/default.conf.template:ro
+      - ../proxy/public/proxy.crt:/etc/nginx/certs/proxy.crt:ro
+      - ../proxy/secrets/proxy.key:/etc/nginx/certs/proxy.key:ro
     networks:
       - sfc-internal-network
     restart: unless-stopped
