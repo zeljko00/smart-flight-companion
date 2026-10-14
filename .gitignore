@@ -1,0 +1,6 @@
+# Ignore environment files
+**/.env
+# Ignore build artifacts
+**/build/*
+# Any internal files
+**/notes*
