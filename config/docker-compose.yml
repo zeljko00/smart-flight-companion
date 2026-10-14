@@ -1,0 +1,16 @@
+services:
+  proxy:
+    image: nginx:1.27-alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    env_file:
+      - ../proxy/config/.env
+    networks:
+      - sfc-internal-network
+    restart: unless-stopped
+
+networks:
+  sfc-internal-network:
+    driver: bridge

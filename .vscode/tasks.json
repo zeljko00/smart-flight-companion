@@ -2,6 +2,49 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Bring up development environment",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "compose",
+        "-f",
+        "config/docker-compose.yml",
+        "--remove-orphans",
+        "up",
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      }
+    },
+    {
+      "label": "Stop development environment",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+          "compose",
+          "-f",
+          "config/docker-compose.yml",
+          "down",
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      }
+    },
+        {
       "label": "Clean up development environment",
       "type": "shell",
       "command": "bash",
