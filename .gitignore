@@ -4,3 +4,7 @@
 **/build/*
 # Any internal files
 **/notes*
+# Any secret files
+**/secret*
+**/*secret*
+**/*.key
