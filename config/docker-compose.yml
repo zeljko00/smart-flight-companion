@@ -1,12 +1,32 @@
 services:
-  proxy:
+  backend:
     image: nginx:1.27-alpine
-    container_name: nginx
+    container_name: dot-net-app
+    networks:
+      - sfc-internal-network
+
+  payment-gateway:
+    image: nginx:1.27-alpine
+    container_name: airpay-service
+    networks:
+      - sfc-internal-network
+
+  frontend:
+    image: nginx:1.27-alpine
+    container_name: reactjs-app
+    networks:
+      - sfc-internal-network
+
+  proxy:
+    container_name: nginx-proxy
+    image: nginx:1.27-alpine
     ports:
       - "80:80"
       - "443:443"
     env_file:
       - ../proxy/config/.env
+    volumes:
+      - ../proxy/config/nginx.conf:/etc/nginx/templates/default.conf.template:ro
     networks:
       - sfc-internal-network
     restart: unless-stopped
