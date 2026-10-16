@@ -1,10 +1,9 @@
 # Ignore environment files
 **/.env
 # Ignore build artifacts
-**/build/*
+**/build/
 # Any internal files
 **/notes*
 # Any secret files
-**/secret*
 **/*secret*
 **/*.key
