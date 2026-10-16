@@ -11,8 +11,8 @@
         "deploy/docker-compose.yml",
         "--profile",
         "dev",
-        "--remove-orphans",
         "up",
+        "--remove-orphans",
       ],
       "options": {
         "cwd": "${workspaceFolder}"
