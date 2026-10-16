@@ -30,7 +30,7 @@
       "args": [
           "compose",
           "-f",
-          "config/docker-compose.yml",
+          "deploy/docker-compose.yml",
           "down",
       ],
       "options": {
