@@ -1,14 +1,28 @@
 services:
+  database:
+    image: postgres:16-alpine
+    container_name: system-database
+    env_file:
+      - ../database/config/.env
+    volumes:
+      - database_data:/var/lib/postgresql/data
+    networks:
+      - sfc-data-network
+    restart: unless-stopped
+
   backend:
     image: nginx:1.27-alpine
-    container_name: dot-net-app
+    container_name: web-services
     networks:
       - sfc-internal-network
+      - sfc-data-network
+    depends_on:
+      - database
     restart: unless-stopped
 
   payment-gateway:
     image: nginx:1.27-alpine
-    container_name: airpay-service
+    container_name: web-payment-service
     networks:
       - sfc-internal-network
     restart: unless-stopped
@@ -41,6 +55,11 @@ services:
       - sfc-internal-network
     restart: unless-stopped
 
+volumes:
+  database_data:
+  
 networks:
   sfc-internal-network:
+    driver: bridge
+  sfc-data-network:
     driver: bridge
