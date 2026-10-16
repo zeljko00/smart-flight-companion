@@ -9,6 +9,8 @@
         "compose",
         "-f",
         "deploy/docker-compose.yml",
+        "--profile",
+        "dev",
         "--remove-orphans",
         "up",
       ],
@@ -31,6 +33,8 @@
           "compose",
           "-f",
           "deploy/docker-compose.yml",
+          "--profile",
+          "dev",
           "down",
       ],
       "options": {
