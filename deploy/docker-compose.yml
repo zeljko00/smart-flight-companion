@@ -11,8 +11,21 @@ services:
     restart: unless-stopped
 
   backend:
-    image: nginx:1.27-alpine
+    build:
+      context: ../backend
+      dockerfile: ../backend/deploy/Dockerfile
     container_name: web-services
+    env_file:
+      - ../backend/config/.env
+    volumes:
+      - ../backend:/app
+      - nuget-cache:/root/.nuget/packages
+      - api-obj:/app/src/web-services.Api/obj
+      - api-bin:/app/src/web-services.Api/bin
+      - services-obj:/app/src/web-services.Application/obj
+      - services-bin:/app/src/web-services.Application/bin
+      - repository-obj:/app/src/web-services.Infrastructure/obj
+      - repository-bin:/app/src/web-services.Infrastructure/bin
     networks:
       - sfc-internal-network
       - sfc-data-network
@@ -75,6 +88,13 @@ services:
 volumes:
   postgres_data:
   pgadmin_data:
+  nuget-cache:
+  api-obj:
+  api-bin:
+  services-obj:
+  services-bin:
+  repository-obj:
+  repository-bin:
   
 networks:
   sfc-internal-network:
