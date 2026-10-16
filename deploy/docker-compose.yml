@@ -4,18 +4,26 @@ services:
     container_name: dot-net-app
     networks:
       - sfc-internal-network
+    restart: unless-stopped
 
   payment-gateway:
     image: nginx:1.27-alpine
     container_name: airpay-service
     networks:
       - sfc-internal-network
+    restart: unless-stopped
 
   frontend:
-    image: nginx:1.27-alpine
-    container_name: reactjs-app
+    build:
+      context: ../frontend
+      dockerfile: ../frontend/deploy/Dockerfile
+    container_name: web-app
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
     networks:
       - sfc-internal-network
+    restart: unless-stopped
 
   proxy:
     container_name: nginx-proxy
