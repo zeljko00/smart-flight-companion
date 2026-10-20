@@ -7,3 +7,5 @@
 # Any secret files
 **/*secret*
 **/*.key
+# Misc
+.github/
