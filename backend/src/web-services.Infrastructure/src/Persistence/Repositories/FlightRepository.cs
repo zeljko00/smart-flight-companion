@@ -11,80 +11,109 @@ public sealed class FlightRepository : Repository<Flight>, IFlightRepository
     {
     }
 
-    public async Task<IReadOnlyList<Flight>> GetByFlightNumberAsync(string flightNumber, CancellationToken cancellationToken = default)
+    public override async Task<Flight?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
-        var normalizedFlightNumber = Normalize(flightNumber);
-
         return await Context.Flights
             .AsNoTracking()
-            .Where(flight => flight.FlightNumber.ToUpper() == normalizedFlightNumber)
+            .Include(flight => flight.DepartureAirport)
+            .Include(flight => flight.ArrivalAirport)
+            .FirstOrDefaultAsync(flight => flight.Id == id, cancellationToken);
+    }
+
+    public override async Task<IReadOnlyList<Flight>> GetAsync(CancellationToken cancellationToken = default)
+    {
+        return await Context.Flights
+            .AsNoTracking()
+            .Include(flight => flight.DepartureAirport)
+            .Include(flight => flight.ArrivalAirport)
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Flight>> GetByDepartureAsync(string departure, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Flight>> Search(
+        string? flightNumber,
+        string? departure,
+        string? destination,
+        string? status,
+        string? airline,
+        decimal? maxPrice,
+        DateTimeOffset? departureTime,
+        DateTimeOffset? arrivalTime,
+        CancellationToken cancellationToken = default)
     {
-        var normalizedDeparture = Normalize(departure);
+        var normalizedFlightNumber = NormalizeOrNull(flightNumber);
+        var normalizedDeparture = NormalizeOrNull(departure);
+        var normalizedDestination = NormalizeOrNull(destination);
+        var normalizedStatus = NormalizeOrNull(status);
+        var normalizedAirline = NormalizeOrNull(airline);
 
-        return await Context.Flights
+        var query = Context.Flights
             .AsNoTracking()
-            .Where(flight =>
+            .Include(flight => flight.DepartureAirport)
+            .Include(flight => flight.ArrivalAirport)
+            .AsQueryable();
+
+        if (normalizedFlightNumber is not null)
+        {
+            query = query.Where(flight => flight.FlightNumber.ToUpper() == normalizedFlightNumber);
+        }
+
+        if (normalizedDeparture is not null)
+        {
+            query = query.Where(flight =>
                 flight.DepartureAirport.Name.ToUpper() == normalizedDeparture ||
                 flight.DepartureAirport.IATA.ToUpper() == normalizedDeparture ||
                 flight.DepartureAirport.City.ToUpper() == normalizedDeparture ||
-                flight.DepartureAirport.Country.ToUpper() == normalizedDeparture)
-            .ToListAsync(cancellationToken);
-    }
+                flight.DepartureAirport.Country.ToUpper() == normalizedDeparture);
+        }
 
-    public async Task<IReadOnlyList<Flight>> GetByDestinationAsync(string destination, CancellationToken cancellationToken = default)
-    {
-        var normalizedDestination = Normalize(destination);
-
-        return await Context.Flights
-            .AsNoTracking()
-            .Where(flight =>
+        if (normalizedDestination is not null)
+        {
+            query = query.Where(flight =>
                 flight.ArrivalAirport.Name.ToUpper() == normalizedDestination ||
                 flight.ArrivalAirport.IATA.ToUpper() == normalizedDestination ||
                 flight.ArrivalAirport.City.ToUpper() == normalizedDestination ||
-                flight.ArrivalAirport.Country.ToUpper() == normalizedDestination)
-            .ToListAsync(cancellationToken);
+                flight.ArrivalAirport.Country.ToUpper() == normalizedDestination);
+        }
+
+        if (normalizedStatus is not null)
+        {
+            query = query.Where(flight => flight.Status.ToString().ToUpper() == normalizedStatus);
+        }
+
+        if (normalizedAirline is not null)
+        {
+            query = query.Where(flight => flight.Airline.ToUpper() == normalizedAirline);
+        }
+
+        if (maxPrice is not null)
+        {
+            var price = maxPrice.Value;
+            query = query.Where(flight =>
+                (flight.EconomyPrice.HasValue && flight.EconomyPrice.Value <= price) ||
+                (flight.PremiumEconomyPrice.HasValue && flight.PremiumEconomyPrice.Value <= price) ||
+                (flight.BusinessPrice.HasValue && flight.BusinessPrice.Value <= price) ||
+                (flight.FirstClassPrice.HasValue && flight.FirstClassPrice.Value <= price));
+        }
+
+        if (departureTime is not null)
+        {
+            var time = departureTime.Value;
+            query = query.Where(flight => time >= flight.ScheduledDepartureTime);
+        }
+
+        if (arrivalTime is not null)
+        {
+            var time = arrivalTime.Value;
+            query = query.Where(flight => time <= flight.ScheduledArrivalTime);
+        }
+
+        return await query.ToListAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Flight>> GetByAirlineAsync(string airline, CancellationToken cancellationToken = default)
+    private static string? NormalizeOrNull(string? value)
     {
-        var normalizedAirline = Normalize(airline);
-
-        return await Context.Flights
-            .AsNoTracking()
-            .Where(flight => flight.Airline.ToUpper() == normalizedAirline)
-            .ToListAsync(cancellationToken);
-    }
-
-    public async Task<IReadOnlyList<Flight>> GetByPriceAsync(decimal price, CancellationToken cancellationToken = default)
-    {
-        return await Context.Flights
-            .AsNoTracking()
-            .Where(flight => flight.EconomyPrice <= price || flight.PremiumEconomyPrice <= price || flight.BusinessPrice <= price || flight.FirstClassPrice <= price)
-            .ToListAsync(cancellationToken);
-    }
-
-    public async Task<IReadOnlyList<Flight>> GetByDepartureTimeAsync(DateTimeOffset departureTime, CancellationToken cancellationToken = default)
-    {
-        return await Context.Flights
-            .AsNoTracking()
-            .Where(flight => flight.ScheduledDepartureTime == departureTime)
-            .ToListAsync(cancellationToken);
-    }
-
-    public async Task<IReadOnlyList<Flight>> GetByArrivalTimeAsync(DateTimeOffset arrivalTime, CancellationToken cancellationToken = default)
-    {
-        return await Context.Flights
-            .AsNoTracking()
-            .Where(flight => flight.ScheduledArrivalTime == arrivalTime)
-            .ToListAsync(cancellationToken);
-    }
-
-    private static string Normalize(string value)
-    {
-        return value.Trim().ToUpperInvariant();
+        return string.IsNullOrWhiteSpace(value)
+            ? null
+            : value.Trim().ToUpperInvariant();
     }
 }

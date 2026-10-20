@@ -49,19 +49,16 @@ public sealed class AirportsController : ControllerBase
         [FromQuery] string? query,
         CancellationToken cancellationToken)
     {
-        var searchTerm = query;
+        IReadOnlyList<AirportDto> airports;
 
-        if (string.IsNullOrWhiteSpace(searchTerm) && Request.Query.TryGetValue("query", out var queryValue))
+        if (string.IsNullOrWhiteSpace(query))
         {
-            searchTerm = queryValue.ToString();
+            airports = await _airportService.GetAll(cancellationToken);
         }
-
-        if (string.IsNullOrWhiteSpace(searchTerm))
+        else
         {
-            return BadRequest("Provide query parameter.");
+            airports = await _airportService.Search(query, cancellationToken);
         }
-
-        var airports = await _airportService.Search(searchTerm, cancellationToken);
 
         return Ok(airports);
     }

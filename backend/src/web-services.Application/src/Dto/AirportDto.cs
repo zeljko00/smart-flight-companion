@@ -2,6 +2,24 @@ using SmartFlightCompanion.WebServices.Infrastructure.Entities;
 
 namespace SmartFlightCompanion.WebServices.Application.Dto;
 
+public sealed record AirportSummaryDto(
+    string Name,
+    string IATA,
+    string Address,
+    double Latitude,
+    double Longitude)
+{
+    public static AirportSummaryDto FromEntity(Airport airport)
+    {
+        return new AirportSummaryDto(
+            airport.Name,
+            airport.IATA,
+            airport.Country + " " + airport.City + " " + airport.Address,
+            airport.Latitude,
+            airport.Longitude);
+    }
+}
+
 public sealed record AirportDto(
     Guid Id,
     string Name,

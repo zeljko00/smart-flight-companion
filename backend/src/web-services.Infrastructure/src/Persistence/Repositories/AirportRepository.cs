@@ -25,8 +25,10 @@ public sealed class AirportRepository : Repository<Airport>, IAirportRepository
             .ToListAsync(cancellationToken);
     }
 
-    private static string Normalize(string value)
+    private static string? Normalize(string value)
     {
-        return value.Trim().ToUpperInvariant();
+        return string.IsNullOrWhiteSpace(value)
+            ? null
+            : value.Trim().ToUpperInvariant();
     }
 }
