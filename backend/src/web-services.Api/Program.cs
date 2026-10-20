@@ -13,6 +13,8 @@ builder.Services.AddControllers(options =>
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddScoped<IAirportService, AirportService>();
 builder.Services.AddScoped<IFlightService, FlightService>();
+builder.Services.AddScoped<IUserService, UserService>();
+
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
