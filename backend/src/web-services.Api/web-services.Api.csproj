@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <RootNamespace>web_services.Api</RootNamespace>
+    <RootNamespace>SmartFlightCompanion.WebServices.Api</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../web-services.Infrastructure/web-services.Infrastructure.csproj" />
+    <ProjectReference Include="../web-services.Application/web-services.Application.csproj" />
   </ItemGroup>
 
 </Project>

@@ -4,6 +4,5 @@ namespace SmartFlightCompanion.WebServices.Infrastructure.Persistence.Abstractio
 
 public interface IAirportRepository : IRepository<Airport>
 {
-    Task<Airport?> GetByIataCodeAsync(string iataCode, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<Airport>> SearchAsync(string query, CancellationToken cancellationToken = default);
 }

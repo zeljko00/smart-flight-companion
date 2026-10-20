@@ -9,7 +9,7 @@ using SmartFlightCompanion.WebServices.Infrastructure.Persistence;
 
 #nullable disable
 
-namespace web_services.Infrastructure.src.Persistence.Migrations
+namespace SmartFlightCompanion.WebServices.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     [Migration("20261019173235_InitialCreate")]

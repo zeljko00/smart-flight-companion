@@ -8,7 +8,7 @@ using SmartFlightCompanion.WebServices.Infrastructure.Persistence;
 
 #nullable disable
 
-namespace web_services.Infrastructure.src.Persistence.Migrations
+namespace SmartFlightCompanion.WebServices.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
     partial class AppDbContextModelSnapshot : ModelSnapshot
