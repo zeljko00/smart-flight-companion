@@ -11,15 +11,6 @@ public sealed class AirportRepository : Repository<Airport>, IAirportRepository
     {
     }
 
-    public Task<Airport?> GetByIataCodeAsync(string iataCode, CancellationToken cancellationToken = default)
-    {
-        var normalizedIataCode = Normalize(iataCode);
-
-        return Context.Airports
-            .AsNoTracking()
-            .FirstOrDefaultAsync(airport => airport.IATA.ToUpper() == normalizedIataCode, cancellationToken);
-    }
-
     public async Task<IReadOnlyList<Airport>> SearchAsync(string query, CancellationToken cancellationToken = default)
     {
         var normalizedQuery = Normalize(query);
