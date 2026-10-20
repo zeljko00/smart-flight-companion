@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
+using SmartFlightCompanion.WebServices.Application.Services;
 using SmartFlightCompanion.WebServices.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -10,6 +11,7 @@ builder.Services.AddControllers(options =>
     options.Conventions.Insert(0, new GlobalRoutePrefixConvention("api"));
 });
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddScoped<IAirportService, AirportService>();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 

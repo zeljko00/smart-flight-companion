@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../web-services.Infrastructure/web-services.Infrastructure.csproj" />
+    <ProjectReference Include="../web-services.Application/web-services.Application.csproj" />
   </ItemGroup>
 
 </Project>
