@@ -6,6 +6,7 @@ services:
       - ../database/config/.env
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ../database/scripts/:/scripts:ro
     networks:
       - sfc-data-network
     restart: unless-stopped
