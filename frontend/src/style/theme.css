@@ -1,0 +1,64 @@
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  --font-body: "Manrope", "Inter", "Segoe UI", sans-serif;
+  --font-display: "Sora", "Manrope", "Segoe UI", sans-serif;
+
+  --bg-app: #F4F7FB;
+  --bg-sidebar: #FFFFFF;
+  --bg-surface: #FFFFFF;
+  --bg-elevated: #F8FAFC;
+  --bg-gradient-start: #E9F0FF;
+  --bg-gradient-end: #F8FBFF;
+
+  --color-primary: #2563EB;
+  --color-primary-hover: #1D4ED8;
+
+  --text-primary: #14243A;
+  --text-secondary: #64748B;
+
+  --border-default: #E2E8F0;
+  --shadow-card: 0 22px 45px rgba(21, 39, 69, 0.12);
+  --shadow-soft: 0 10px 24px rgba(37, 99, 235, 0.12);
+
+  --color-success: #15803D;
+  --color-warning: #B45309;
+  --color-error: #B91C1C;
+
+  --auth-badge-bg: #DBEAFE;
+  --auth-badge-text: #1D4ED8;
+  --auth-input-bg: #FFFFFF;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --font-body: "Manrope", "Inter", "Segoe UI", sans-serif;
+  --font-display: "Sora", "Manrope", "Segoe UI", sans-serif;
+
+  --bg-app: #0B1220;
+  --bg-sidebar: #0F172A;
+  --bg-surface: #151F30;
+  --bg-elevated: #1E293B;
+  --bg-gradient-start: #0C162A;
+  --bg-gradient-end: #121F33;
+
+  --color-primary: #3B82F6;
+  --color-primary-hover: #60A5FA;
+
+  --text-primary: #F1F5F9;
+  --text-secondary: #94A3B8;
+
+  --border-default: #29374B;
+  --shadow-card: 0 24px 45px rgba(2, 6, 23, 0.45);
+  --shadow-soft: 0 10px 30px rgba(59, 130, 246, 0.25);
+
+  --color-success: #5EEAD4;
+  --color-warning: #FBBF24;
+  --color-error: #F87171;
+
+  --auth-badge-bg: #1E3A8A;
+  --auth-badge-text: #DBEAFE;
+  --auth-input-bg: #0F172A;
+}
