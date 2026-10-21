@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ApiError } from '../services/apiClient'
 import { authService } from '../services/authService'
 import '../style/AuthPanel.css'
@@ -38,6 +39,7 @@ function LockIcon() {
 }
 
 export function LoginForm() {
+  const { t } = useTranslation()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -56,9 +58,9 @@ export function LoginForm() {
         password,
       })
 
-      setSuccessMessage(`Welcome back, ${user.firstName || user.username}.`)
+      setSuccessMessage(t('login.success', { name: user.firstName || user.username }))
     } catch (error) {
-      const fallbackMessage = 'Unable to sign in. Please check your credentials.'
+      const fallbackMessage = t('login.failure')
 
       if (error instanceof ApiError) {
         setErrorMessage(error.message || fallbackMessage)
@@ -78,12 +80,12 @@ export function LoginForm() {
       onSubmit={handleSubmit}
     >
       <div className="login-form__intro">
-        <h2 id="login-title">Sign in to SmartFlightCompanion</h2>
-        <p>Track flights, gate changes, and trip updates in one place.</p>
+        <h2 id="login-title">{t('login.title')}</h2>
+        <p>{t('login.subtitle')}</p>
       </div>
 
       <label className="input-group" htmlFor="username">
-        <span>Username</span>
+        <span>{t('login.username')}</span>
         <div className="input-group__field">
           <MailIcon />
           <input
@@ -91,7 +93,7 @@ export function LoginForm() {
             name="username"
             type="text"
             autoComplete="username"
-            placeholder="Enter your username"
+            placeholder={t('login.usernamePlaceholder')}
             required
             value={username}
             onChange={(event) => setUsername(event.target.value)}
@@ -101,7 +103,7 @@ export function LoginForm() {
       </label>
 
       <label className="input-group" htmlFor="password">
-        <span>Password</span>
+        <span>{t('login.password')}</span>
         <div className="input-group__field">
           <LockIcon />
           <input
@@ -109,7 +111,7 @@ export function LoginForm() {
             name="password"
             type="password"
             autoComplete="current-password"
-            placeholder="Enter your password"
+            placeholder={t('login.passwordPlaceholder')}
             required
             value={password}
             onChange={(event) => setPassword(event.target.value)}
@@ -129,11 +131,11 @@ export function LoginForm() {
       )}
 
       <button className="login-form__submit" type="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Signing in...' : 'Sign in'}
+        {isSubmitting ? t('login.submitting') : t('login.submit')}
       </button>
 
       <p className="login-form__register-prompt">
-        New here? <Link to="/register">Create your account</Link>
+        {t('login.registerPrompt')} <Link to="/register">{t('login.registerAction')}</Link>
       </p>
     </form>
   )

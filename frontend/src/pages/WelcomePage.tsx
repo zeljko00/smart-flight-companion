@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { CSSProperties } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AuthHeader } from '../components/AuthHeader'
 import { LoginForm } from '../components/LoginForm'
 import { fetchUpcomingFlights } from '../services/flightsService'
 import '../style/WelcomePage.css'
 
 export function WelcomePage() {
+  const { t } = useTranslation()
   const [flights, setFlights] = useState<Awaited<ReturnType<typeof fetchUpcomingFlights>>>([])
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -24,7 +26,7 @@ export function WelcomePage() {
         }
       } catch {
         if (!isDisposed) {
-          setErrorMessage('Could not load flights right now.')
+          setErrorMessage(t('flights.loadError'))
         }
       } finally {
         if (!isDisposed) {
@@ -38,7 +40,7 @@ export function WelcomePage() {
     return () => {
       isDisposed = true
     }
-  }, [])
+  }, [t])
 
   const animatedFlights = useMemo(() => {
     if (flights.length <= 1) {
@@ -54,15 +56,15 @@ export function WelcomePage() {
     <main className="welcome-page">
       <div className="welcome-page__ambient" aria-hidden="true" />
 
-      <section className="welcome-page__grid" aria-label="Login section">
+      <section className="welcome-page__grid" aria-label={t('page.loginSectionAria')}>
         <article className="welcome-page__showcase">
-          <section className="welcome-page__flights" aria-label="Upcoming flights">
+          <section className="welcome-page__flights" aria-label={t('flights.sectionAria')}>
             <header className="welcome-page__flights-head">
-              <h3>Upcoming flights</h3>
+              <h3>{t('flights.heading')}</h3>
             </header>
 
             {isLoading ? (
-              <p className="welcome-page__flights-message">Loading upcoming departures...</p>
+              <p className="welcome-page__flights-message">{t('flights.loading')}</p>
             ) : null}
 
             {!isLoading && errorMessage ? (
@@ -72,7 +74,7 @@ export function WelcomePage() {
             ) : null}
 
             {!isLoading && !errorMessage && flights.length === 0 ? (
-              <p className="welcome-page__flights-message">No future flights are available right now.</p>
+              <p className="welcome-page__flights-message">{t('flights.empty')}</p>
             ) : null}
 
             {!isLoading && !errorMessage && flights.length > 0 ? (
@@ -85,7 +87,7 @@ export function WelcomePage() {
                     <li key={`${flight.id}-${index}`}>
                       <p className="welcome-page__flight-number">{flight.flightNumber}</p>
                       <p className="welcome-page__flight-route">
-                        {flight.fromLabel} to {flight.toLabel}
+                        {flight.fromLabel} {t('flights.routeSeparator')} {flight.toLabel}
                       </p>
                       <p className="welcome-page__flight-meta">
                         <span>{flight.airline}</span>
@@ -100,7 +102,7 @@ export function WelcomePage() {
           </section>
         </article>
 
-        <article className="welcome-page__panel" aria-label="Login form">
+        <article className="welcome-page__panel" aria-label={t('page.loginFormAria')}>
           <AuthHeader />
           <LoginForm />
         </article>
