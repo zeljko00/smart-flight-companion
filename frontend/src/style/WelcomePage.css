@@ -1,0 +1,212 @@
+.welcome-page {
+  position: relative;
+  min-height: 100svh;
+  padding: clamp(1rem, 2.8vw, 2.2rem);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  background:
+    radial-gradient(55rem 30rem at 8% -10%, color-mix(in srgb, var(--color-primary) 12%, transparent), transparent),
+    radial-gradient(45rem 28rem at 85% 120%, color-mix(in srgb, var(--color-success) 8%, transparent), transparent),
+    linear-gradient(145deg, var(--bg-gradient-start), var(--bg-gradient-end));
+}
+
+.welcome-page__ambient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--border-default) 20%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      color-mix(in srgb, var(--border-default) 16%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 36px 36px;
+  mask-image: radial-gradient(circle at 50% 35%, black 12%, transparent 88%);
+}
+
+.welcome-page__grid {
+  position: relative;
+  max-width: 1020px;
+  width: min(1020px, 100%);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(1rem, 2.4vw, 2rem);
+  align-items: stretch;
+}
+
+.welcome-page__showcase,
+.welcome-page__panel {
+  --panel-height: clamp(28rem, 66vh, 36rem);
+  border: 1px solid var(--border-default);
+  border-radius: 1.25rem;
+  background: color-mix(in srgb, var(--bg-surface) 88%, transparent);
+  backdrop-filter: blur(8px);
+  min-height: var(--panel-height);
+}
+
+.welcome-page__showcase {
+  padding: clamp(1.2rem, 3vw, 2.2rem);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+}
+
+.welcome-page__showcase h2 {
+  margin: 0;
+  font-size: clamp(1.6rem, 2.2vw, 2.35rem);
+  line-height: 1.15;
+  font-family: var(--font-display);
+}
+
+.welcome-page__showcase > p {
+  margin: 0;
+  max-width: 60ch;
+  color: var(--text-secondary);
+}
+
+.welcome-page__flights {
+  margin-top: 0;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--border-default) 72%, transparent);
+  background: color-mix(in srgb, var(--bg-elevated) 93%, transparent);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.welcome-page__flights-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.8rem 0.9rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-default) 68%, transparent);
+}
+
+.welcome-page__flights-head h3 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-family: var(--font-display);
+}
+
+.welcome-page__flights-head span {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+.welcome-page__flights-message {
+  margin: 0;
+  padding: 0.85rem 0.9rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.welcome-page__flights-message--error {
+  color: var(--color-error);
+}
+
+.welcome-page__ticker-wrap {
+  --ticker-duration: 24s;
+  --visible-rows: 5;
+  --flight-row-height: 5.1rem;
+  height: calc(var(--visible-rows) * var(--flight-row-height));
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.welcome-page__ticker {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.welcome-page__ticker--animated {
+  animation: flightTickerScroll var(--ticker-duration) linear infinite;
+}
+
+.welcome-page__ticker li {
+  min-height: var(--flight-row-height);
+  padding: 0.75rem 0.9rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-default) 60%, transparent);
+}
+
+.welcome-page__flight-number,
+.welcome-page__flight-route,
+.welcome-page__flight-meta {
+  margin: 0;
+}
+
+.welcome-page__flight-number {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.welcome-page__flight-route {
+  margin-top: 0.2rem;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.welcome-page__flight-meta {
+  margin-top: 0.28rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.8rem;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+}
+
+@keyframes flightTickerScroll {
+  from {
+    transform: translateY(0);
+  }
+
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .welcome-page__ticker--animated {
+    animation: none;
+  }
+}
+
+.welcome-page__panel {
+  padding: clamp(1rem, 2.5vw, 1.65rem);
+  display: grid;
+  gap: 1.2rem;
+  align-content: start;
+  box-shadow: var(--shadow-card);
+}
+
+@media (max-width: 900px) {
+  .welcome-page {
+    align-items: center;
+  }
+
+  .welcome-page__grid {
+    grid-template-columns: 1fr;
+    align-items: center;
+  }
+
+  .welcome-page__showcase {
+    order: 2;
+    min-height: auto;
+  }
+
+  .welcome-page__panel {
+    order: 1;
+    min-height: auto;
+  }
+}
