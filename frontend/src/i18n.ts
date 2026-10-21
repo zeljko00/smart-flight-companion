@@ -38,8 +38,8 @@ const resources = {
         switchToDark: 'Switch to dark theme',
         switchToLight: 'Switch to light theme',
         languageLabel: 'Language',
-        english: 'English',
-        serbian: 'Serbian',
+        english: 'ENG',
+        serbian: 'SRB',
       },
       login: {
         title: 'Sign in to SmartFlightCompanion',
@@ -102,8 +102,8 @@ const resources = {
         switchToDark: 'Prebaci na tamnu temu',
         switchToLight: 'Prebaci na svetlu temu',
         languageLabel: 'Jezik',
-        english: 'Engleski',
-        serbian: 'Srpski',
+        english: 'ENG',
+        serbian: 'SRB',
       },
       login: {
         title: 'Prijavite se na SmartFlightCompanion',

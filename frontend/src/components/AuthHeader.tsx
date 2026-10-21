@@ -1,6 +1,7 @@
 import { AppLogo } from './AppLogo'
 import { useTheme } from '../theme/ThemeProvider'
 import { useTranslation } from 'react-i18next'
+import { Moon, Sun } from 'lucide-react'
 import '../style/AuthPanel.css'
 
 export function AuthHeader() {
@@ -13,7 +14,6 @@ export function AuthHeader() {
       <AppLogo />
       <div className="auth-header__actions">
         <label className="auth-header__language" htmlFor="language-select">
-          <span>{t('common.languageLabel')}</span>
           <select
             id="language-select"
             value={selectedLanguage}
@@ -33,7 +33,7 @@ export function AuthHeader() {
           onClick={toggleTheme}
           aria-label={theme === 'light' ? t('common.switchToDark') : t('common.switchToLight')}
         >
-          {theme === 'light' ? t('common.themeDark') : t('common.themeLight')}
+          {theme === 'light' ? <Moon aria-hidden="true" /> : <Sun aria-hidden="true" />}
         </button>
       </div>
     </header>

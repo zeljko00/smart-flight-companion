@@ -41,17 +41,23 @@
 }
 
 .auth-header__theme-switch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid var(--border-default);
   border-radius: 999px;
-  min-height: 2.2rem;
-  padding: 0.45rem 0.9rem;
-  font-size: 0.82rem;
-  font-weight: 700;
-  font-family: var(--font-body);
+  width: 2.2rem;
+  height: 2.2rem;
+  padding: 0;
   color: var(--text-primary);
   background: var(--bg-elevated);
   cursor: pointer;
   transition: border-color 160ms ease, color 160ms ease, background-color 160ms ease;
+}
+
+.auth-header__theme-switch svg {
+  width: 1rem;
+  height: 1rem;
 }
 
 .auth-header__theme-switch:hover {
@@ -304,8 +310,9 @@
   }
 
   .auth-header__theme-switch {
-    width: 100%;
-    justify-self: stretch;
+    width: 2.4rem;
+    height: 2.4rem;
+    justify-self: end;
   }
 
   .auth-header__actions {
