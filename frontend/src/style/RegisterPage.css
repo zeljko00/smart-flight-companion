@@ -1,0 +1,53 @@
+.register-page {
+  position: relative;
+  min-height: 100svh;
+  padding: clamp(1rem, 2.6vw, 2.2rem);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background:
+    radial-gradient(40rem 22rem at 8% 4%, color-mix(in srgb, var(--color-primary) 11%, transparent), transparent),
+    radial-gradient(35rem 20rem at 90% 100%, color-mix(in srgb, var(--color-success) 8%, transparent), transparent),
+    linear-gradient(165deg, var(--bg-gradient-start), var(--bg-gradient-end));
+}
+
+.register-page__ambient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--border-default) 18%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      color-mix(in srgb, var(--border-default) 14%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 30px 30px;
+  mask-image: radial-gradient(circle at 50% 50%, black 18%, transparent 92%);
+}
+
+.register-page__shell {
+  position: relative;
+  width: min(640px, 100%);
+}
+
+.register-page__panel {
+  border: 1px solid var(--border-default);
+  border-radius: 1.25rem;
+  background: color-mix(in srgb, var(--bg-surface) 88%, transparent);
+  backdrop-filter: blur(8px);
+  padding: clamp(1rem, 2.4vw, 1.65rem);
+  display: grid;
+  gap: 1.2rem;
+  align-content: start;
+  box-shadow: var(--shadow-card);
+}
+
+@media (max-width: 700px) {
+  .register-page__shell {
+    width: min(96vw, 640px);
+  }
+}
