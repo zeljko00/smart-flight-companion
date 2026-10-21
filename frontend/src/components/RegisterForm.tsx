@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { ApiError } from '../services/apiClient'
 import { authService } from '../services/authService'
 import '../style/AuthPanel.css'
@@ -47,6 +48,7 @@ function LockIcon() {
 }
 
 export function RegisterForm() {
+  const { t } = useTranslation()
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
   const [username, setUsername] = useState('')
@@ -63,7 +65,7 @@ export function RegisterForm() {
     setSuccessMessage(null)
 
     if (password !== passwordConfirmation) {
-      setErrorMessage('Passwords do not match.')
+      setErrorMessage(t('register.mismatch'))
       return
     }
 
@@ -78,11 +80,11 @@ export function RegisterForm() {
         password,
       })
 
-      setSuccessMessage(`Account created for ${user.firstName || user.username}. You can now sign in.`)
+      setSuccessMessage(t('register.success', { name: user.firstName || user.username }))
       setPassword('')
       setPasswordConfirmation('')
     } catch (error) {
-      const fallbackMessage = 'Unable to create account. Please verify your details and try again.'
+      const fallbackMessage = t('register.failure')
 
       if (error instanceof ApiError) {
         setErrorMessage(error.message || fallbackMessage)
@@ -102,12 +104,12 @@ export function RegisterForm() {
       onSubmit={handleSubmit}
     >
       <div className="login-form__intro">
-        <h2 id="register-title">Create your SmartFlightCompanion account</h2>
-        <p>Register once to receive flight updates and manage your travel profile.</p>
+        <h2 id="register-title">{t('register.title')}</h2>
+        <p>{t('register.subtitle')}</p>
       </div>
 
       <label className="input-group" htmlFor="firstName">
-        <span>First name</span>
+        <span>{t('register.firstName')}</span>
         <div className="input-group__field">
           <UserIcon />
           <input
@@ -115,7 +117,7 @@ export function RegisterForm() {
             name="firstName"
             type="text"
             autoComplete="given-name"
-            placeholder="Enter your first name"
+            placeholder={t('register.firstNamePlaceholder')}
             required
             value={firstName}
             onChange={(event) => setFirstName(event.target.value)}
@@ -125,7 +127,7 @@ export function RegisterForm() {
       </label>
 
       <label className="input-group" htmlFor="lastName">
-        <span>Last name</span>
+        <span>{t('register.lastName')}</span>
         <div className="input-group__field">
           <UserIcon />
           <input
@@ -133,7 +135,7 @@ export function RegisterForm() {
             name="lastName"
             type="text"
             autoComplete="family-name"
-            placeholder="Enter your last name"
+            placeholder={t('register.lastNamePlaceholder')}
             required
             value={lastName}
             onChange={(event) => setLastName(event.target.value)}
@@ -143,7 +145,7 @@ export function RegisterForm() {
       </label>
 
       <label className="input-group" htmlFor="username">
-        <span>Username</span>
+        <span>{t('register.username')}</span>
         <div className="input-group__field">
           <UserIcon />
           <input
@@ -151,7 +153,7 @@ export function RegisterForm() {
             name="username"
             type="text"
             autoComplete="username"
-            placeholder="Choose a username"
+            placeholder={t('register.usernamePlaceholder')}
             required
             value={username}
             onChange={(event) => setUsername(event.target.value)}
@@ -161,7 +163,7 @@ export function RegisterForm() {
       </label>
 
       <label className="input-group" htmlFor="email">
-        <span>Email</span>
+        <span>{t('register.email')}</span>
         <div className="input-group__field">
           <MailIcon />
           <input
@@ -169,7 +171,7 @@ export function RegisterForm() {
             name="email"
             type="email"
             autoComplete="email"
-            placeholder="Enter your email"
+            placeholder={t('register.emailPlaceholder')}
             required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
@@ -179,7 +181,7 @@ export function RegisterForm() {
       </label>
 
       <label className="input-group" htmlFor="password">
-        <span>Password</span>
+        <span>{t('register.password')}</span>
         <div className="input-group__field">
           <LockIcon />
           <input
@@ -187,7 +189,7 @@ export function RegisterForm() {
             name="password"
             type="password"
             autoComplete="new-password"
-            placeholder="Create a password"
+            placeholder={t('register.passwordPlaceholder')}
             required
             value={password}
             onChange={(event) => setPassword(event.target.value)}
@@ -197,7 +199,7 @@ export function RegisterForm() {
       </label>
 
       <label className="input-group" htmlFor="passwordConfirmation">
-        <span>Confirm password</span>
+        <span>{t('register.confirmPassword')}</span>
         <div className="input-group__field">
           <LockIcon />
           <input
@@ -205,7 +207,7 @@ export function RegisterForm() {
             name="passwordConfirmation"
             type="password"
             autoComplete="new-password"
-            placeholder="Repeat your password"
+            placeholder={t('register.confirmPasswordPlaceholder')}
             required
             value={passwordConfirmation}
             onChange={(event) => setPasswordConfirmation(event.target.value)}
@@ -225,11 +227,11 @@ export function RegisterForm() {
       )}
 
       <button className="login-form__submit" type="submit" disabled={isSubmitting}>
-        {isSubmitting ? 'Creating account...' : 'Create account'}
+        {isSubmitting ? t('register.submitting') : t('register.submit')}
       </button>
 
       <p className="login-form__register-prompt">
-        Already have an account? <Link to="/">Sign in</Link>
+        {t('register.loginPrompt')} <Link to="/">{t('register.loginAction')}</Link>
       </p>
     </form>
   )
