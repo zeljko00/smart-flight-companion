@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { ApiError } from '../services/apiClient'
 import { authService } from '../services/authService'
 import '../style/AuthPanel.css'
@@ -228,7 +229,7 @@ export function RegisterForm() {
       </button>
 
       <p className="login-form__register-prompt">
-        Already have an account? <a href="/">Sign in</a>
+        Already have an account? <Link to="/">Sign in</Link>
       </p>
     </form>
   )

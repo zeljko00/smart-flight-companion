@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
+import { Link } from 'react-router-dom'
 import { ApiError } from '../services/apiClient'
 import { authService } from '../services/authService'
 import '../style/AuthPanel.css'
@@ -132,7 +133,7 @@ export function LoginForm() {
       </button>
 
       <p className="login-form__register-prompt">
-        New here? <a href="/register">Create your account</a>
+        New here? <Link to="/register">Create your account</Link>
       </p>
     </form>
   )
