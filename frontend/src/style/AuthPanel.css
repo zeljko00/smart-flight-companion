@@ -5,6 +5,30 @@
   gap: 1rem;
 }
 
+.auth-header__theme-switch {
+  border: 1px solid var(--border-default);
+  border-radius: 999px;
+  min-height: 2.2rem;
+  padding: 0.45rem 0.9rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  background: var(--bg-elevated);
+  cursor: pointer;
+  transition: border-color 160ms ease, color 160ms ease, background-color 160ms ease;
+}
+
+.auth-header__theme-switch:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.auth-header__theme-switch:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+  outline-offset: 2px;
+}
+
 .auth-header__register-link {
   text-decoration: none;
   color: var(--color-primary);
@@ -189,6 +213,10 @@
     gap: 0.7rem;
   }
 
+  .auth-header__theme-switch {
+    margin-left: auto;
+  }
+
   .app-logo {
     gap: 0.55rem;
   }
@@ -234,6 +262,11 @@
 @media (max-width: 520px) {
   .auth-header {
     margin-bottom: 0.1rem;
+  }
+
+  .auth-header__theme-switch {
+    width: 100%;
+    justify-self: stretch;
   }
 
   .app-logo {
