@@ -44,7 +44,6 @@ public sealed class AirportsController : ControllerBase
 
     [HttpGet("search")]
     [ProducesResponseType(typeof(IReadOnlyList<AirportDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     public async Task<ActionResult<IReadOnlyList<AirportDto>>> Search(
         [FromQuery] string? query,
         CancellationToken cancellationToken)

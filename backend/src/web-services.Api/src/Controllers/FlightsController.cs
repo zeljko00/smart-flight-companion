@@ -60,7 +60,7 @@ public sealed class SearchFlightsRequest
     [FromQuery(Name = "flightNumber")]
     public string? FlightNumber { get; set; }
 
-    [FromQuery(Name = "departure")]
+    [FromQuery(Name = "start")]
     public string? Departure { get; set; }
 
     [FromQuery(Name = "destination")]
@@ -75,9 +75,9 @@ public sealed class SearchFlightsRequest
     [FromQuery(Name = "maxPrice")]
     public decimal? MaxPrice { get; set; }
 
-    [FromQuery(Name = "departureTime")]
+    [FromQuery(Name = "departure")]
     public DateTimeOffset? DepartureTime { get; set; }
 
-    [FromQuery(Name = "arrivalTime")]
+    [FromQuery(Name = "arrival")]
     public DateTimeOffset? ArrivalTime { get; set; }
 }

@@ -29,6 +29,24 @@ public sealed class UserRepository : Repository<User>, IUserRepository
             .AnyAsync(user => user.Username.ToUpper() == normalizedUsername, cancellationToken);
     }
 
+    public Task<int> BlockUserAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return Context.Users
+            .Where(user => user.Id == id)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(user => user.IsActive, false),
+                cancellationToken);
+    }
+
+    public Task<int> AuthorizeUserAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        return Context.Users
+            .Where(user => user.Id == id && user.Role != Role.Admin)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(user => user.Role, Role.User),
+                cancellationToken);
+    }
+
     private static string Normalize(string value)
     {
         return value.Trim().ToUpperInvariant();

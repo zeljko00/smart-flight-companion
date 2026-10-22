@@ -20,6 +20,7 @@ export type UserDto = {
   firstName: string
   lastName: string
   role: string
+  isActive: boolean
   createdAt: string
 }
 

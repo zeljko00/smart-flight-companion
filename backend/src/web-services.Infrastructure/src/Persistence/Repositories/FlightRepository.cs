@@ -54,35 +54,35 @@ public sealed class FlightRepository : Repository<Flight>, IFlightRepository
 
         if (normalizedFlightNumber is not null)
         {
-            query = query.Where(flight => flight.FlightNumber.ToUpper() == normalizedFlightNumber);
+            query = query.Where(flight => flight.FlightNumber.ToUpper().Contains(normalizedFlightNumber));
         }
 
         if (normalizedDeparture is not null)
         {
             query = query.Where(flight =>
-                flight.DepartureAirport.Name.ToUpper() == normalizedDeparture ||
-                flight.DepartureAirport.IATA.ToUpper() == normalizedDeparture ||
-                flight.DepartureAirport.City.ToUpper() == normalizedDeparture ||
-                flight.DepartureAirport.Country.ToUpper() == normalizedDeparture);
+                flight.DepartureAirport.Name.ToUpper().Contains(normalizedDeparture) ||
+                flight.DepartureAirport.IATA.ToUpper().Contains(normalizedDeparture) ||
+                flight.DepartureAirport.City.ToUpper().Contains(normalizedDeparture) ||
+                flight.DepartureAirport.Country.ToUpper().Contains(normalizedDeparture));
         }
 
         if (normalizedDestination is not null)
         {
             query = query.Where(flight =>
-                flight.ArrivalAirport.Name.ToUpper() == normalizedDestination ||
-                flight.ArrivalAirport.IATA.ToUpper() == normalizedDestination ||
-                flight.ArrivalAirport.City.ToUpper() == normalizedDestination ||
-                flight.ArrivalAirport.Country.ToUpper() == normalizedDestination);
+                flight.ArrivalAirport.Name.ToUpper().Contains(normalizedDestination) ||
+                flight.ArrivalAirport.IATA.ToUpper().Contains(normalizedDestination) ||
+                flight.ArrivalAirport.City.ToUpper().Contains(normalizedDestination) ||
+                flight.ArrivalAirport.Country.ToUpper().Contains(normalizedDestination));
         }
 
         if (normalizedStatus is not null)
         {
-            query = query.Where(flight => flight.Status.ToString().ToUpper() == normalizedStatus);
+            query = query.Where(flight => flight.Status.ToString().ToUpper().Contains(normalizedStatus));
         }
 
         if (normalizedAirline is not null)
         {
-            query = query.Where(flight => flight.Airline.ToUpper() == normalizedAirline);
+            query = query.Where(flight => flight.Airline.ToUpper().Contains(normalizedAirline));
         }
 
         if (maxPrice is not null)
@@ -98,13 +98,13 @@ public sealed class FlightRepository : Repository<Flight>, IFlightRepository
         if (departureTime is not null)
         {
             var time = departureTime.Value;
-            query = query.Where(flight => time >= flight.ScheduledDepartureTime);
+            query = query.Where(flight => time.Date ==  flight.ScheduledDepartureTime.Date);
         }
 
         if (arrivalTime is not null)
         {
             var time = arrivalTime.Value;
-            query = query.Where(flight => time <= flight.ScheduledArrivalTime);
+            query = query.Where(flight => time.Date ==  flight.ScheduledArrivalTime.Date);
         }
 
         return await query.ToListAsync(cancellationToken);

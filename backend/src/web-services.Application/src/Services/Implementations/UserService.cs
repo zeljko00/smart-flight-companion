@@ -46,4 +46,21 @@ public sealed class UserService : IUserService
         
         return UserDto.FromEntity(result);
     }
+    public async Task<IReadOnlyList<UserDto>> GetAll(CancellationToken cancellationToken = default)
+    {
+        var users = await _userRepository.GetAsync(cancellationToken);
+        return users.Select(UserDto.FromEntity).ToList().AsReadOnly();
+    }
+
+    public async Task<bool> Block(Guid id, CancellationToken cancellationToken = default)
+    {
+        var affectedRows = await _userRepository.BlockUserAsync(id, cancellationToken);
+        return affectedRows > 0;
+    }
+
+    public async Task<bool> Authorize(Guid id, CancellationToken cancellationToken = default)
+    {
+        var affectedRows = await _userRepository.AuthorizeUserAsync(id, cancellationToken);
+        return affectedRows > 0;
+    }
 }
