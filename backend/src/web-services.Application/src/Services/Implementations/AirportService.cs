@@ -21,12 +21,12 @@ public class AirportService : IAirportService
     public async Task<IReadOnlyList<AirportDto>> GetAll(CancellationToken cancellationToken = default)
     {
         var airports = await _airportRepository.GetAsync(cancellationToken);
-        return airports.Select(AirportDto.FromEntity).ToList();
+        return airports.Select(AirportDto.FromEntity).ToList().AsReadOnly();
     }
 
     public async Task<IReadOnlyList<AirportDto>> Search(string query, CancellationToken cancellationToken = default)
     {
         var airports = await _airportRepository.SearchAsync(query, cancellationToken);
-        return airports.Select(AirportDto.FromEntity).ToList();
+        return airports.Select(AirportDto.FromEntity).ToList().AsReadOnly();
     }
 }

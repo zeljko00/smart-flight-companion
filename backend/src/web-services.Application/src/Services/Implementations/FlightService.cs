@@ -21,7 +21,7 @@ public sealed class FlightService : IFlightService
     public async Task<IReadOnlyList<FlightDto>> GetAll(CancellationToken cancellationToken = default)
     {
         var flights = await _flightRepository.GetAsync(cancellationToken);
-        return flights.Select(FlightDto.FromEntity).ToList();
+        return flights.Select(FlightDto.FromEntity).ToList().AsReadOnly();
     }
 
     public async Task<IReadOnlyList<FlightDto>> Search(
@@ -46,6 +46,6 @@ public sealed class FlightService : IFlightService
             arrivalTime,
             cancellationToken);
 
-        return flights.Select(FlightDto.FromEntity).ToList();
+        return flights.Select(FlightDto.FromEntity).ToList().AsReadOnly();
     }
 }
