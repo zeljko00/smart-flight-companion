@@ -10,6 +10,7 @@ public sealed record UserDto(
     string FirstName,
     string LastName,
     string Role,
+    bool IsActive,
     DateTimeOffset CreatedAt
     )
 {
@@ -22,6 +23,7 @@ public sealed record UserDto(
             user.FirstName,
             user.LastName,
             user.Role.ToString(),
+            user.IsActive,
             user.CreatedAt);
     }
 

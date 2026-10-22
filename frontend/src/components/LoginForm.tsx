@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { FormEvent } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { ApiError } from '../services/apiClient'
 import { authService } from '../services/authService'
@@ -40,6 +40,7 @@ function LockIcon() {
 
 export function LoginForm() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -57,6 +58,16 @@ export function LoginForm() {
         username: username.trim(),
         password,
       })
+
+      if (user.role.toLowerCase() === 'admin' && user.isActive) {
+        navigate('/admin/console', {
+          replace: true,
+          state: {
+            adminUser: user,
+          },
+        })
+        return
+      }
 
       setSuccessMessage(t('login.success', { name: user.firstName || user.username }))
     } catch (error) {
