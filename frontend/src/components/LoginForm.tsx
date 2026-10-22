@@ -68,8 +68,14 @@ export function LoginForm() {
         })
         return
       }
-
-      setSuccessMessage(t('login.success', { name: user.firstName || user.username }))
+      if(user.role.toLowerCase() === 'user' && user.isActive) {
+        navigate('/home', {
+          replace: true,
+          state: {
+            user,
+          },
+        })
+      }
     } catch (error) {
       const fallbackMessage = t('login.failure')
 

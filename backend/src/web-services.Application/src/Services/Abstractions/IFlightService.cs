@@ -14,6 +14,5 @@ public interface IFlightService
         string? airline,
         decimal? maxPrice,
         DateTimeOffset? departureTime,
-        DateTimeOffset? arrivalTime,
         CancellationToken cancellationToken = default);
 }

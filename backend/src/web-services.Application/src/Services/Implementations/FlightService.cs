@@ -32,7 +32,6 @@ public sealed class FlightService : IFlightService
         string? airline,
         decimal? maxPrice,
         DateTimeOffset? departureTime,
-        DateTimeOffset? arrivalTime,
         CancellationToken cancellationToken = default)
     {
         var flights = await _flightRepository.Search(
@@ -43,7 +42,6 @@ public sealed class FlightService : IFlightService
             airline,
             maxPrice,
             departureTime,
-            arrivalTime,
             cancellationToken);
 
         return flights.Select(FlightDto.FromEntity).ToList().AsReadOnly();

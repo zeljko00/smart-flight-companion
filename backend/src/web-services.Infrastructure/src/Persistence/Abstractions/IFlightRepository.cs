@@ -12,6 +12,5 @@ public interface IFlightRepository : IRepository<Flight>
         string? airline,
         decimal? maxPrice,
         DateTimeOffset? departureTime,
-        DateTimeOffset? arrivalTime,
         CancellationToken cancellationToken = default);
 }

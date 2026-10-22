@@ -16,7 +16,10 @@ type AdminLocationState = {
 
 function formatDate(value: string): string {
   const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString()
+  return new Intl.DateTimeFormat('sr-RS',{
+    dateStyle: 'short',
+    timeStyle: 'short',
+  }).format(date)
 }
 
 export function AdminPage() {

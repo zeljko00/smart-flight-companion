@@ -26,6 +26,7 @@ public sealed class FlightRepository : Repository<Flight>, IFlightRepository
             .AsNoTracking()
             .Include(flight => flight.DepartureAirport)
             .Include(flight => flight.ArrivalAirport)
+            .Where(flight => flight.DepartureTime >= DateTimeOffset.UtcNow)
             .ToListAsync(cancellationToken);
     }
 
@@ -37,7 +38,6 @@ public sealed class FlightRepository : Repository<Flight>, IFlightRepository
         string? airline,
         decimal? maxPrice,
         DateTimeOffset? departureTime,
-        DateTimeOffset? arrivalTime,
         CancellationToken cancellationToken = default)
     {
         var normalizedFlightNumber = NormalizeOrNull(flightNumber);
@@ -99,12 +99,6 @@ public sealed class FlightRepository : Repository<Flight>, IFlightRepository
         {
             var time = departureTime.Value;
             query = query.Where(flight => time.Date ==  flight.ScheduledDepartureTime.Date);
-        }
-
-        if (arrivalTime is not null)
-        {
-            var time = arrivalTime.Value;
-            query = query.Where(flight => time.Date ==  flight.ScheduledArrivalTime.Date);
         }
 
         return await query.ToListAsync(cancellationToken);
