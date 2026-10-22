@@ -1,0 +1,368 @@
+.home-page {
+  position: relative;
+  min-height: 100svh;
+  padding: clamp(1rem, 2.8vw, 2.2rem);
+  overflow-x: hidden;
+  overflow-y: visible;
+  display: flex;
+  align-items: stretch;
+  background:
+    radial-gradient(55rem 30rem at 8% -10%, color-mix(in srgb, var(--color-primary) 12%, transparent), transparent),
+    radial-gradient(45rem 28rem at 85% 120%, color-mix(in srgb, var(--color-success) 8%, transparent), transparent),
+    linear-gradient(145deg, var(--bg-gradient-start), var(--bg-gradient-end));
+}
+
+.home-page__ambient {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--border-default) 20%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      color-mix(in srgb, var(--border-default) 16%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 36px 36px;
+  mask-image: radial-gradient(circle at 50% 35%, black 12%, transparent 88%);
+}
+
+.home-page__shell {
+  position: relative;
+  max-width: 1180px;
+  width: min(1180px, 100%);
+  margin: 0 auto;
+}
+
+.home-page__panel {
+  border: 1px solid var(--border-default);
+  border-radius: 1.25rem;
+  background: color-mix(in srgb, var(--bg-surface) 88%, transparent);
+  backdrop-filter: blur(8px);
+  padding: clamp(0.9rem, 2.3vw, 1.55rem);
+  display: grid;
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: 0.82rem;
+  min-height: clamp(28rem, 66vh, 36rem);
+  box-shadow: var(--shadow-card);
+}
+
+.home-page__panel > .auth-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.home-page__panel > .auth-header .app-logo {
+  width: auto;
+  justify-content: flex-start;
+  gap: 0.35rem;
+}
+
+.home-page__panel > .auth-header .app-logo img {
+  width: 50px;
+  height: 50px;
+}
+
+.home-page__panel > .auth-header .app-logo__label {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.home-page__panel > .auth-header .auth-header__actions {
+  margin-left: auto;
+}
+
+.home-page__panel > .auth-header .auth-header__language select {
+  min-height: 1.72rem;
+  font-size: 0.74rem;
+  padding: 0 0.42rem;
+}
+
+.home-page__panel > .auth-header .auth-header__theme-switch {
+  width: 1.62rem;
+  height: 1.62rem;
+}
+
+.home-page .admin-page__user-compact {
+  min-height: 2.22rem;
+  padding: 0.28rem 0.2rem;
+  width: 100%;
+  flex: 0 0 auto;
+  align-self: start;
+}
+
+.home-page .admin-page__logout {
+  min-height: 1.5rem;
+}
+
+.home-page__heading {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-areas:
+    "title toggle"
+    "subtitle toggle";
+  align-items: center;
+  gap: 0.1rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.home-page__heading-area {
+  position: relative;
+  display: grid;
+  gap: 0.52rem;
+  align-content: start;
+}
+
+.home-page__heading h2 {
+  grid-area: title;
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.3rem, 2.1vw, 1.9rem);
+  color: var(--text-primary);
+}
+
+.home-page__heading p {
+  grid-area: subtitle;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.92rem;
+}
+
+.home-page__filter-toggle {
+  grid-area: toggle;
+  justify-self: start;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  flex: 0 0 auto;
+  width: 2.4rem;
+  height: 2.4rem;
+  min-height: 2.4rem;
+  min-width: 2.4rem;
+  padding: 0;
+  border-radius: 0.7rem;
+  border: 1px solid color-mix(in srgb, var(--border-default) 78%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.home-page__filter-toggle span {
+  display: none;
+}
+
+.home-page__filter-toggle:hover {
+  background: color-mix(in srgb, var(--bg-elevated) 92%, transparent);
+}
+
+.home-page__filters {
+  display: grid;
+  gap: 0.62rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: end;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid color-mix(in srgb, var(--border-default) 78%, transparent);
+  border-radius: 0.9rem;
+  background: color-mix(in srgb, var(--bg-surface) 96%, transparent);
+  box-shadow: var(--shadow-soft);
+  padding: 0.72rem;
+}
+
+.home-page__filters-layer {
+  position: static;
+  width: 100%;
+  margin-top: 0.65rem;
+  margin-bottom: 0.65rem;
+
+}
+
+.home-page__filters-layer[hidden] {
+  display: none;
+}
+
+.home-page__filter-field {
+  display: grid;
+  gap: 0.24rem;
+  min-width: 0;
+}
+
+.home-page__filter-field span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-secondary);
+}
+
+.home-page__filter-field input,
+.home-page__filter-field select {
+  width: 100%;
+  min-height: 2.3rem;
+  border-radius: 0.68rem;
+  border: 1px solid color-mix(in srgb, var(--border-default) 72%, transparent);
+  background: color-mix(in srgb, var(--auth-input-bg) 92%, transparent);
+  color: var(--text-primary);
+  padding: 0 0.62rem;
+  font-size: 0.85rem;
+}
+
+.home-page__filter-field input:focus,
+.home-page__filter-field select:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--color-primary) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
+}
+
+.home-page__filter-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.52rem;
+}
+
+.home-page__button {
+  min-height: 2.08rem;
+  border-radius: 0.7rem;
+  border: 1px solid transparent;
+  padding: 0 0.86rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.home-page__button--primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.home-page__button--primary:hover {
+  background: var(--color-primary-hover);
+}
+
+.home-page__button--secondary {
+  border-color: color-mix(in srgb, var(--border-default) 80%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 90%, transparent);
+  color: var(--text-primary);
+}
+
+.home-page__button--secondary:hover {
+  background: color-mix(in srgb, var(--bg-elevated) 90%, transparent);
+}
+
+.home-page__status {
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--bg-elevated) 88%, transparent);
+}
+
+.home-page__status--error {
+  color: var(--color-error);
+  border: 1px solid color-mix(in srgb, var(--color-error) 24%, transparent);
+  background: color-mix(in srgb, var(--color-error) 10%, transparent);
+}
+
+.home-page__table-wrap {
+  border: 1px solid color-mix(in srgb, var(--border-default) 72%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--bg-elevated) 93%, transparent);
+  overflow: auto;
+}
+
+.home-page__table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 860px;
+}
+
+.home-page__table thead th {
+  text-align: left;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding: 0.72rem 0.85rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-default) 72%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 68%, transparent);
+}
+
+.home-page__table tbody td {
+  padding: 0.7rem 0.85rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-default) 64%, transparent);
+  color: var(--text-primary);
+  font-size: 0.86rem;
+}
+
+.home-page__table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.home-page__status-pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.25rem;
+  padding: 0.06rem 0.42rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--color-primary) 25%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+  color: color-mix(in srgb, var(--color-primary) 84%, var(--text-primary));
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+@media (max-width: 900px) {
+  .home-page {
+    align-items: center;
+  }
+
+  .home-page__panel {
+    min-height: auto;
+    padding: 0.9rem;
+  }
+
+  .home-page__panel > .auth-header .app-logo img {
+    width: 44px;
+    height: 44px;
+  }
+
+  .home-page__panel > .auth-header .app-logo__label {
+    font-size: 1.02rem;
+  }
+
+  .home-page .admin-page__user-compact {
+    min-height: 2.04rem;
+    padding: 0.22rem 0.14rem;
+  }
+
+  .home-page .admin-page__logout {
+    min-height: 1.42rem;
+    font-size: 0.67rem;
+    padding: 0.08rem 0.46rem;
+  }
+
+  .home-page__filters {
+    grid-template-columns: 1fr;
+  }
+
+  .home-page__filters-layer {
+    position: static;
+    margin-top: 0;
+  }
+
+  .home-page__heading {
+    grid-template-columns: 1fr auto;
+  }
+}

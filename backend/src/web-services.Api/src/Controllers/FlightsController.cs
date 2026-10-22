@@ -49,7 +49,7 @@ public sealed class FlightsController : ControllerBase
         [FromQuery] SearchFlightsRequest request,
         CancellationToken cancellationToken)
     {
-        var flights = await _flightService.Search(request.FlightNumber, request.Departure, request.Destination, request.Status, request.Airline, request.MaxPrice, request.DepartureTime, request.ArrivalTime, cancellationToken);
+        var flights = await _flightService.Search(request.FlightNumber, request.Departure, request.Destination, request.Status, request.Airline, request.MaxPrice, request.DepartureTime, cancellationToken);
 
         return Ok(flights);
     }
@@ -77,7 +77,4 @@ public sealed class SearchFlightsRequest
 
     [FromQuery(Name = "departure")]
     public DateTimeOffset? DepartureTime { get; set; }
-
-    [FromQuery(Name = "arrival")]
-    public DateTimeOffset? ArrivalTime { get; set; }
 }

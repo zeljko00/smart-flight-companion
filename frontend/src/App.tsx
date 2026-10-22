@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { WelcomePage } from './pages/WelcomePage'
 import { RegisterPage } from './pages/RegisterPage'
 import { AdminPage } from './pages/AdminPage'
+import { HomePage } from './pages/HomePage'
 import { ThemeProvider } from './theme/ThemeProvider'
 
 function App() {
@@ -9,6 +10,7 @@ function App() {
     <ThemeProvider>
       <Routes>
         <Route path="/" element={<WelcomePage />} />
+        <Route path="/home" element={<HomePage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/admin/console" element={<AdminPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
