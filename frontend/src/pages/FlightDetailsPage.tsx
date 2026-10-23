@@ -216,7 +216,6 @@ export function FlightDetailsPage() {
                 <article className="flight-details-page__overview-card flight-details-page__overview-card--flight">
                   <p>{t('flightDetails.fields.flightNumber')}</p>
                   <strong>{flight.flightNumber}</strong>
-                  <span>{flight.id}</span>
                 </article>
                 <article className="flight-details-page__overview-card flight-details-page__overview-card--airline">
                   <p>{t('flightDetails.fields.airline')}</p>
@@ -231,7 +230,6 @@ export function FlightDetailsPage() {
                 <article className="flight-details-page__overview-card flight-details-page__overview-card--route">
                   <p>{t('flightDetails.fields.route')}</p>
                   <strong>{flight.departureAirport.iata} → {flight.arrivalAirport.iata}</strong>
-                  <span>{flight.departureAirport.name} → {flight.arrivalAirport.name}</span>
                 </article>
               </section>
 

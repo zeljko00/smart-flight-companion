@@ -21,6 +21,12 @@ public sealed class UserService : IUserService
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
     }
 
+    public async Task<UserDto?> GetById(Guid id, CancellationToken cancellationToken = default)
+    {
+        var user = await _userRepository.GetByIdAsync(id, cancellationToken);
+        return user is null ? null : UserDto.FromEntity(user);
+    }
+
     public async Task<UserDto?> Login(UserLoginRequestDto request, CancellationToken cancellationToken = default)
     {
         var user = await _userRepository.GetByUsernameAsync(request.Username, cancellationToken);
@@ -85,7 +91,7 @@ public sealed class UserService : IUserService
             digits[random.Next(digits.Length)],
             special[random.Next(special.Length)]
         };
-        for (int i = 4; i < random.Next(11, 21); i++)
+        for (int i = 4; i < random.Next(15, 25); i++)
         {
             var allChars = upper + lower + digits + special;
             passwordChars.Add(allChars[random.Next(allChars.Length)]);
