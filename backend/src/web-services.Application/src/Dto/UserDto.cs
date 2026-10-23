@@ -31,10 +31,12 @@ public sealed record UserDto(
 
 public class UserLoginRequestDto
 {
-    [Required, MinLength(3), MaxLength(50)]
+    [Required(ErrorMessage = "username_missing"), MinLength(12, ErrorMessage = "invalid_username_length"), MaxLength(50)]
+    [RegularExpression(@"^[^@#/]+$", ErrorMessage = "invalid_username" )]
     public string? Username { get; set; }
 
-    [Required, MinLength(5), MaxLength(128)]
+    [Required(ErrorMessage = "password_missing"), MinLength(15, ErrorMessage = "invalid_password_length"), MaxLength(128)]
+    [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$", ErrorMessage = "invalid_password")]
     public string? Password { get; set; }
 }
 

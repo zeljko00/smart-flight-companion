@@ -80,9 +80,9 @@ export function LoginForm() {
       const fallbackMessage = t('login.failure')
 
       if (error instanceof ApiError) {
-        setErrorMessage(error.message || fallbackMessage)
+        setErrorMessage(t("login."+error.message) || t("login."+fallbackMessage))
       } else {
-        setErrorMessage(fallbackMessage)
+        setErrorMessage(t("login."+fallbackMessage))
       }
     } finally {
       setIsSubmitting(false)
