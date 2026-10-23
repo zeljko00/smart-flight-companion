@@ -14,6 +14,15 @@ import '../style/HomePage.css'
 
 type HomeLocationState = {
   user?: UserDto
+  homeFilters?: {
+    airline: string
+    start: string
+    destination: string
+    departureTime: string
+    maxPrice: string
+    status: string
+    isFilterPanelOpen: boolean
+  }
 }
 
 function toLocalDateInputValue(date: Date): string {
@@ -47,18 +56,20 @@ export function HomePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const user = (location.state as HomeLocationState | null)?.user ?? null
+  const locationState = (location.state as HomeLocationState | null) ?? null
+  const user = locationState?.user ?? null
+  const preservedFilters = locationState?.homeFilters
   const statusOptions = ['Scheduled', 'Delayed', 'Departed', 'Arrived', 'Cancelled']
-  const initialDepartureFilter = toLocalDateInputValue(new Date())
+  const initialDepartureFilter = preservedFilters?.departureTime || toLocalDateInputValue(new Date())
 
   const [flights, setFlights] = useState<FlightTableRow[]>([])
-  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(false)
-  const [airlineFilter, setAirlineFilter] = useState('')
-  const [startFilter, setStartFilter] = useState('')
-  const [destinationFilter, setDestinationFilter] = useState('')
+  const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(preservedFilters?.isFilterPanelOpen ?? false)
+  const [airlineFilter, setAirlineFilter] = useState(preservedFilters?.airline ?? '')
+  const [startFilter, setStartFilter] = useState(preservedFilters?.start ?? '')
+  const [destinationFilter, setDestinationFilter] = useState(preservedFilters?.destination ?? '')
   const [departureTimeFilter, setDepartureTimeFilter] = useState(initialDepartureFilter)
-  const [maxPriceFilter, setMaxPriceFilter] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
+  const [maxPriceFilter, setMaxPriceFilter] = useState(preservedFilters?.maxPrice ?? '')
+  const [statusFilter, setStatusFilter] = useState(preservedFilters?.status ?? '')
   const [minDepartureTime, setMinDepartureTime] = useState(initialDepartureFilter)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -109,9 +120,20 @@ export function HomePage() {
       setErrorMessage(null)
 
       try {
-        const defaultDepartureDate = parseLocalDateInput(initialDepartureFilter)
+        const maxPriceRaw = preservedFilters?.maxPrice?.trim()
+        const maxPriceParsed = maxPriceRaw ? Number(maxPriceRaw) : undefined
+        const maxPrice =
+          typeof maxPriceParsed === 'number' && Number.isFinite(maxPriceParsed) && maxPriceParsed >= 0
+            ? maxPriceParsed
+            : undefined
+
         const result = await fetchAllFlights({
-          departureTime: defaultDepartureDate,
+          airline: preservedFilters?.airline || undefined,
+          start: preservedFilters?.start || undefined,
+          destination: preservedFilters?.destination || undefined,
+          departureTime: parseLocalDateInput(initialDepartureFilter),
+          maxPrice,
+          status: preservedFilters?.status || undefined,
         })
         if (!isDisposed) {
           setFlights(result)
@@ -130,10 +152,27 @@ export function HomePage() {
     return () => {
       isDisposed = true
     }
-  }, [t])
+  }, [initialDepartureFilter, preservedFilters, t])
 
   const handleLogout = () => {
     navigate('/', { replace: true })
+  }
+
+  const handleOpenFlightDetails = (flightId: string) => {
+    navigate(`/flights/${encodeURIComponent(flightId)}`, {
+      state: {
+        user,
+        homeFilters: {
+          airline: airlineFilter,
+          start: startFilter,
+          destination: destinationFilter,
+          departureTime: departureTimeFilter,
+          maxPrice: maxPriceFilter,
+          status: statusFilter,
+          isFilterPanelOpen,
+        },
+      },
+    })
   }
 
   const handleFilterSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -316,7 +355,20 @@ export function HomePage() {
                 </thead>
                 <tbody>
                   {flights.map((flight) => (
-                    <tr key={flight.id}>
+                    <tr
+                      key={flight.id}
+                      className="home-page__table-row"
+                      role="link"
+                      tabIndex={0}
+                      onClick={() => handleOpenFlightDetails(flight.id)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault()
+                          handleOpenFlightDetails(flight.id)
+                        }
+                      }}
+                      aria-label={`${t('home.columns.openDetails')}: ${flight.flightNumber}`}
+                    >
                       <td>{flight.flightNumber}</td>
                       <td>{flight.airline}</td>
                       <td>{flight.fromLabel}</td>
@@ -324,7 +376,7 @@ export function HomePage() {
                       <td>{flight.departureLabel}</td>
                       <td>{flight.lowestPriceLabel === 'N/A' ? t('home.columns.noPrice') : flight.lowestPriceLabel}</td>
                       <td>
-                        <span className="home-page__status-pill">{t('common.'+flight.statusLabel)}</span>
+                        <span className="home-page__status-pill">{t(`common.${flight.statusLabel}`)}</span>
                       </td>
                     </tr>
                   ))}

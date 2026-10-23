@@ -306,6 +306,21 @@
   font-size: 0.86rem;
 }
 
+.home-page__table-row {
+  cursor: pointer;
+  transition: background-color 0.16s ease;
+}
+
+.home-page__table-row:hover {
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+}
+
+.home-page__table-row:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--color-primary) 52%, transparent);
+  outline-offset: -2px;
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+
 .home-page__table tbody tr:last-child td {
   border-bottom: 0;
 }

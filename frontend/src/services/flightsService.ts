@@ -3,6 +3,9 @@ import { apiRequest } from './apiClient'
 type ApiAirport = {
   iata?: string
   name?: string
+  address?: string
+  latitude?: number
+  longitude?: number
   city?: string
 }
 
@@ -12,8 +15,15 @@ type ApiFlight = {
   flightNumber?: string
   airline?: string
   status?: string
+  terminal?: number
+  gate?: string
+  aircraft?: string
+  seatCapacity?: number
+  seatsFree?: number
   departureTime?: string
+  scheduledArrivalTime?: string
   scheduledDepartureTime?: string
+  arrivalTime?: string
   economyPrice?: number | null
   premiumEconomyPrice?: number | null
   businessPrice?: number | null
@@ -45,6 +55,40 @@ export type FlightTableRow = {
   departureAt: Date | null
 }
 
+export type FlightDetails = {
+  id: string
+  flightNumber: string
+  airline: string
+  statusLabel: string
+  terminal: number | null
+  gate: string
+  aircraft: string
+  seatCapacity: number | null
+  seatsFree: number | null
+  departureAirport: {
+    iata: string
+    name: string
+    address: string
+    latitude: number | null
+    longitude: number | null
+  }
+  arrivalAirport: {
+    iata: string
+    name: string
+    address: string
+    latitude: number | null
+    longitude: number | null
+  }
+  scheduledDepartureLabel: string
+  scheduledArrivalLabel: string
+  departureLabel: string
+  arrivalLabel: string
+  economyPriceLabel: string
+  premiumEconomyPriceLabel: string
+  businessPriceLabel: string
+  firstClassPriceLabel: string
+}
+
 export type FlightSearchFilters = {
   airline?: string
   start?: string
@@ -69,6 +113,20 @@ function airportLabel(airport?: ApiAirport): string {
   }
 
   return airport.iata || airport.name || airport.city || 'TBD'
+}
+
+function toAirportDetails(airport?: ApiAirport): FlightDetails['departureAirport'] {
+  return {
+    iata: airport?.iata || 'TBD',
+    name: airport?.name || 'TBD',
+    address: airport?.address || 'TBD',
+    latitude: typeof airport?.latitude === 'number' && Number.isFinite(airport.latitude)
+      ? airport.latitude
+      : null,
+    longitude: typeof airport?.longitude === 'number' && Number.isFinite(airport.longitude)
+      ? airport.longitude
+      : null,
+  }
 }
 
 function formatDeparture(date: Date): string {
@@ -99,6 +157,14 @@ function getLowestPriceLabel(flight: ApiFlight): string {
   }
 
   return formatPrice(Math.min(...prices))
+}
+
+function priceLabel(value?: number | null): string {
+  if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+    return 'N/A'
+  }
+
+  return formatPrice(value)
 }
 
 export async function fetchUpcomingFlights(limit = 12): Promise<UpcomingFlight[]> {
@@ -196,4 +262,43 @@ export async function fetchAllFlights(filters: FlightSearchFilters = {}): Promis
 
       return a.departureAt.getTime() - b.departureAt.getTime()
     })
+}
+
+export async function fetchFlightById(id: string): Promise<FlightDetails> {
+  const flight = await apiRequest<ApiFlight>(`/flights/${encodeURIComponent(id)}`)
+  const scheduledDepartureAt = parseDate(flight.scheduledDepartureTime)
+  const scheduledArrivalAt = parseDate(flight.scheduledArrivalTime)
+  const departureAt = parseDate(flight.departureTime)
+  const arrivalAt = parseDate(flight.arrivalTime)
+
+  return {
+    id: flight.id,
+    flightNumber: flight.flightNumber || flight.fligtNumber || 'Unknown #',
+    airline: flight.airline || 'Unknown airline',
+    statusLabel: flight.status || 'Scheduled',
+    terminal:
+      typeof flight.terminal === 'number' && Number.isFinite(flight.terminal)
+        ? flight.terminal
+        : null,
+    gate: flight.gate || 'TBD',
+    aircraft: flight.aircraft || 'TBD',
+    seatCapacity:
+      typeof flight.seatCapacity === 'number' && Number.isFinite(flight.seatCapacity)
+        ? flight.seatCapacity
+        : null,
+    seatsFree:
+      typeof flight.seatsFree === 'number' && Number.isFinite(flight.seatsFree)
+        ? flight.seatsFree
+        : null,
+    departureAirport: toAirportDetails(flight.departureAirport),
+    arrivalAirport: toAirportDetails(flight.arrivalAirport),
+    scheduledDepartureLabel: scheduledDepartureAt ? formatDeparture(scheduledDepartureAt) : 'TBD',
+    scheduledArrivalLabel: scheduledArrivalAt ? formatDeparture(scheduledArrivalAt) : 'TBD',
+    departureLabel: departureAt ? formatDeparture(departureAt) : 'TBD',
+    arrivalLabel: arrivalAt ? formatDeparture(arrivalAt) : 'TBD',
+    economyPriceLabel: priceLabel(flight.economyPrice),
+    premiumEconomyPriceLabel: priceLabel(flight.premiumEconomyPrice),
+    businessPriceLabel: priceLabel(flight.businessPrice),
+    firstClassPriceLabel: priceLabel(flight.firstClassPrice),
+  }
 }
