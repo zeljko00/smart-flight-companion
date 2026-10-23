@@ -6,6 +6,38 @@ import { ApiError } from '../services/apiClient'
 import { authService } from '../services/authService'
 import '../style/AuthPanel.css'
 
+function validateUsername(value: string): 'required' | 'length' | 'invalid' | null {
+  if (!value.trim()) {
+    return 'required'
+  }
+
+  if (value.length < 12 || value.length > 50) {
+    return 'length'
+  }
+
+  if (/[@#/]/.test(value)) {
+    return 'invalid'
+  }
+
+  return null
+}
+
+function validatePassword(value: string): 'required' | 'length' | 'invalid' | null {
+  if (!value) {
+    return 'required'
+  }
+
+  if (value.length < 15 || value.length > 128) {
+    return 'length'
+  }
+
+  if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/.test(value)) {
+    return 'invalid'
+  }
+
+  return null
+}
+
 function UserIcon() {
   return (
     <svg viewBox="0 0 24 24" width="18" height="18" fill="none" aria-hidden="true">
@@ -58,11 +90,61 @@ export function RegisterForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [usernameError, setUsernameError] = useState<string | null>(null)
+  const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [usernameTouched, setUsernameTouched] = useState(false)
+  const [passwordTouched, setPasswordTouched] = useState(false)
+
+  const mapUsernameError = (error: ReturnType<typeof validateUsername>) => {
+    if (!error) {
+      return null
+    }
+
+    if (error === 'required') {
+      return t('register.username_missing')
+    }
+
+    if (error === 'length') {
+      return t('register.invalid_username_length')
+    }
+
+    return t('register.invalid_username')
+  }
+
+  const mapPasswordError = (error: ReturnType<typeof validatePassword>) => {
+    if (!error) {
+      return null
+    }
+
+    if (error === 'required') {
+      return t('register.password_missing')
+    }
+
+    if (error === 'length') {
+      return t('register.invalid_password_length')
+    }
+
+    return t('register.invalid_password')
+  }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
     setErrorMessage(null)
     setSuccessMessage(null)
+
+    const usernameValidation = validateUsername(username)
+    const passwordValidation = validatePassword(password)
+    const resolvedUsernameError = mapUsernameError(usernameValidation)
+    const resolvedPasswordError = mapPasswordError(passwordValidation)
+
+    setUsernameTouched(true)
+    setPasswordTouched(true)
+    setUsernameError(resolvedUsernameError)
+    setPasswordError(resolvedPasswordError)
+
+    if (usernameValidation || passwordValidation) {
+      return
+    }
 
     if (password !== passwordConfirmation) {
       setErrorMessage(t('register.mismatch'))
@@ -156,10 +238,25 @@ export function RegisterForm() {
             placeholder={t('register.usernamePlaceholder')}
             required
             value={username}
-            onChange={(event) => setUsername(event.target.value)}
+            onChange={(event) => {
+              const nextValue = event.target.value
+              setUsername(nextValue)
+              if (!usernameTouched && nextValue.length > 0) {
+                setUsernameTouched(true)
+              }
+              if (usernameTouched || nextValue.length > 0) {
+                setUsernameError(mapUsernameError(validateUsername(nextValue)))
+              }
+            }}
+            onBlur={() => {
+              setUsernameTouched(true)
+              setUsernameError(mapUsernameError(validateUsername(username)))
+            }}
             disabled={isSubmitting}
+            aria-invalid={Boolean(usernameError)}
           />
         </div>
+        {usernameError ? <small className="input-group__error">{usernameError}</small> : null}
       </label>
 
       <label className="input-group" htmlFor="email">
@@ -192,10 +289,25 @@ export function RegisterForm() {
             placeholder={t('register.passwordPlaceholder')}
             required
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            onChange={(event) => {
+              const nextValue = event.target.value
+              setPassword(nextValue)
+              if (!passwordTouched && nextValue.length > 0) {
+                setPasswordTouched(true)
+              }
+              if (passwordTouched || nextValue.length > 0) {
+                setPasswordError(mapPasswordError(validatePassword(nextValue)))
+              }
+            }}
+            onBlur={() => {
+              setPasswordTouched(true)
+              setPasswordError(mapPasswordError(validatePassword(password)))
+            }}
             disabled={isSubmitting}
+            aria-invalid={Boolean(passwordError)}
           />
         </div>
+        {passwordError ? <small className="input-group__error">{passwordError}</small> : null}
       </label>
 
       <label className="input-group" htmlFor="passwordConfirmation">

@@ -188,6 +188,17 @@
   color: color-mix(in srgb, var(--text-secondary) 85%, transparent);
 }
 
+.input-group__error {
+  color: var(--color-error);
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.input-group input[aria-invalid="true"] {
+  color: var(--color-error);
+}
+
 .login-form__submit {
   min-height: 2.9rem;
   border: 0;
