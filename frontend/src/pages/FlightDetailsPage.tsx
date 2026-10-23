@@ -296,6 +296,8 @@ export function FlightDetailsPage() {
                     <DetailField label={t('flightDetails.fields.scheduledArrival')} value={flight.scheduledArrivalLabel} />
                     <DetailField label={t('flightDetails.fields.departure')} value={flight.departureLabel} />
                     <DetailField label={t('flightDetails.fields.arrival')} value={flight.arrivalLabel} />
+                    <DetailField label={t('flightDetails.fields.duration')} value={flight.durationLabel} />
+
                   </dl>
                 </article>
 
