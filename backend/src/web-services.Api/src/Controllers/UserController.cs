@@ -76,6 +76,23 @@ public sealed class UserController : ControllerBase
         return Ok();
     }
 
+    [HttpPut("{id}/reset")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> Reset(
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
+    {   
+        // Generate a new random password and reset the user's password
+        var newPassword = _userService.GenerateRandomPassword();
+        var updated = await _userService.ResetPassword(id, newPassword, cancellationToken);
+        if (!updated)
+        {
+            return NotFound();
+        }
+        return Ok();
+    }
+
     [HttpPut("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

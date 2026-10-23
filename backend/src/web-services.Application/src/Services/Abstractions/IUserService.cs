@@ -9,5 +9,6 @@ public interface IUserService
     Task<IReadOnlyList<UserDto>> GetAll(CancellationToken cancellationToken = default);
     Task<bool> Block(Guid id, CancellationToken cancellationToken = default);
     Task<bool> Authorize(Guid id, CancellationToken cancellationToken = default);
-
+    Task<bool> ResetPassword(Guid id, string newPassword, CancellationToken cancellationToken = default);
+    string GenerateRandomPassword();
 }

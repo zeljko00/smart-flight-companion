@@ -47,6 +47,15 @@ public sealed class UserRepository : Repository<User>, IUserRepository
                 cancellationToken);
     }
 
+    public Task<int> ResetPasswordAsync(Guid id, string password, CancellationToken cancellationToken = default)
+    {
+        return Context.Users
+            .Where(user => user.Id == id && user.Role != Role.Admin)
+            .ExecuteUpdateAsync(
+                setters => setters.SetProperty(user => user.PasswordHash, password),
+                cancellationToken);
+    }
+
     private static string Normalize(string value)
     {
         return value.Trim().ToUpperInvariant();
