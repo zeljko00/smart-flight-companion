@@ -3,6 +3,7 @@ import { WelcomePage } from './pages/WelcomePage'
 import { RegisterPage } from './pages/RegisterPage'
 import { AdminPage } from './pages/AdminPage'
 import { HomePage } from './pages/HomePage'
+import { FlightDetailsPage } from './pages/FlightDetailsPage'
 import { ThemeProvider } from './theme/ThemeProvider'
 
 function App() {
@@ -11,6 +12,7 @@ function App() {
       <Routes>
         <Route path="/" element={<WelcomePage />} />
         <Route path="/home" element={<HomePage />} />
+        <Route path="/flights/:flightId" element={<FlightDetailsPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/admin/console" element={<AdminPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
