@@ -21,6 +21,12 @@ public sealed class UserService : IUserService
         return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
     }
 
+    public async Task<UserDto?> GetById(Guid id, CancellationToken cancellationToken = default)
+    {
+        var user = await _userRepository.GetByIdAsync(id, cancellationToken);
+        return user is null ? null : UserDto.FromEntity(user);
+    }
+
     public async Task<UserDto?> Login(UserLoginRequestDto request, CancellationToken cancellationToken = default)
     {
         var user = await _userRepository.GetByUsernameAsync(request.Username, cancellationToken);
@@ -62,5 +68,35 @@ public sealed class UserService : IUserService
     {
         var affectedRows = await _userRepository.AuthorizeUserAsync(id, cancellationToken);
         return affectedRows > 0;
+    }
+
+    public async Task<bool> ResetPassword(Guid id, string newPassword, CancellationToken cancellationToken = default)
+    {
+        var hashedPassword = Hash(newPassword);
+        var affectedRows = await _userRepository.ResetPasswordAsync(id, hashedPassword, cancellationToken);
+        return affectedRows > 0;
+    }
+
+    public string GenerateRandomPassword()
+    {
+        var random = new Random();
+        const string upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const string lower = "abcdefghijklmnopqrstuvwxyz";
+        const string digits = "0123456789";
+        const string special = "!@#$%^&*()_+-=[]{}|;:,.<>?";
+        var passwordChars = new List<char>
+        {
+            upper[random.Next(upper.Length)],
+            lower[random.Next(lower.Length)],
+            digits[random.Next(digits.Length)],
+            special[random.Next(special.Length)]
+        };
+        for (int i = 4; i < random.Next(15, 25); i++)
+        {
+            var allChars = upper + lower + digits + special;
+            passwordChars.Add(allChars[random.Next(allChars.Length)]);
+        }
+        
+        return new string(passwordChars.OrderBy(x => random.Next()).ToArray());
     }
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
+import { Ban, KeyRound, Loader2, UserCheck } from 'lucide-react'
 import { ApiError } from '../services/apiClient'
 import type { UserDto } from '../services/authService'
 import { usersService } from '../services/usersService'
@@ -22,8 +23,12 @@ function formatDate(value: string): string {
   }).format(date)
 }
 
+function getApiLanguage(selectedLanguage: string | undefined): 'en' | 'srb' {
+  return selectedLanguage?.startsWith('sr') ? 'srb' : 'en'
+}
+
 export function AdminPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const adminUser = (location.state as AdminLocationState | null)?.adminUser ?? null
@@ -98,20 +103,49 @@ export function AdminPage() {
             className="admin-users__action"
             onClick={() => handleAuthorize(user.id)}
             disabled={isMutatingId === user.id}
+            aria-label={isMutatingId === user.id ? t('admin.authorizing') : t('admin.authorize')}
+            title={t('admin.authorize')}
           >
-            {isMutatingId === user.id ? t('admin.authorizing') : t('admin.authorize')}
+            {isMutatingId === user.id ? (
+              <Loader2 className="admin-users__icon admin-users__icon--spin" aria-hidden="true" />
+            ) : (
+              <UserCheck className="admin-users__icon" aria-hidden="true" />
+            )}
           </button>
         ) : null}
 
         {action === 'block' ? (
-          <button
-            type="button"
-            className="admin-users__action admin-users__action--danger"
-            onClick={() => handleBlock(user.id)}
-            disabled={isMutatingId === user.id}
-          >
-            {isMutatingId === user.id ? t('admin.blocking') : t('admin.block')}
-          </button>
+          <div className="admin-users__actions">
+            <button
+              type="button"
+              className="admin-users__action admin-users__action--secondary"
+              onClick={() => handleResetPassword(user.id)}
+              disabled={isMutatingId === user.id}
+              aria-label={isMutatingId === user.id ? t('admin.resettingPassword') : t('admin.resetPassword')}
+              title={t('admin.resetPassword')}
+            >
+              {isMutatingId === user.id ? (
+                <Loader2 className="admin-users__icon admin-users__icon--spin" aria-hidden="true" />
+              ) : (
+                <KeyRound className="admin-users__icon" aria-hidden="true" />
+              )}
+            </button>
+
+            <button
+              type="button"
+              className="admin-users__action admin-users__action--danger"
+              onClick={() => handleBlock(user.id)}
+              disabled={isMutatingId === user.id}
+              aria-label={isMutatingId === user.id ? t('admin.blocking') : t('admin.block')}
+              title={t('admin.block')}
+            >
+              {isMutatingId === user.id ? (
+                <Loader2 className="admin-users__icon admin-users__icon--spin" aria-hidden="true" />
+              ) : (
+                <Ban className="admin-users__icon" aria-hidden="true" />
+              )}
+            </button>
+          </div>
         ) : null}
       </li>
     ))
@@ -144,6 +178,21 @@ export function AdminPage() {
       setNoticeMessage(t('admin.blockSuccess'))
     } catch (error) {
       setErrorMessage(error instanceof ApiError ? error.message : t('admin.blockError'))
+    } finally {
+      setIsMutatingId(null)
+    }
+  }
+
+  const handleResetPassword = async (id: string) => {
+    setErrorMessage(null)
+    setNoticeMessage(null)
+    setIsMutatingId(id)
+
+    try {
+      await usersService.resetPassword(id, getApiLanguage(i18n.resolvedLanguage))
+      setNoticeMessage(t('admin.resetPasswordSuccess'))
+    } catch (error) {
+      setErrorMessage(error instanceof ApiError ? error.message : t('admin.resetPasswordError'))
     } finally {
       setIsMutatingId(null)
     }

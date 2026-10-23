@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SmartFlightCompanion.WebServices.Infrastructure.Mail;
 using SmartFlightCompanion.WebServices.Infrastructure.Persistence;
 using SmartFlightCompanion.WebServices.Infrastructure.Persistence.Abstractions;
 using SmartFlightCompanion.WebServices.Infrastructure.Persistence.Repositories;
@@ -25,6 +26,12 @@ public static class DependencyInjection
         services.AddScoped<IAirportRepository, AirportRepository>();
         services.AddScoped<IFlightRepository, FlightRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+
+        services.Configure<SmtpOptions>(configuration.GetSection(SmtpOptions.SectionName));
+        services.AddSingleton<InMemoryEmailQueue>();
+        services.AddSingleton<IEmailQueue>(provider => provider.GetRequiredService<InMemoryEmailQueue>());
+        services.AddSingleton<IEmailQueueReader>(provider => provider.GetRequiredService<InMemoryEmailQueue>());
+        services.AddHostedService<MailWorker>();
 
         return services;
     }

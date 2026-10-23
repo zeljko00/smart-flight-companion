@@ -87,6 +87,7 @@ export type FlightDetails = {
   premiumEconomyPriceLabel: string
   businessPriceLabel: string
   firstClassPriceLabel: string
+  durationLabel: string
 }
 
 export type FlightSearchFilters = {
@@ -165,6 +166,23 @@ function priceLabel(value?: number | null): string {
   }
 
   return formatPrice(value)
+}
+
+function formatDuration(departureAt: Date, arrivalAt: Date): string {
+  const diffMs = arrivalAt.getTime() - departureAt.getTime()
+  if (diffMs <= 0) {
+    return 'TBD'
+  }
+
+  const totalMinutes = Math.floor(diffMs / 60000)
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+
+  if (hours === 0) {
+    return `${minutes}min`
+  }
+
+  return `${hours}h ${minutes}min`
 }
 
 export async function fetchUpcomingFlights(limit = 12): Promise<UpcomingFlight[]> {
@@ -296,6 +314,9 @@ export async function fetchFlightById(id: string): Promise<FlightDetails> {
     scheduledArrivalLabel: scheduledArrivalAt ? formatDeparture(scheduledArrivalAt) : 'TBD',
     departureLabel: departureAt ? formatDeparture(departureAt) : 'TBD',
     arrivalLabel: arrivalAt ? formatDeparture(arrivalAt) : 'TBD',
+    durationLabel: departureAt && arrivalAt
+      ? formatDuration(departureAt, arrivalAt)
+      : 'TBD',
     economyPriceLabel: priceLabel(flight.economyPrice),
     premiumEconomyPriceLabel: priceLabel(flight.premiumEconomyPrice),
     businessPriceLabel: priceLabel(flight.businessPrice),

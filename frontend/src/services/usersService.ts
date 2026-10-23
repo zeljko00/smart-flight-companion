@@ -17,4 +17,11 @@ export const usersService = {
       method: 'PUT',
     })
   },
+  resetPassword(id: string, language: 'en' | 'srb') {
+    const query = new URLSearchParams({ language })
+
+    return apiRequest<void>(`/users/${id}/reset?${query.toString()}`, {
+      method: 'PUT',
+    })
+  },
 }
