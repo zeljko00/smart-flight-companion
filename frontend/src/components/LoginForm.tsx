@@ -131,9 +131,10 @@ export function LoginForm() {
     setUsernameError(resolvedUsernameError)
     setPasswordError(resolvedPasswordError)
 
-    if (usernameValidation || passwordValidation) {
-      return
-    }
+    // TODO: Uncomment this block to enable form validation before submission
+    // if (usernameValidation || passwordValidation) {
+    //   return
+    // } 
 
     setIsSubmitting(true)
 
