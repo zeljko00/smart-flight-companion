@@ -107,11 +107,10 @@ public sealed class UserController : ControllerBase
                 new EmailQueueItem(
                     user.Email,
                     "Vaša SmartFlightCompanion lozinka je resetovana",
-                    "Zdravo {{FirstName}},\n\nVaša lozinka za nalog je resetovana.\nKorisničko ime: {{Username}}\nNova lozinka: {{Password}}\n\nSmartFlightCompanion tim",
+                    "Zdravo {{FirstName}},\n\nVaša lozinka za nalog je resetovana.\nNova lozinka: {{Password}}\n\nSmartFlightCompanion tim",
                     new Dictionary<string, string>
                     {
                         ["FirstName"] = user.FirstName,
-                        ["Username"] = user.Username,
                         ["Password"] = newPassword,
                     }),
                 cancellationToken);    
@@ -122,11 +121,10 @@ public sealed class UserController : ControllerBase
                 new EmailQueueItem(
                     user.Email,
                     "Your SmartFlightCompanion password was reset",
-                    "Hello {{FirstName}},\n\nYour account password has been reset.\nUsername: {{Username}}\nNew password: {{Password}}\n\nSmartFlightCompanion Team",
+                    "Hello {{FirstName}},\n\nYour account password has been reset.\nNew password: {{Password}}\n\nSmartFlightCompanion Team",
                     new Dictionary<string, string>
                     {
                         ["FirstName"] = user.FirstName,
-                        ["Username"] = user.Username,
                         ["Password"] = newPassword,
                     }),
                 cancellationToken);
