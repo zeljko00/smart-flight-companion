@@ -539,6 +539,31 @@
   font-family: var(--font-display);
 }
 
+.flight-details-page__boarding-pass-availability {
+  border: 1px solid color-mix(in srgb, var(--border-default) 62%, transparent);
+  border-radius: 0.74rem;
+  background: color-mix(in srgb, var(--bg-surface) 90%, transparent);
+  padding: 0.48rem 0.62rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+.flight-details-page__boarding-pass-availability span {
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.flight-details-page__boarding-pass-availability strong {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-family: var(--font-display);
+}
+
 .flight-details-page__boarding-pass-confirm {
   display: flex;
   align-items: flex-start;

@@ -290,6 +290,13 @@ export function FlightDetailsPage() {
     : []
 
   const activeSeatOffer = seatOffers.find((offer) => offer.seat === selectedSeatType) ?? seatOffers[0] ?? null
+  const seatsLeft = typeof flight?.seatsFree === 'number' ? Math.max(0, flight.seatsFree) : null
+  const seatCapacity = typeof flight?.seatCapacity === 'number' ? Math.max(0, flight.seatCapacity) : null
+  const seatsAvailabilityLabel =
+    seatsLeft === null || seatCapacity === null
+      ? 'TBD'
+      : `${seatsLeft}/${seatCapacity}`
+  const isSoldOut = seatsLeft === 0
 
   const handleBuyBoardingPass = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
@@ -300,6 +307,11 @@ export function FlightDetailsPage() {
 
     if (seatOffers.length === 0) {
       setPurchaseErrorMessage(t('flightDetails.boardingPass.unavailable'))
+      return
+    }
+
+    if (isSoldOut) {
+      setPurchaseErrorMessage(t('flightDetails.boardingPass.soldOut'))
       return
     }
 
@@ -315,6 +327,14 @@ export function FlightDetailsPage() {
 
     try {
       const boardingPass = await createBoardingPass(flightId, seatToBuy)
+
+      try {
+        const refreshedFlight = await fetchFlightById(flightId)
+        setFlight(refreshedFlight)
+      } catch {
+        // Purchase succeeded; keep success flow even if refresh fails.
+      }
+
       const seatLabel = t(`flightDetails.boardingPass.seats.${boardingPass.seat}`)
       const priceLabel =
         typeof boardingPass.price === 'number'
@@ -550,6 +570,17 @@ export function FlightDetailsPage() {
                         <strong>{activeSeatOffer?.priceLabel ?? t('home.columns.noPrice')}</strong>
                       </div>
 
+                      <div className="flight-details-page__boarding-pass-availability">
+                        <span>{t('flightDetails.boardingPass.seatsLeft')}</span>
+                        <strong>{seatsAvailabilityLabel}</strong>
+                      </div>
+
+                      {isSoldOut ? (
+                        <p className="flight-details-page__purchase-note flight-details-page__purchase-note--error" role="status">
+                          {t('flightDetails.boardingPass.soldOut')}
+                        </p>
+                      ) : null}
+
                       <label className="flight-details-page__boarding-pass-confirm">
                         <input
                           type="checkbox"
@@ -580,7 +611,7 @@ export function FlightDetailsPage() {
                       <button
                         type="submit"
                         className="flight-details-page__comment-submit"
-                        disabled={isPurchasingBoardingPass || seatOffers.length === 0 || !isPurchaseConfirmed}
+                        disabled={isPurchasingBoardingPass || seatOffers.length === 0 || !isPurchaseConfirmed || isSoldOut}
                       >
                         {isPurchasingBoardingPass
                           ? t('flightDetails.boardingPass.purchasing')

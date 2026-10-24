@@ -29,6 +29,12 @@ public sealed class BoardingPassService : IBoardingPassService
             return null;
         }
 
+        int seatsTaken = await _BoardingPassRepository.GetCountByFlightIdAsync(flightId, cancellationToken);
+        if (seatsTaken >= flight.SeatCapacity)
+        {
+            return null;
+        }
+
         decimal? price = flight.FirstClassPrice;
 
         if(seat == Seat.Economy)
@@ -70,5 +76,10 @@ public sealed class BoardingPassService : IBoardingPassService
             .Select(BoardingPassDto.FromEntity)
             .ToList()
             .AsReadOnly();
+    }
+
+    public async Task<int> GetCountByFlightId(Guid flightId, CancellationToken cancellationToken = default)
+    {
+        return await _BoardingPassRepository.GetCountByFlightIdAsync(flightId, cancellationToken);
     }
 }

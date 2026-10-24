@@ -20,4 +20,13 @@ public sealed class BoardingPassRepository : Repository<BoardingPass>, IBoarding
             .Where(boardingPass => boardingPass.User.Id == ownerId)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<int> GetCountByFlightIdAsync(Guid flightId, CancellationToken cancellationToken = default)
+    {
+        return await Context.BoardingPasses
+            .AsNoTracking()
+            .Include(boardingPass => boardingPass.Flight)
+            .Where(boardingPass => boardingPass.Flight.Id == flightId)
+            .CountAsync(cancellationToken);
+    }
 }

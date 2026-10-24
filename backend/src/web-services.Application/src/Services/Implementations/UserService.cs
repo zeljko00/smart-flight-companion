@@ -29,7 +29,7 @@ public sealed class UserService : IUserService
 
     public async Task<UserDto?> Login(UserLoginRequestDto request, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(request.Password))
+        if (string.IsNullOrEmpty(request.Password) || string.IsNullOrEmpty(request.Username))
         {
             return null;
         }
@@ -45,7 +45,7 @@ public sealed class UserService : IUserService
 
     public async Task<UserDto?> Register(UserRegisterRequestDto request, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(request.Password))
+        if (string.IsNullOrEmpty(request.Password) || string.IsNullOrEmpty(request.Username))
         {
             return null;
         }

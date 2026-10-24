@@ -5,4 +5,5 @@ namespace SmartFlightCompanion.WebServices.Infrastructure.Persistence.Abstractio
 public interface IBoardingPassRepository : IRepository<BoardingPass>
 {
     Task<IReadOnlyList<BoardingPass>> GetByOwnerIdAsync(Guid ownerId, CancellationToken cancellationToken = default);
+    Task<int> GetCountByFlightIdAsync(Guid flightId, CancellationToken cancellationToken = default);
 }

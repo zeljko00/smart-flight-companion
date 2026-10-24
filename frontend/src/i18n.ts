@@ -212,6 +212,8 @@ const resources = {
         boardingPass: {
           seatType: 'Seat type',
           price: 'Selected price',
+          seatsLeft: 'Seats left',
+          soldOut: 'No seats left for this flight.',
           confirmLabel: 'I confirm purchase of the selected boarding pass.',
           confirmRequired: 'Please confirm the purchase before continuing.',
           purchase: 'Buy boarding pass',
@@ -454,6 +456,8 @@ const resources = {
         boardingPass: {
           seatType: 'Tip sedista',
           price: 'Izabrana cena',
+          seatsLeft: 'Preostalo mesta',
+          soldOut: 'Nema vise slobodnih mesta za ovaj let.',
           confirmLabel: 'Potvrdjujem kupovinu izabrane bording karte.',
           confirmRequired: 'Potvrdite kupovinu pre nastavka.',
           purchase: 'Kupi bording kartu',
