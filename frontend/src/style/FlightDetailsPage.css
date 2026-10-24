@@ -155,6 +155,28 @@
   background: color-mix(in srgb, var(--color-error) 10%, transparent);
 }
 
+.flight-details-page__status--success {
+  color: color-mix(in srgb, var(--color-success) 78%, var(--text-primary));
+  border: 1px solid color-mix(in srgb, var(--color-success) 28%, transparent);
+  background: color-mix(in srgb, var(--color-success) 12%, transparent);
+}
+
+.flight-details-page__purchase-note {
+  margin: 0;
+  padding: 0;
+  font-size: 0.76rem;
+  line-height: 1.3;
+  font-weight: 500;
+}
+
+.flight-details-page__purchase-note--error {
+  color: color-mix(in srgb, var(--color-error) 58%, var(--text-secondary));
+}
+
+.flight-details-page__purchase-note--success {
+  color: color-mix(in srgb, var(--color-success) 58%, var(--text-secondary));
+}
+
 .flight-details-page__content {
   display: grid;
   gap: 0.8rem;
@@ -242,6 +264,11 @@
   grid-column: 1 / -1;
   display: grid;
   gap: 0.72rem;
+}
+
+.flight-details-page__card--boarding-pass {
+  display: grid;
+  gap: 0.65rem;
 }
 
 .flight-details-page__card h3 {
@@ -446,6 +473,108 @@
 .flight-details-page__comment-submit:disabled {
   cursor: not-allowed;
   opacity: 0.68;
+}
+
+.flight-details-page__boarding-pass-form {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.flight-details-page__boarding-pass-field {
+  display: grid;
+  gap: 0.24rem;
+}
+
+.flight-details-page__boarding-pass-field span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-secondary);
+}
+
+.flight-details-page__boarding-pass-field select {
+  min-height: 2.2rem;
+  border-radius: 0.68rem;
+  border: 1px solid color-mix(in srgb, var(--border-default) 72%, transparent);
+  background: color-mix(in srgb, var(--auth-input-bg) 92%, transparent);
+  color: var(--text-primary);
+  padding: 0 0.58rem;
+  font-size: 0.84rem;
+  font-family: inherit;
+}
+
+.flight-details-page__boarding-pass-field select:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--color-primary) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
+}
+
+.flight-details-page__boarding-pass-price {
+  border: 1px solid color-mix(in srgb, var(--border-default) 66%, transparent);
+  border-radius: 0.74rem;
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--color-primary) 10%, var(--bg-surface)),
+    color-mix(in srgb, var(--color-success) 8%, var(--bg-elevated))
+  );
+  padding: 0.54rem 0.62rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+.flight-details-page__boarding-pass-price span {
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.flight-details-page__boarding-pass-price strong {
+  color: var(--text-primary);
+  font-size: 0.94rem;
+  font-family: var(--font-display);
+}
+
+.flight-details-page__boarding-pass-availability {
+  border: 1px solid color-mix(in srgb, var(--border-default) 62%, transparent);
+  border-radius: 0.74rem;
+  background: color-mix(in srgb, var(--bg-surface) 90%, transparent);
+  padding: 0.48rem 0.62rem;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.7rem;
+}
+
+.flight-details-page__boarding-pass-availability span {
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.flight-details-page__boarding-pass-availability strong {
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  font-family: var(--font-display);
+}
+
+.flight-details-page__boarding-pass-confirm {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  color: var(--text-secondary);
+  font-size: 0.79rem;
+  line-height: 1.35;
+}
+
+.flight-details-page__boarding-pass-confirm input {
+  margin-top: 0.1rem;
 }
 
 @media (max-width: 980px) {

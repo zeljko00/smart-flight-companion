@@ -27,6 +27,7 @@ public static class DependencyInjection
         services.AddScoped<IFlightRepository, FlightRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ICommentRepository, CommentRepository>();
+        services.AddScoped<IBoardingPassRepository, BoardingPassRepository>();
 
 
         services.Configure<SmtpOptions>(configuration.GetSection(SmtpOptions.SectionName));

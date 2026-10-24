@@ -11,6 +11,10 @@ import {
   fetchCommentsByFlight,
   type FlightComment,
 } from '../services/commentsService'
+import {
+  createBoardingPass,
+  type SeatType,
+} from '../services/boardingPassesService'
 import { fetchFlightById, type FlightDetails } from '../services/flightsService'
 import { AuthHeader } from '../components/AuthHeader'
 import { UserInfo } from '../components/UserInfo'
@@ -105,6 +109,11 @@ export function FlightDetailsPage() {
   const [newCommentContent, setNewCommentContent] = useState('')
   const [submitCommentErrorMessage, setSubmitCommentErrorMessage] = useState<string | null>(null)
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
+  const [selectedSeatType, setSelectedSeatType] = useState<SeatType>('economy')
+  const [isPurchaseConfirmed, setIsPurchaseConfirmed] = useState(false)
+  const [isPurchasingBoardingPass, setIsPurchasingBoardingPass] = useState(false)
+  const [purchaseSuccessMessage, setPurchaseSuccessMessage] = useState<string | null>(null)
+  const [purchaseErrorMessage, setPurchaseErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
     if (!flightId) {
@@ -239,6 +248,118 @@ export function FlightDetailsPage() {
       timeStyle: 'short',
     }).format(parsedDate)
   }
+
+  const formatPrice = (value: number) => {
+    return new Intl.NumberFormat(i18n.language, {
+      style: 'currency',
+      currency: 'EUR',
+      maximumFractionDigits: 2,
+    }).format(value)
+  }
+
+  const seatOffers: Array<{ seat: SeatType; label: string; price: number; priceLabel: string }> = flight
+    ? [
+        {
+          seat: 'economy',
+          label: t('flightDetails.boardingPass.seats.economy'),
+          price: flight.economyPriceValue,
+        },
+        {
+          seat: 'premiumEconomy',
+          label: t('flightDetails.boardingPass.seats.premiumEconomy'),
+          price: flight.premiumEconomyPriceValue,
+        },
+        {
+          seat: 'business',
+          label: t('flightDetails.boardingPass.seats.business'),
+          price: flight.businessPriceValue,
+        },
+        {
+          seat: 'firstClass',
+          label: t('flightDetails.boardingPass.seats.firstClass'),
+          price: flight.firstClassPriceValue,
+        },
+      ]
+        .filter((offer): offer is { seat: SeatType; label: string; price: number } =>
+          typeof offer.price === 'number' && Number.isFinite(offer.price) && offer.price > 0,
+        )
+        .map((offer) => ({
+          ...offer,
+          priceLabel: formatPrice(offer.price),
+        }))
+    : []
+
+  const activeSeatOffer = seatOffers.find((offer) => offer.seat === selectedSeatType) ?? seatOffers[0] ?? null
+  const seatsLeft = typeof flight?.seatsFree === 'number' ? Math.max(0, flight.seatsFree) : null
+  const seatCapacity = typeof flight?.seatCapacity === 'number' ? Math.max(0, flight.seatCapacity) : null
+  const seatsAvailabilityLabel =
+    seatsLeft === null || seatCapacity === null
+      ? 'TBD'
+      : `${seatsLeft}/${seatCapacity}`
+  const isSoldOut = seatsLeft === 0
+
+  const handleBuyBoardingPass = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    if (!flightId) {
+      return
+    }
+
+    if (seatOffers.length === 0) {
+      setPurchaseErrorMessage(t('flightDetails.boardingPass.unavailable'))
+      return
+    }
+
+    if (isSoldOut) {
+      setPurchaseErrorMessage(t('flightDetails.boardingPass.soldOut'))
+      return
+    }
+
+    if (!isPurchaseConfirmed) {
+      setPurchaseErrorMessage(t('flightDetails.boardingPass.confirmRequired'))
+      return
+    }
+
+    const seatToBuy = activeSeatOffer?.seat ?? selectedSeatType
+    setIsPurchasingBoardingPass(true)
+    setPurchaseErrorMessage(null)
+    setPurchaseSuccessMessage(null)
+
+    try {
+      const boardingPass = await createBoardingPass(flightId, seatToBuy)
+
+      try {
+        const refreshedFlight = await fetchFlightById(flightId)
+        setFlight(refreshedFlight)
+      } catch {
+        // Purchase succeeded; keep success flow even if refresh fails.
+      }
+
+      const seatLabel = t(`flightDetails.boardingPass.seats.${boardingPass.seat}`)
+      const priceLabel =
+        typeof boardingPass.price === 'number'
+          ? formatPrice(boardingPass.price)
+          : activeSeatOffer?.priceLabel ?? t('home.columns.noPrice')
+
+      setPurchaseSuccessMessage(
+        t('flightDetails.boardingPass.purchaseSuccess', {
+          seat: seatLabel,
+          price: priceLabel,
+        }),
+      )
+      setIsPurchaseConfirmed(false)
+    } catch {
+      setPurchaseErrorMessage(t('flightDetails.boardingPass.purchaseError'))
+    } finally {
+      setIsPurchasingBoardingPass(false)
+    }
+  }
+
+  useEffect(() => {
+    if (!seatOffers.some((offer) => offer.seat === selectedSeatType) && seatOffers.length > 0) {
+      setSelectedSeatType(seatOffers[0].seat)
+    }
+  }, [seatOffers, selectedSeatType])
 
   const departureLatitude = flight?.departureAirport.latitude ?? null
   const departureLongitude = flight?.departureAirport.longitude ?? null
@@ -417,6 +538,88 @@ export function FlightDetailsPage() {
                   </dl>
                 </article>
 
+                <article className="flight-details-page__card flight-details-page__card--boarding-pass">
+                  <h3>{t('flightDetails.sections.boardingPass')}</h3>
+
+                  {seatOffers.length === 0 ? (
+                    <p className="flight-details-page__map-fallback">{t('flightDetails.boardingPass.unavailable')}</p>
+                  ) : (
+                    <form className="flight-details-page__boarding-pass-form" onSubmit={handleBuyBoardingPass}>
+                      <label className="flight-details-page__boarding-pass-field">
+                        <span>{t('flightDetails.boardingPass.seatType')}</span>
+                        <select
+                          value={selectedSeatType}
+                          onChange={(event) => {
+                            setSelectedSeatType(event.target.value as SeatType)
+                            setIsPurchaseConfirmed(false)
+                            setPurchaseErrorMessage(null)
+                            setPurchaseSuccessMessage(null)
+                          }}
+                          disabled={isPurchasingBoardingPass || seatOffers.length === 0}
+                        >
+                          {seatOffers.map((offer) => (
+                            <option key={offer.seat} value={offer.seat}>
+                              {offer.label} - {offer.priceLabel}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <div className="flight-details-page__boarding-pass-price">
+                        <span>{t('flightDetails.boardingPass.price')}</span>
+                        <strong>{activeSeatOffer?.priceLabel ?? t('home.columns.noPrice')}</strong>
+                      </div>
+
+                      <div className="flight-details-page__boarding-pass-availability">
+                        <span>{t('flightDetails.boardingPass.seatsLeft')}</span>
+                        <strong>{seatsAvailabilityLabel}</strong>
+                      </div>
+
+                      {isSoldOut ? (
+                        <p className="flight-details-page__purchase-note flight-details-page__purchase-note--error" role="status">
+                          {t('flightDetails.boardingPass.soldOut')}
+                        </p>
+                      ) : null}
+
+                      <label className="flight-details-page__boarding-pass-confirm">
+                        <input
+                          type="checkbox"
+                          checked={isPurchaseConfirmed}
+                          onChange={(event) => {
+                            setIsPurchaseConfirmed(event.target.checked)
+                            if (purchaseErrorMessage) {
+                              setPurchaseErrorMessage(null)
+                            }
+                          }}
+                          disabled={isPurchasingBoardingPass || seatOffers.length === 0}
+                        />
+                        <span>{t('flightDetails.boardingPass.confirmLabel')}</span>
+                      </label>
+
+                      {purchaseErrorMessage ? (
+                        <p className="flight-details-page__purchase-note flight-details-page__purchase-note--error" role="alert">
+                          {purchaseErrorMessage}
+                        </p>
+                      ) : null}
+
+                      {purchaseSuccessMessage ? (
+                        <p className="flight-details-page__purchase-note flight-details-page__purchase-note--success" role="status">
+                          {purchaseSuccessMessage}
+                        </p>
+                      ) : null}
+
+                      <button
+                        type="submit"
+                        className="flight-details-page__comment-submit"
+                        disabled={isPurchasingBoardingPass || seatOffers.length === 0 || !isPurchaseConfirmed || isSoldOut}
+                      >
+                        {isPurchasingBoardingPass
+                          ? t('flightDetails.boardingPass.purchasing')
+                          : t('flightDetails.boardingPass.purchase')}
+                      </button>
+                    </form>
+                  )}
+                </article>
                 <article className="flight-details-page__card flight-details-page__card--comments">
                   <div className="flight-details-page__comments-header">
                     <h3>{t('flightDetails.sections.comments')}</h3>
