@@ -10,10 +10,12 @@ namespace SmartFlightCompanion.WebServices.Api.Controllers;
 public sealed class FlightsController : ControllerBase
 {
     private readonly IFlightService _flightService;
+    private readonly ICommentService _commentService;
 
-    public FlightsController(IFlightService flightService)
+    public FlightsController(IFlightService flightService, ICommentService commentService)
     {
         _flightService = flightService;
+        _commentService = commentService;
     }
 
     [HttpGet]
@@ -52,6 +54,22 @@ public sealed class FlightsController : ControllerBase
         var flights = await _flightService.Search(request.FlightNumber, request.Departure, request.Destination, request.Status, request.Airline, request.MaxPrice, request.DepartureTime, cancellationToken);
 
         return Ok(flights);
+    }
+
+    [HttpGet("{flightId:guid}/comments")]
+    [ProducesResponseType(typeof(IReadOnlyList<CommentDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<IReadOnlyList<CommentDto>>> GetCommentsByFlight(
+        [FromRoute] Guid flightId,
+        CancellationToken cancellationToken)
+    {
+        if (flightId == Guid.Empty)
+        {
+            return BadRequest("Invalid flight ID.");
+        }
+
+        var comments = await _commentService.GetByFlightId(flightId, cancellationToken);
+        return Ok(comments);
     }
 }
 

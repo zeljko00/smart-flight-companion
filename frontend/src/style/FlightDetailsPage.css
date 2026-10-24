@@ -238,6 +238,12 @@
   grid-column: 1 / -1;
 }
 
+.flight-details-page__card--comments {
+  grid-column: 1 / -1;
+  display: grid;
+  gap: 0.72rem;
+}
+
 .flight-details-page__card h3 {
   margin: 0 0 0.65rem;
   font-size: 0.93rem;
@@ -290,6 +296,156 @@
   border-radius: 0.72rem;
   color: var(--text-secondary);
   background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+}
+
+.flight-details-page__comments-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.52rem;
+}
+
+.flight-details-page__comments-header h3 {
+  margin-bottom: 0;
+}
+
+.flight-details-page__comments-header span {
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.flight-details-page__comments-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.52rem;
+  max-height: min(38vh, 20rem);
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+.flight-details-page__comment-item {
+  border: 1px solid color-mix(in srgb, var(--border-default) 72%, transparent);
+  border-radius: 0.86rem;
+  padding: 0.58rem 0.68rem;
+  max-width: min(42rem, 96%);
+  box-shadow: var(--shadow-soft);
+}
+
+.flight-details-page__comment-item--other {
+  justify-self: start;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--bg-surface) 96%, transparent),
+    color-mix(in srgb, var(--bg-elevated) 92%, transparent)
+  );
+}
+
+.flight-details-page__comment-item--self {
+  justify-self: end;
+  border-color: color-mix(in srgb, var(--color-primary) 32%, transparent);
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--color-primary) 17%, var(--bg-surface)),
+    color-mix(in srgb, var(--color-primary) 10%, var(--bg-elevated))
+  );
+}
+
+.flight-details-page__comment-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.3rem 0.6rem;
+  margin-bottom: 0.36rem;
+}
+
+.flight-details-page__comment-meta strong {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.flight-details-page__comment-meta time {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.flight-details-page__comment-item p {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.84rem;
+  line-height: 1.42;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.flight-details-page__comment-form {
+  display: grid;
+  gap: 0.46rem;
+  padding-top: 0.32rem;
+  border-top: 1px solid color-mix(in srgb, var(--border-default) 56%, transparent);
+}
+
+.flight-details-page__comment-input-wrap {
+  display: grid;
+  gap: 0.24rem;
+}
+
+.flight-details-page__comment-input-wrap span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-secondary);
+}
+
+.flight-details-page__comment-input-wrap textarea {
+  width: 100%;
+  min-height: 5.8rem;
+  border-radius: 0.68rem;
+  border: 1px solid color-mix(in srgb, var(--border-default) 72%, transparent);
+  background: color-mix(in srgb, var(--auth-input-bg) 92%, transparent);
+  color: var(--text-primary);
+  padding: 0.6rem 0.62rem;
+  font-size: 0.84rem;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.flight-details-page__comment-input-wrap textarea:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--color-primary) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
+}
+
+.flight-details-page__comment-input-wrap textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.76;
+}
+
+.flight-details-page__comment-submit {
+  min-height: 2.08rem;
+  width: fit-content;
+  border-radius: 0.7rem;
+  border: 1px solid transparent;
+  padding: 0 0.86rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.flight-details-page__comment-submit:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.flight-details-page__comment-submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
 }
 
 @media (max-width: 980px) {

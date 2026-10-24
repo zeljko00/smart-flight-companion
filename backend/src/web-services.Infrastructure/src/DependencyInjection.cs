@@ -26,6 +26,8 @@ public static class DependencyInjection
         services.AddScoped<IAirportRepository, AirportRepository>();
         services.AddScoped<IFlightRepository, FlightRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<ICommentRepository, CommentRepository>();
+
 
         services.Configure<SmtpOptions>(configuration.GetSection(SmtpOptions.SectionName));
         services.AddSingleton<InMemoryEmailQueue>();

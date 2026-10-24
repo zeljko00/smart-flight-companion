@@ -15,6 +15,11 @@ public sealed class AirportRepository : Repository<Airport>, IAirportRepository
     {
         var normalizedQuery = Normalize(query);
 
+        if(normalizedQuery is null)
+        {
+            return Array.Empty<Airport>();
+        }
+
         return await Context.Airports
             .AsNoTracking()
             .Where(airport =>

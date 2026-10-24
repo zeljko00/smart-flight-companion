@@ -29,6 +29,11 @@ public sealed class UserService : IUserService
 
     public async Task<UserDto?> Login(UserLoginRequestDto request, CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrEmpty(request.Password))
+        {
+            return null;
+        }
+
         var user = await _userRepository.GetByUsernameAsync(request.Username, cancellationToken);
         if (user is null || user.PasswordHash != Hash(request.Password))
         {
@@ -40,6 +45,11 @@ public sealed class UserService : IUserService
 
     public async Task<UserDto?> Register(UserRegisterRequestDto request, CancellationToken cancellationToken = default)
     {
+        if (string.IsNullOrEmpty(request.Password))
+        {
+            return null;
+        }
+
         if (await _userRepository.ExistsByUsernameAsync(request.Username, cancellationToken))
         {
             return null;
