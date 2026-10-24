@@ -14,8 +14,7 @@ public class BoardingPass
     public required Seat Seat { get; set; }
     [Required]
     public required decimal Price { get; set; }
-    [Required]
-    public required DateTimeOffset IssuedAt { get; set; }
+    public DateTimeOffset IssuedAt { get; private init; } = DateTimeOffset.UtcNow;
     [Required]
     public required bool IsValid { get; set; } = true;
 }

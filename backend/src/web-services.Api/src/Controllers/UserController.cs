@@ -11,11 +11,13 @@ namespace SmartFlightCompanion.WebServices.Api.Controllers;
 public sealed class UserController : ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly IBoardingPassService _boardingPassService;
     private readonly IEmailQueue _emailQueue;
 
-    public UserController(IUserService userService, IEmailQueue emailQueue)
+    public UserController(IUserService userService, IBoardingPassService boardingPassService, IEmailQueue emailQueue)
     {
         _userService = userService;
+        _boardingPassService = boardingPassService;
         _emailQueue = emailQueue;
     }
 
@@ -153,5 +155,21 @@ public sealed class UserController : ControllerBase
             return NotFound();
         }
         return Ok();
+    }
+
+    [HttpGet("{id}/boarding-passes")]
+    [ProducesResponseType(typeof(IReadOnlyList<BoardingPassDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<IReadOnlyList<BoardingPassDto>>> GetBoardingPassesByUser(
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
+    {
+        if (id == Guid.Empty)
+        {
+            return BadRequest("Invalid user ID.");
+        }
+
+        var boardingPasses = await _boardingPassService.GetByOwnerId(id, cancellationToken);
+        return Ok(boardingPasses);
     }
 }

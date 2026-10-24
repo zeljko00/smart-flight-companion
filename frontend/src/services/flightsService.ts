@@ -83,6 +83,10 @@ export type FlightDetails = {
   scheduledArrivalLabel: string
   departureLabel: string
   arrivalLabel: string
+  economyPriceValue: number | null
+  premiumEconomyPriceValue: number | null
+  businessPriceValue: number | null
+  firstClassPriceValue: number | null
   economyPriceLabel: string
   premiumEconomyPriceLabel: string
   businessPriceLabel: string
@@ -314,6 +318,22 @@ export async function fetchFlightById(id: string): Promise<FlightDetails> {
     scheduledArrivalLabel: scheduledArrivalAt ? formatDeparture(scheduledArrivalAt) : 'TBD',
     departureLabel: departureAt ? formatDeparture(departureAt) : 'TBD',
     arrivalLabel: arrivalAt ? formatDeparture(arrivalAt) : 'TBD',
+    economyPriceValue:
+      typeof flight.economyPrice === 'number' && Number.isFinite(flight.economyPrice) && flight.economyPrice >= 0
+        ? flight.economyPrice
+        : null,
+    premiumEconomyPriceValue:
+      typeof flight.premiumEconomyPrice === 'number' && Number.isFinite(flight.premiumEconomyPrice) && flight.premiumEconomyPrice >= 0
+        ? flight.premiumEconomyPrice
+        : null,
+    businessPriceValue:
+      typeof flight.businessPrice === 'number' && Number.isFinite(flight.businessPrice) && flight.businessPrice >= 0
+        ? flight.businessPrice
+        : null,
+    firstClassPriceValue:
+      typeof flight.firstClassPrice === 'number' && Number.isFinite(flight.firstClassPrice) && flight.firstClassPrice >= 0
+        ? flight.firstClassPrice
+        : null,
     durationLabel: departureAt && arrivalAt
       ? formatDuration(departureAt, arrivalAt)
       : 'TBD',

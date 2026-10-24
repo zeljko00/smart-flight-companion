@@ -11,11 +11,13 @@ public sealed class FlightsController : ControllerBase
 {
     private readonly IFlightService _flightService;
     private readonly ICommentService _commentService;
+    private readonly IBoardingPassService _boardingPassService;
 
-    public FlightsController(IFlightService flightService, ICommentService commentService)
+    public FlightsController(IFlightService flightService, ICommentService commentService, IBoardingPassService boardingPassService)
     {
         _flightService = flightService;
         _commentService = commentService;
+        _boardingPassService = boardingPassService;
     }
 
     [HttpGet]
@@ -65,11 +67,35 @@ public sealed class FlightsController : ControllerBase
     {
         if (flightId == Guid.Empty)
         {
-            return BadRequest("Invalid flight ID.");
+            return BadRequest("Failed to buy boarding pass.");
         }
 
         var comments = await _commentService.GetByFlightId(flightId, cancellationToken);
         return Ok(comments);
+    }
+
+    [HttpPost("{flightId:guid}/boarding-passes")]
+    [ProducesResponseType(typeof(BoardingPassDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<BoardingPassDto>> CreateBoardingPass(
+        [FromRoute] Guid flightId,
+        [FromBody] BoardingPassRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        if (flightId == Guid.Empty)
+        {
+            return BadRequest("Failed to create boarding pass.");
+        }
+
+        Guid ownerId = Guid.Parse("cf5804db-9f79-4072-91c2-6a555c5e7d50"); // TODO: take ID from session
+        var boardingPass = await _boardingPassService.Create(flightId, ownerId, request.Seat, cancellationToken);
+
+        if (boardingPass is null)
+        {
+            return BadRequest("Failed to create boarding pass.");
+        }
+
+        return Created(string.Empty, boardingPass);
     }
 }
 
