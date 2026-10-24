@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { ArrowLeft } from 'lucide-react'
 import type { LatLngTuple } from 'leaflet'
 import { MapContainer, Marker, Polyline, Popup, TileLayer } from 'react-leaflet'
@@ -6,6 +6,11 @@ import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ApiError } from '../services/apiClient'
 import type { UserDto } from '../services/authService'
+import {
+  createComment,
+  fetchCommentsByFlight,
+  type FlightComment,
+} from '../services/commentsService'
 import { fetchFlightById, type FlightDetails } from '../services/flightsService'
 import { AuthHeader } from '../components/AuthHeader'
 import { UserInfo } from '../components/UserInfo'
@@ -83,7 +88,7 @@ function buildRouteArc(start: LatLngTuple, end: LatLngTuple): LatLngTuple[] {
 }
 
 export function FlightDetailsPage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const { flightId } = useParams<{ flightId: string }>()
@@ -94,6 +99,12 @@ export function FlightDetailsPage() {
   const [flight, setFlight] = useState<FlightDetails | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [comments, setComments] = useState<FlightComment[]>([])
+  const [isCommentsLoading, setIsCommentsLoading] = useState(false)
+  const [commentsErrorMessage, setCommentsErrorMessage] = useState<string | null>(null)
+  const [newCommentContent, setNewCommentContent] = useState('')
+  const [submitCommentErrorMessage, setSubmitCommentErrorMessage] = useState<string | null>(null)
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false)
 
   useEffect(() => {
     if (!flightId) {
@@ -135,6 +146,41 @@ export function FlightDetailsPage() {
     }
   }, [flightId, t])
 
+  useEffect(() => {
+    if (!flightId) {
+      setComments([])
+      setCommentsErrorMessage(null)
+      setIsCommentsLoading(false)
+      return
+    }
+
+    let isDisposed = false
+
+    void (async () => {
+      setIsCommentsLoading(true)
+      setCommentsErrorMessage(null)
+
+      try {
+        const result = await fetchCommentsByFlight(flightId)
+        if (!isDisposed) {
+          setComments(result)
+        }
+      } catch {
+        if (!isDisposed) {
+          setCommentsErrorMessage(t('flightDetails.comments.loadError'))
+        }
+      } finally {
+        if (!isDisposed) {
+          setIsCommentsLoading(false)
+        }
+      }
+    })()
+
+    return () => {
+      isDisposed = true
+    }
+  }, [flightId, t])
+
   const handleBack = () => {
     navigate('/home', {
       state: {
@@ -146,6 +192,52 @@ export function FlightDetailsPage() {
 
   const handleLogout = () => {
     navigate('/', { replace: true })
+  }
+
+  const handleCommentSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+
+    if (!flightId) {
+      return
+    }
+
+    const normalizedContent = newCommentContent.trim()
+    if (!normalizedContent) {
+      setSubmitCommentErrorMessage(t('flightDetails.comments.validationRequired'))
+      return
+    }
+
+    setIsSubmittingComment(true)
+    setSubmitCommentErrorMessage(null)
+
+    try {
+      const createdComment = await createComment({
+        flightId,
+        content: normalizedContent,
+      })
+
+      setComments((previousComments) => [...previousComments, createdComment])
+      setNewCommentContent('')
+    } catch {
+      setSubmitCommentErrorMessage(t('flightDetails.comments.submitError'))
+    } finally {
+      setIsSubmittingComment(false)
+    }
+  }
+
+  const currentUserFullName = user ? `${user.firstName} ${user.lastName}`.trim().toLowerCase() : null
+
+  const formatCommentDate = (value: string) => {
+    const parsedDate = new Date(value)
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return t('flightDetails.comments.justNow')
+    }
+
+    return new Intl.DateTimeFormat(i18n.language, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(parsedDate)
   }
 
   const departureLatitude = flight?.departureAirport.latitude ?? null
@@ -323,6 +415,90 @@ export function FlightDetailsPage() {
                     />
                     <DetailField label={t('flightDetails.fields.arrivalAirportAddress')} value={flight.arrivalAirport.address} />
                   </dl>
+                </article>
+
+                <article className="flight-details-page__card flight-details-page__card--comments">
+                  <div className="flight-details-page__comments-header">
+                    <h3>{t('flightDetails.sections.comments')}</h3>
+                    <span>{t('flightDetails.comments.count', { count: comments.length })}</span>
+                  </div>
+
+                  {isCommentsLoading ? (
+                    <p className="flight-details-page__status">{t('flightDetails.comments.loading')}</p>
+                  ) : null}
+
+                  {!isCommentsLoading && commentsErrorMessage ? (
+                    <p className="flight-details-page__status flight-details-page__status--error" role="alert">
+                      {commentsErrorMessage}
+                    </p>
+                  ) : null}
+
+                  {!isCommentsLoading && !commentsErrorMessage && comments.length === 0 ? (
+                    <p className="flight-details-page__map-fallback">{t('flightDetails.comments.empty')}</p>
+                  ) : null}
+
+                  {!isCommentsLoading && !commentsErrorMessage && comments.length > 0 ? (
+                    <ol className="flight-details-page__comments-list" aria-label={t('flightDetails.comments.listAria')}>
+                      {comments.map((comment) => {
+                        const normalizedAuthor = comment.author.trim().toLowerCase()
+                        const isOwnComment =
+                          Boolean(currentUserFullName) &&
+                          (normalizedAuthor === currentUserFullName || comment.authorId === user?.id)
+
+                        return (
+                          <li
+                            key={comment.id}
+                            className={`flight-details-page__comment-item ${
+                              isOwnComment
+                                ? 'flight-details-page__comment-item--self'
+                                : 'flight-details-page__comment-item--other'
+                            }`}
+                          >
+                            <div className="flight-details-page__comment-meta">
+                              <strong>{comment.author}</strong>
+                              <time dateTime={comment.createdAt}>{formatCommentDate(comment.createdAt)}</time>
+                            </div>
+                            <p>{comment.content}</p>
+                          </li>
+                        )
+                      })}
+                    </ol>
+                  ) : null}
+
+                  <form className="flight-details-page__comment-form" onSubmit={handleCommentSubmit}>
+                    <label className="flight-details-page__comment-input-wrap">
+                      <span>{t('flightDetails.comments.inputLabel')}</span>
+                      <textarea
+                        value={newCommentContent}
+                        onChange={(event) => {
+                          setNewCommentContent(event.target.value)
+                          if (submitCommentErrorMessage) {
+                            setSubmitCommentErrorMessage(null)
+                          }
+                        }}
+                        placeholder={t('flightDetails.comments.inputPlaceholder')}
+                        rows={3}
+                        maxLength={500}
+                        disabled={isSubmittingComment}
+                      />
+                    </label>
+
+                    {submitCommentErrorMessage ? (
+                      <p className="flight-details-page__status flight-details-page__status--error" role="alert">
+                        {submitCommentErrorMessage}
+                      </p>
+                    ) : null}
+
+                    <button
+                      type="submit"
+                      className="flight-details-page__comment-submit"
+                      disabled={isSubmittingComment}
+                    >
+                      {isSubmittingComment
+                        ? t('flightDetails.comments.submitting')
+                        : t('flightDetails.comments.submit')}
+                    </button>
+                  </form>
                 </article>
               </section>
             </div>

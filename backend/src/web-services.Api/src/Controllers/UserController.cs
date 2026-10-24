@@ -136,10 +136,17 @@ public sealed class UserController : ControllerBase
     [HttpPut("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+
     public async Task<ActionResult> Block(
         [FromRoute] Guid id,
         CancellationToken cancellationToken)
     {
+        if (id == Guid.Empty)
+        {
+            return BadRequest("Invalid user ID.");
+        }
+        
         var updated = await _userService.Block(id, cancellationToken);
         if (!updated)
         {

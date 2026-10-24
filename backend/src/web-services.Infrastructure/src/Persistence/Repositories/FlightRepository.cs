@@ -14,7 +14,6 @@ public sealed class FlightRepository : Repository<Flight>, IFlightRepository
     public override async Task<Flight?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
     {
         return await Context.Flights
-            .AsNoTracking()
             .Include(flight => flight.DepartureAirport)
             .Include(flight => flight.ArrivalAirport)
             .FirstOrDefaultAsync(flight => flight.Id == id, cancellationToken);
