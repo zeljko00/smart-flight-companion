@@ -144,7 +144,9 @@ export function LoginForm() {
         password,
       })
 
-      if (user.role.toLowerCase() === 'admin' && user.isActive) {
+      const normalizedRole = user.role.toLowerCase()
+
+      if (normalizedRole === 'admin' && user.isActive) {
         navigate('/admin/console', {
           replace: true,
           state: {
@@ -153,14 +155,23 @@ export function LoginForm() {
         })
         return
       }
-      if(user.role.toLowerCase() === 'user' && user.isActive) {
+
+      if (normalizedRole === 'user' && user.isActive) {
         navigate('/home', {
           replace: true,
           state: {
             user,
           },
         })
+        return
       }
+
+      if (normalizedRole === 'guest' && user.isActive) {
+        setSuccessMessage(t('login.guestPendingApproval'))
+        return
+      }
+
+      setErrorMessage(t('login.failure'))
     } catch (error) {
       const fallbackMessage = t('login.failure')
 
