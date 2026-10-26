@@ -172,4 +172,26 @@ public sealed class UserController : ControllerBase
         var boardingPasses = await _boardingPassService.GetByOwnerId(id, cancellationToken);
         return Ok(boardingPasses);
     }
+
+    [HttpGet("me/boarding-passes/{id:guid}/pdf")]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> GetBoardingPassPdfById(
+        [FromRoute] Guid id,
+        CancellationToken cancellationToken)
+    {
+        if (id == Guid.Empty)
+        {
+            return BadRequest("Invalid boarding pass ID.");
+        }
+
+        var pdfBytes = await _boardingPassService.GetPdfById(id, cancellationToken);
+        if (pdfBytes is null)
+        {
+            return NotFound();
+        }
+
+        return File(pdfBytes, "application/pdf", $"boarding-pass-{id}.pdf");
+    }
 }

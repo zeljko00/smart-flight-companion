@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Mail;
 using System.Text;
+using System.IO;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -78,6 +79,16 @@ public sealed class MailWorker : BackgroundService
             IsBodyHtml = false
         };
         message.To.Add(queuedEmail.ToAddress);
+
+        if (queuedEmail.Attachments is not null)
+        {
+            foreach (var queuedAttachment in queuedEmail.Attachments)
+            {
+                var attachmentStream = new MemoryStream(queuedAttachment.Content, writable: false);
+                var attachment = new Attachment(attachmentStream, queuedAttachment.FileName, queuedAttachment.ContentType);
+                message.Attachments.Add(attachment);
+            }
+        }
 
         using var client = new SmtpClient(_smtpOptions.Host, _smtpOptions.Port)
         {
