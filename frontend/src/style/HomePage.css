@@ -338,6 +338,23 @@
   font-weight: 700;
 }
 
+.home-page__boarding-pass-section {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.35rem;
+}
+
+.home-page__boarding-pass-header h3 {
+  margin: 0;
+  font-size: 0.98rem;
+  font-family: var(--font-display);
+  color: var(--text-primary);
+}
+
+.home-page__table--boarding-passes {
+  min-width: 980px;
+}
+
 @media (max-width: 900px) {
   .home-page {
     align-items: center;

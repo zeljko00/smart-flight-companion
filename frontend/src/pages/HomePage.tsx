@@ -10,6 +10,10 @@ import {
   type FlightSearchFilters,
   type FlightTableRow,
 } from '../services/flightsService'
+import {
+  fetchBoardingPassesByUserId,
+  type UserBoardingPass,
+} from '../services/boardingPassesService'
 import '../style/HomePage.css'
 
 type HomeLocationState = {
@@ -53,7 +57,7 @@ function parseLocalDateInput(value: string): Date | undefined {
 }
 
 export function HomePage() {
-  const { t } = useTranslation()
+  const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
   const locationState = (location.state as HomeLocationState | null) ?? null
@@ -73,6 +77,9 @@ export function HomePage() {
   const [minDepartureTime, setMinDepartureTime] = useState(initialDepartureFilter)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [boardingPasses, setBoardingPasses] = useState<UserBoardingPass[]>([])
+  const [isBoardingPassesLoading, setIsBoardingPassesLoading] = useState(false)
+  const [boardingPassesErrorMessage, setBoardingPassesErrorMessage] = useState<string | null>(null)
 
   const loadFlights = useCallback(
     async (filters: FlightSearchFilters = {}) => {
@@ -154,6 +161,41 @@ export function HomePage() {
     }
   }, [initialDepartureFilter, preservedFilters, t])
 
+  useEffect(() => {
+    if (!user?.id) {
+      setBoardingPasses([])
+      setIsBoardingPassesLoading(false)
+      setBoardingPassesErrorMessage(null)
+      return
+    }
+
+    let isDisposed = false
+
+    void (async () => {
+      setIsBoardingPassesLoading(true)
+      setBoardingPassesErrorMessage(null)
+
+      try {
+        const result = await fetchBoardingPassesByUserId(user.id)
+        if (!isDisposed) {
+          setBoardingPasses(result)
+        }
+      } catch {
+        if (!isDisposed) {
+          setBoardingPassesErrorMessage(t('home.boardingPasses.loadError'))
+        }
+      } finally {
+        if (!isDisposed) {
+          setIsBoardingPassesLoading(false)
+        }
+      }
+    })()
+
+    return () => {
+      isDisposed = true
+    }
+  }, [t, user?.id])
+
   const handleLogout = () => {
     navigate('/', { replace: true })
   }
@@ -205,6 +247,31 @@ export function HomePage() {
     setMaxPriceFilter('')
     setStatusFilter('')
     await loadFlights({ departureTime: parseLocalDateInput(nowValue) })
+  }
+
+  const formatDateTime = (value: string) => {
+    const parsedDate = new Date(value)
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return 'TBD'
+    }
+
+    return new Intl.DateTimeFormat(i18n.language, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(parsedDate)
+  }
+
+  const formatPrice = (value: number | null) => {
+    if (typeof value !== 'number' || !Number.isFinite(value) || value < 0) {
+      return t('home.columns.noPrice')
+    }
+
+    return new Intl.NumberFormat(i18n.language, {
+      style: 'currency',
+      currency: 'EUR',
+      maximumFractionDigits: 2,
+    }).format(value)
   }
 
   return (
@@ -346,8 +413,7 @@ export function HomePage() {
                   <tr>
                     <th>{t('home.columns.flight')}</th>
                     <th>{t('home.columns.airline')}</th>
-                    <th>{t('home.columns.from')}</th>
-                    <th>{t('home.columns.to')}</th>
+                    <th>{t('home.columns.route')}</th>
                     <th>{t('home.columns.departure')}</th>
                     <th>{t('home.columns.lowestPrice')}</th>
                     <th>{t('home.columns.status')}</th>
@@ -371,8 +437,7 @@ export function HomePage() {
                     >
                       <td>{flight.flightNumber}</td>
                       <td>{flight.airline}</td>
-                      <td>{flight.fromLabel}</td>
-                      <td>{flight.toLabel}</td>
+                      <td>{flight.fromLabel} &rarr; {flight.toLabel}</td>
                       <td>{flight.departureLabel}</td>
                       <td>{flight.lowestPriceLabel === 'N/A' ? t('home.columns.noPrice') : flight.lowestPriceLabel}</td>
                       <td>
@@ -384,6 +449,65 @@ export function HomePage() {
               </table>
             </section>
           ) : null}
+
+          <section className="home-page__boarding-pass-section" aria-label={t('home.boardingPasses.tableAria')}>
+            <div className="home-page__boarding-pass-header">
+              <h3>{t('home.boardingPasses.title')}</h3>
+            </div>
+
+            {isBoardingPassesLoading ? (
+              <p className="home-page__status">{t('home.boardingPasses.loading')}</p>
+            ) : null}
+
+            {!isBoardingPassesLoading && boardingPassesErrorMessage ? (
+              <p className="home-page__status home-page__status--error" role="alert">
+                {boardingPassesErrorMessage}
+              </p>
+            ) : null}
+
+            {!isBoardingPassesLoading && !boardingPassesErrorMessage && boardingPasses.length === 0 ? (
+              <p className="home-page__status">{t('home.boardingPasses.empty')}</p>
+            ) : null}
+
+            {!isBoardingPassesLoading && !boardingPassesErrorMessage && boardingPasses.length > 0 ? (
+              <div className="home-page__table-wrap" aria-label={t('home.boardingPasses.tableAria')}>
+                <table className="home-page__table home-page__table--boarding-passes">
+                  <thead>
+                    <tr>
+                      <th>{t('home.boardingPasses.columns.flight')}</th>
+                      <th>{t('home.boardingPasses.columns.airline')}</th>
+                      <th>{t('home.boardingPasses.columns.route')}</th>
+                      <th>{t('home.boardingPasses.columns.departure')}</th>
+                      <th>{t('home.boardingPasses.columns.seat')}</th>
+                      <th>{t('home.boardingPasses.columns.price')}</th>
+                      <th>{t('home.boardingPasses.columns.issuedAt')}</th>
+                      <th>{t('home.boardingPasses.columns.validity')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {boardingPasses.map((boardingPass) => (
+                      <tr key={boardingPass.id}>
+                        <td>{boardingPass.flightNumber}</td>
+                        <td>{boardingPass.airline}</td>
+                        <td>{boardingPass.routeStart} &rarr; {boardingPass.routeDest}</td>
+                        <td>{formatDateTime(boardingPass.departureAt)}</td>
+                        <td>{t(`flightDetails.boardingPass.seats.${boardingPass.seat}`)}</td>
+                        <td>{formatPrice(boardingPass.price)}</td>
+                        <td>{formatDateTime(boardingPass.issuedAt)}</td>
+                        <td>
+                          <span className="home-page__status-pill">
+                            {boardingPass.isValid
+                              ? t('home.boardingPasses.valid')
+                              : t('home.boardingPasses.invalid')}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
+          </section>
         </article>
       </section>
     </main>

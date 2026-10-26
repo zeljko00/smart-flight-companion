@@ -7,8 +7,15 @@ type ApiBoardingPass = {
   seat?: number | string
   price?: number
   flightId?: string
+  flightNumber?: string
+  flightAirline?: string
+  flightDepartureAirport?: string
+  flightArrivalAirport?: string
+  flightDepartureTime?: string
+  flightArrivalTime?: string
   userId?: string
   issuedAt?: string
+  isValid?: boolean
 }
 
 export type BoardingPassPurchaseResult = {
@@ -18,6 +25,20 @@ export type BoardingPassPurchaseResult = {
   flightId: string
   userId: string
   issuedAt: string
+}
+
+export type UserBoardingPass = {
+  id: string
+  flightNumber: string
+  airline: string
+  routeStart: string
+  routeDest: string
+  departureAt: string
+  arrivalAt: string
+  seat: SeatType
+  price: number | null
+  issuedAt: string
+  isValid: boolean
 }
 
 const seatToApiValue: Record<SeatType, number> = {
@@ -86,4 +107,50 @@ export async function createBoardingPass(
     userId: boardingPass.userId ?? '',
     issuedAt: boardingPass.issuedAt ?? new Date().toISOString(),
   }
+}
+
+function toUserBoardingPass(boardingPass: ApiBoardingPass): UserBoardingPass {
+  const departureIata = boardingPass.flightDepartureAirport?.trim() || 'TBD'
+  const arrivalIata = boardingPass.flightArrivalAirport?.trim() || 'TBD'
+
+  return {
+    id: boardingPass.id,
+    flightNumber: boardingPass.flightNumber?.trim() || 'Unknown #',
+    airline: boardingPass.flightAirline?.trim() || 'Unknown airline',
+    routeStart: `${departureIata}`,
+    routeDest:  `${arrivalIata}`,
+    departureAt: boardingPass.flightDepartureTime ?? '',
+    arrivalAt: boardingPass.flightArrivalTime ?? '',
+    seat: normalizeSeat(boardingPass.seat),
+    price: typeof boardingPass.price === 'number' && Number.isFinite(boardingPass.price)
+      ? boardingPass.price
+      : null,
+    issuedAt: boardingPass.issuedAt ?? '',
+    isValid: boardingPass.isValid !== false,
+  }
+}
+
+export async function fetchBoardingPassesByUserId(userId: string): Promise<UserBoardingPass[]> {
+  const boardingPasses = await apiRequest<ApiBoardingPass[]>(`/users/${encodeURIComponent(userId)}/boarding-passes`)
+
+  return boardingPasses
+    .map(toUserBoardingPass)
+    .sort((first, second) => {
+      const left = new Date(second.issuedAt).getTime()
+      const right = new Date(first.issuedAt).getTime()
+
+      if (Number.isNaN(left) && Number.isNaN(right)) {
+        return 0
+      }
+
+      if (Number.isNaN(left)) {
+        return 1
+      }
+
+      if (Number.isNaN(right)) {
+        return -1
+      }
+
+      return left - right
+    })
 }
