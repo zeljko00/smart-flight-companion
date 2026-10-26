@@ -325,6 +325,30 @@
   border-bottom: 0;
 }
 
+.home-page__inline-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  min-height: 1.9rem;
+  border-radius: 0.62rem;
+  border: 1px solid color-mix(in srgb, var(--border-default) 72%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  color: var(--text-primary);
+  padding: 0.2rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.home-page__inline-action:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--bg-elevated) 94%, transparent);
+}
+
+.home-page__inline-action:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
 .home-page__status-pill {
   display: inline-flex;
   align-items: center;

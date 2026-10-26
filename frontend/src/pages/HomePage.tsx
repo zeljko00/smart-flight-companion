@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { Funnel } from 'lucide-react'
+import { Download, Funnel } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { AuthHeader } from '../components/AuthHeader'
@@ -11,6 +11,7 @@ import {
   type FlightTableRow,
 } from '../services/flightsService'
 import {
+  downloadBoardingPassPdf,
   fetchBoardingPassesByUserId,
   type UserBoardingPass,
 } from '../services/boardingPassesService'
@@ -80,6 +81,7 @@ export function HomePage() {
   const [boardingPasses, setBoardingPasses] = useState<UserBoardingPass[]>([])
   const [isBoardingPassesLoading, setIsBoardingPassesLoading] = useState(false)
   const [boardingPassesErrorMessage, setBoardingPassesErrorMessage] = useState<string | null>(null)
+  const [downloadingBoardingPassId, setDownloadingBoardingPassId] = useState<string | null>(null)
 
   const loadFlights = useCallback(
     async (filters: FlightSearchFilters = {}) => {
@@ -272,6 +274,27 @@ export function HomePage() {
       currency: 'EUR',
       maximumFractionDigits: 2,
     }).format(value)
+  }
+
+  const handleDownloadBoardingPassPdf = async (boardingPass: UserBoardingPass) => {
+    setBoardingPassesErrorMessage(null)
+    setDownloadingBoardingPassId(boardingPass.id)
+
+    try {
+      const pdfBlob = await downloadBoardingPassPdf(boardingPass.id)
+      const objectUrl = window.URL.createObjectURL(pdfBlob)
+      const downloadLink = document.createElement('a')
+      downloadLink.href = objectUrl
+      downloadLink.download = `boarding-pass-${boardingPass.id}.pdf`
+      document.body.appendChild(downloadLink)
+      downloadLink.click()
+      downloadLink.remove()
+      window.URL.revokeObjectURL(objectUrl)
+    } catch {
+      setBoardingPassesErrorMessage(t('home.boardingPasses.downloadError'))
+    } finally {
+      setDownloadingBoardingPassId(null)
+    }
   }
 
   return (
@@ -482,6 +505,7 @@ export function HomePage() {
                       <th>{t('home.boardingPasses.columns.price')}</th>
                       <th>{t('home.boardingPasses.columns.issuedAt')}</th>
                       <th>{t('home.boardingPasses.columns.validity')}</th>
+                      <th>{t('home.boardingPasses.columns.actions')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -500,6 +524,24 @@ export function HomePage() {
                               ? t('home.boardingPasses.valid')
                               : t('home.boardingPasses.invalid')}
                           </span>
+                        </td>
+                        <td>
+                          <button
+                            type="button"
+                            className="home-page__inline-action"
+                            onClick={() => {
+                              void handleDownloadBoardingPassPdf(boardingPass)
+                            }}
+                            disabled={downloadingBoardingPassId === boardingPass.id}
+                            aria-label={t('home.boardingPasses.download')}
+                          >
+                            <Download size={14} aria-hidden="true" />
+                            <span>
+                              {downloadingBoardingPassId === boardingPass.id
+                                ? t('home.boardingPasses.downloading')
+                                : t('home.boardingPasses.download')}
+                            </span>
+                          </button>
                         </td>
                       </tr>
                     ))}

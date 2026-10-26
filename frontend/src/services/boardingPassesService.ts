@@ -1,4 +1,4 @@
-import { apiRequest } from './apiClient'
+import { apiRequest, apiRequestBlob } from './apiClient'
 
 export type SeatType = 'economy' | 'premiumEconomy' | 'business' | 'firstClass'
 
@@ -153,4 +153,8 @@ export async function fetchBoardingPassesByUserId(userId: string): Promise<UserB
 
       return left - right
     })
+}
+
+export async function downloadBoardingPassPdf(boardingPassId: string): Promise<Blob> {
+  return await apiRequestBlob(`/users/me/boarding-passes/${encodeURIComponent(boardingPassId)}/pdf`)
 }
