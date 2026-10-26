@@ -404,11 +404,6 @@ export function FlightDetailsPage() {
           <UserInfo user={user} onLogout={handleLogout} />
 
           <header className="flight-details-page__header">
-            <button type="button" className="flight-details-page__back" onClick={handleBack}>
-              <ArrowLeft size={16} aria-hidden="true" />
-              <span>{t('flightDetails.back')}</span>
-            </button>
-
             <div className="flight-details-page__headline">
               <h2>{t('flightDetails.title')}</h2>
               <p>{t('flightDetails.subtitle')}</p>
@@ -706,6 +701,10 @@ export function FlightDetailsPage() {
               </section>
             </div>
           ) : null}
+          <button type="button" className="flight-details-page__back" onClick={handleBack}>
+            <ArrowLeft size={16} aria-hidden="true" />
+            <span>{t('flightDetails.back')}</span>
+          </button>
         </article>
       </section>
     </main>

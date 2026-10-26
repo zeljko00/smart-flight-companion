@@ -32,16 +32,18 @@ public sealed class FlightService : IFlightService
     {
         var flights = await _flightRepository.GetAsync(cancellationToken);
 
-        var mappedFlights = flights.Select(FlightDto.FromEntity);
-        var result = await Task.WhenAll(mappedFlights.Select(async flight =>
+        var result = new List<FlightDto>(flights.Count);
+
+        foreach (var flightEntity in flights)
         {
+            var flight = FlightDto.FromEntity(flightEntity);
             var count = await _boardingPassService.GetCountByFlightId(flight.Id, cancellationToken);
             var seatsFree = Math.Max(0, flight.SeatCapacity - count);
 
-            return flight with { SeatsFree = seatsFree };
-        }));
+            result.Add(flight with { SeatsFree = seatsFree });
+        }
 
-        return result.ToList().AsReadOnly();
+        return result.AsReadOnly();
     }
 
     public async Task<IReadOnlyList<FlightDto>> Search(
@@ -64,15 +66,17 @@ public sealed class FlightService : IFlightService
             departureTime,
             cancellationToken);
 
-        var mappedFlights = flights.Select(FlightDto.FromEntity);
-        var result = await Task.WhenAll(mappedFlights.Select(async flight =>
+        var result = new List<FlightDto>(flights.Count);
+
+        foreach (var flightEntity in flights)
         {
+            var flight = FlightDto.FromEntity(flightEntity);
             var count = await _boardingPassService.GetCountByFlightId(flight.Id, cancellationToken);
             var seatsFree = Math.Max(0, flight.SeatCapacity - count);
 
-            return flight with { SeatsFree = seatsFree };
-        }));
+            result.Add(flight with { SeatsFree = seatsFree });
+        }
 
-        return result.ToList().AsReadOnly();
+        return result.AsReadOnly();
     }
 }

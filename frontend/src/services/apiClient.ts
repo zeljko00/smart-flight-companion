@@ -93,3 +93,38 @@ export async function apiRequest<TResponse>(
 
   return payload as TResponse
 }
+
+export async function apiRequestBlob(
+  path: string,
+  options: RequestOptions = {},
+): Promise<Blob> {
+  const headers = new Headers(options.headers)
+
+  if (options.body !== undefined && !headers.has('Content-Type')) {
+    headers.set('Content-Type', 'application/json')
+  }
+
+  const response = await fetch(buildUrl(path), {
+    ...options,
+    headers,
+    body:
+      options.body === undefined
+        ? undefined
+        : typeof options.body === 'string'
+          ? options.body
+          : JSON.stringify(options.body),
+  })
+
+  if (!response.ok) {
+    const contentType = response.headers.get('content-type') ?? ''
+    const isJson = contentType.includes('application/json') || contentType.includes('+json')
+
+    const payload = isJson
+      ? await response.json().catch(() => null)
+      : await response.text().catch(() => '')
+
+    throw new ApiError(extractErrorMessage(payload, response.status), response.status, payload)
+  }
+
+  return await response.blob()
+}
