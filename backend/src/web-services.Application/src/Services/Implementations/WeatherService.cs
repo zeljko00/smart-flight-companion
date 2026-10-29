@@ -8,10 +8,7 @@ namespace SmartFlightCompanion.WebServices.Application.Services;
 
 public sealed class WeatherService : IWeatherService
 {
-    private const int RequiredCityCount = 3;
-    private const int DesiredCandidateCount = 12;
-    private const int CityPopulationThreshold = 50_000;
-
+    private const int TargetCityCount = 3;
     private readonly HttpClient _httpClient;
 
     public WeatherService(HttpClient httpClient)
@@ -30,13 +27,21 @@ public sealed class WeatherService : IWeatherService
             return null;
         }
 
-        var cityCandidates = await ResolveCities(context, cancellationToken);
-        if (cityCandidates.Count < RequiredCityCount)
+        var cityNames = await ResolveCitiesByCountry(context.CountryCode, cancellationToken);
+
+        if (cityNames.Count == 0)
         {
             return null;
         }
 
-        var cities = new List<CityWeatherForecastDto>(RequiredCityCount);
+        var cityCandidates = await ResolveCityCoordinates(cityNames.OrderBy(_ => Random.Shared.Next()).Take(5 * TargetCityCount).ToList(), context.CountryCode, cancellationToken);
+
+        if (cityCandidates.Count < TargetCityCount)
+        {
+            return null;
+        }
+
+        var forecasts = new List<CityWeatherForecastDto>(TargetCityCount);
         foreach (var cityCandidate in cityCandidates)
         {
             var forecast = await ResolveForecast(cityCandidate.Latitude, cityCandidate.Longitude, cancellationToken);
@@ -45,24 +50,18 @@ public sealed class WeatherService : IWeatherService
                 continue;
             }
 
-            cities.Add(new CityWeatherForecastDto(
+            forecasts.Add(new CityWeatherForecastDto(
                 cityCandidate.Name,
-                cityCandidate.Country,
-                cityCandidate.CountryCode,
+                context.Country,
                 forecast));
 
-            if (cities.Count == RequiredCityCount)
+            if (forecasts.Count == TargetCityCount)
             {
                 break;
             }
         }
 
-        if (cities.Count < RequiredCityCount)
-        {
-            return null;
-        }
-
-        return cities.AsReadOnly();
+        return forecasts.AsReadOnly();
     }
 
     private async Task<CountryContext?> ResolveCountry(
@@ -81,240 +80,110 @@ public sealed class WeatherService : IWeatherService
         {
             return null;
         }
+        var countryName = response.CountryName;
+        if(response.CountryCode.Equals("US", StringComparison.OrdinalIgnoreCase))
+        {
+            countryName = "United States";
+        }
 
         return new CountryContext(
-            response.CountryName,
-            response.CountryCode.ToUpperInvariant(),
-            response.City,
-            response.PrincipalSubdivision,
-            response.Locality);
+            countryName,
+            response.CountryCode.ToUpperInvariant());
     }
 
-    private async Task<IReadOnlyList<GeocodedCity>> ResolveCities(
-        CountryContext context,
-        CancellationToken cancellationToken)
+
+    private async Task<IReadOnlyList<string>> ResolveCitiesByCountry(string countryCode, CancellationToken cancellationToken)
     {
-        var countryCodeCities = await ResolveCitiesByCountryCode(context, cancellationToken);
-        if (countryCodeCities.Count >= RequiredCityCount)
+        // var postUrl = "https://countriesnow.space/api/v0.1/countries/cities";
+        // var postResponse = await PostJsonOrDefault<CountriesNowCitiesRequest, CountriesNowCitiesResponse>(
+        //     postUrl,
+        //     new CountriesNowCitiesRequest(country),
+        //     cancellationToken);
+
+        // if (postResponse is { Error: false, Data.Count: > 0 })
+        // {
+        //     return postResponse.Data
+        //         .Where(city => !string.IsNullOrWhiteSpace(city))
+        //         .Distinct(StringComparer.OrdinalIgnoreCase)
+        //         .ToList()
+        //         .AsReadOnly();
+        // }
+
+        var encodedCountry = Uri.EscapeDataString(countryCode);
+        var fallbackUrl = $"https://countriesnow.space/api/v0.1/countries/cities/q?iso2={encodedCountry}";
+        var fallbackResponse = await GetJsonOrDefault<CountriesNowCitiesResponse>(fallbackUrl, cancellationToken);
+        
+        if (fallbackResponse is not { Error: false, Data.Count: > 0 })
         {
-            return countryCodeCities;
+            return Array.Empty<string>();
         }
 
-        var seedQueries = BuildCitySeedQueries(context);
-        var candidates = new List<GeocodedCity>(DesiredCandidateCount * 2);
-
-        candidates.AddRange(countryCodeCities);
-
-        foreach (var seed in seedQueries)
-        {
-            var seedParam = Uri.EscapeDataString(seed);
-            var searchUrl = $"https://geocoding-api.open-meteo.com/v1/search?name={seedParam}&count=100&language=en&format=json";
-
-            var response = await GetJsonOrDefault<SearchGeocodingResponse>(searchUrl, cancellationToken);
-            var cities = response?.Results ?? [];
-
-            var filtered = cities
-                .Where(city =>
-                    !string.IsNullOrWhiteSpace(city.Name) &&
-                    IsAcceptableCityName(city.Name!) &&
-                    !string.IsNullOrWhiteSpace(city.Country) &&
-                    !string.IsNullOrWhiteSpace(city.CountryCode) &&
-                    string.Equals(city.CountryCode, context.CountryCode, StringComparison.OrdinalIgnoreCase) &&
-                    !string.IsNullOrWhiteSpace(city.FeatureCode) &&
-                    city.FeatureCode.StartsWith("PPL", StringComparison.OrdinalIgnoreCase))
-                .OrderByDescending(city => city.Population ?? 0)
-                .ThenBy(city => city.Name, StringComparer.OrdinalIgnoreCase)
-                .Select(city => new GeocodedCity(
-                    city.Name!,
-                    city.Country!,
-                    city.CountryCode!,
-                    city.Latitude,
-                    city.Longitude,
-                    city.FeatureCode,
-                    city.Population));
-
-            foreach (var city in filtered)
-            {
-                AddCandidate(candidates, city);
-            }
-        }
-
-        var cityPriority = candidates
-            .Where(IsLikelyCity)
-            .OrderByDescending(city => GetFeatureScore(city.FeatureCode))
-            .ThenByDescending(city => city.Population ?? 0)
-            .ThenBy(city => city.Name, StringComparer.OrdinalIgnoreCase)
-            .Take(DesiredCandidateCount)
-            .ToList();
-
-        if (cityPriority.Count >= RequiredCityCount)
-        {
-            return cityPriority;
-        }
-
-        return candidates
-            .OrderByDescending(city => GetFeatureScore(city.FeatureCode))
-            .ThenByDescending(city => city.Population ?? 0)
-            .ThenBy(city => city.Name, StringComparer.OrdinalIgnoreCase)
-            .Take(DesiredCandidateCount)
-            .ToList();
+        return fallbackResponse.Data
+            .Where(city => !string.IsNullOrWhiteSpace(city))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList().AsReadOnly();
     }
 
-    private async Task<IReadOnlyList<GeocodedCity>> ResolveCitiesByCountryCode(
-        CountryContext context,
+    private async Task<IReadOnlyList<GeocodedCity>> ResolveCityCoordinates(
+        IReadOnlyList<string> cityNames,
+        string countryCode,
         CancellationToken cancellationToken)
     {
-        var url = FormattableString.Invariant(
-            $"http://geodb-free-service.wirefreethought.com/v1/geo/cities?countryIds={context.CountryCode}&minPopulation={CityPopulationThreshold}&limit=30&sort=-population");
+        var geocoded = new Dictionary<string, GeocodedCity>(StringComparer.OrdinalIgnoreCase);
 
-        var response = await GetJsonOrDefault<GeoDbCitiesResponse>(url, cancellationToken);
-        var data = response?.Data ?? [];
-
-        var candidates = new List<GeocodedCity>(DesiredCandidateCount);
-        foreach (var row in data)
+        foreach (var cityName in cityNames)
         {
-            if (!string.Equals(row.CountryCode, context.CountryCode, StringComparison.OrdinalIgnoreCase))
+            var encodedCityName = Uri.EscapeDataString(cityName);
+            var geocodingUrl =
+                $"https://geocoding-api.open-meteo.com/v1/search?name={encodedCityName}&count=10&language=en&format=json";
+
+            var response = await GetJsonOrDefault<SearchGeocodingResponse>(geocodingUrl, cancellationToken);
+            
+            if (response?.Results is null)
             {
                 continue;
             }
 
-            if (string.IsNullOrWhiteSpace(row.City) || !IsAcceptableCityName(row.City))
+            var match = response.Results
+                .Where(result => result is not null &&
+                                 !string.IsNullOrWhiteSpace(result.Name) &&
+                                 !string.IsNullOrWhiteSpace(result.Country) &&
+                                 !string.IsNullOrWhiteSpace(result.CountryCode) &&
+                                 string.Equals(result.CountryCode, countryCode, StringComparison.OrdinalIgnoreCase))
+                .Select(result => new GeocodedCity(
+                    result!.Name!,
+                    result.Country!,
+                    result.CountryCode!.ToUpperInvariant(),
+                    result.Latitude,
+                    result.Longitude,
+                    result.FeatureCode,
+                    result.Population))
+                .FirstOrDefault();
+
+            if (match is null)
             {
                 continue;
             }
 
-            // Skip administrative and non-city place types.
-            if (!string.Equals(row.Type, "CITY", StringComparison.OrdinalIgnoreCase))
+            if (!geocoded.ContainsKey(match.Name))
             {
-                continue;
+                geocoded[match.Name] = match;
             }
 
-            var candidate = new GeocodedCity(
-                row.City,
-                row.Country ?? context.Country,
-                row.CountryCode,
-                row.Latitude,
-                row.Longitude,
-                "PPLA",
-                row.Population);
-
-            AddCandidate(candidates, candidate);
-            if (candidates.Count >= DesiredCandidateCount)
+            if(geocoded.Count == 20)
             {
                 break;
             }
         }
 
-        return candidates;
-    }
-
-    private static bool IsLikelyCity(GeocodedCity city)
-    {
-        if (!IsAcceptableCityName(city.Name))
+        var randomCities = geocoded.Values.ToList();
+        for (var i = randomCities.Count - 1; i > 0; i--)
         {
-            return false;
+            var j = Random.Shared.Next(i + 1);
+            (randomCities[i], randomCities[j]) = (randomCities[j], randomCities[i]);
         }
 
-        if (string.IsNullOrWhiteSpace(city.FeatureCode))
-        {
-            return false;
-        }
-
-        if (!city.FeatureCode.StartsWith("PPL", StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        if (GetFeatureScore(city.FeatureCode) >= 3)
-        {
-            return true;
-        }
-
-        return (city.Population ?? 0) >= CityPopulationThreshold;
-    }
-
-    private static int GetFeatureScore(string? featureCode)
-    {
-        return featureCode?.ToUpperInvariant() switch
-        {
-            "PPLC" => 5,
-            "PPLA" => 4,
-            "PPLA2" => 3,
-            "PPLA3" => 2,
-            "PPLA4" => 1,
-            "PPL" => 0,
-            _ => -1,
-        };
-    }
-
-    private static IReadOnlyList<string> BuildCitySeedQueries(CountryContext context)
-    {
-        var seeds = new List<string>(8);
-        AddSeed(seeds, context.City);
-        AddSeed(seeds, context.PrincipalSubdivision);
-        AddSeed(seeds, context.Locality);
-        AddSeed(seeds, NormalizeCountryName(context.Country));
-        return seeds;
-    }
-
-    private static bool IsAcceptableCityName(string value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return false;
-        }
-
-        var name = value.Trim();
-        var blockedTokens = new[]
-        {
-            "municipality",
-            "district",
-            "province",
-            "region",
-            "settlement",
-            "republic",
-            "country",
-            "national",
-        };
-
-        return !blockedTokens.Any(token => name.Contains(token, StringComparison.OrdinalIgnoreCase));
-    }
-
-    private static void AddCandidate(List<GeocodedCity> candidates, GeocodedCity city)
-    {
-        if (candidates.Any(existing =>
-                string.Equals(existing.Name, city.Name, StringComparison.OrdinalIgnoreCase) &&
-                string.Equals(existing.CountryCode, city.CountryCode, StringComparison.OrdinalIgnoreCase)))
-        {
-            return;
-        }
-
-        candidates.Add(city);
-    }
-
-    private static void AddSeed(List<string> seeds, string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-        {
-            return;
-        }
-
-        if (seeds.Any(seed => string.Equals(seed, value, StringComparison.OrdinalIgnoreCase)))
-        {
-            return;
-        }
-
-        seeds.Add(value);
-    }
-
-    private static string NormalizeCountryName(string country)
-    {
-        return country.Trim() switch
-        {
-            "Turkiye" => "Turkey",
-            "Türkiye" => "Turkey",
-            _ => country,
-        };
+        return randomCities.Take(TargetCityCount).ToList();
     }
 
     private async Task<IReadOnlyList<WeatherForecastDayDto>> ResolveForecast(
@@ -379,6 +248,39 @@ public sealed class WeatherService : IWeatherService
         }
     }
 
+    private async Task<TResponse?> PostJsonOrDefault<TRequest, TResponse>(
+        string url,
+        TRequest body,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var response = await _httpClient.PostAsJsonAsync(url, body, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return default;
+            }
+
+            return await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken);
+        }
+        catch (HttpRequestException)
+        {
+            return default;
+        }
+        catch (TaskCanceledException)
+        {
+            return default;
+        }
+        catch (NotSupportedException)
+        {
+            return default;
+        }
+        catch (JsonException)
+        {
+            return default;
+        }
+    }
+
     private sealed record BigDataCloudReverseResponse(
         string? CountryName,
         string? CountryCode,
@@ -388,23 +290,16 @@ public sealed class WeatherService : IWeatherService
 
     private sealed record CountryContext(
         string Country,
-        string CountryCode,
-        string? City,
-        string? PrincipalSubdivision,
-        string? Locality);
+        string CountryCode);
+
+    private sealed record CountriesNowCitiesRequest(string Country);
+
+    private sealed record CountriesNowCitiesResponse(
+        bool Error,
+        string? Msg,
+        List<string>? Data);
 
     private sealed record SearchGeocodingResponse(List<SearchGeocodingResult>? Results);
-
-    private sealed record GeoDbCitiesResponse(List<GeoDbCity>? Data);
-
-    private sealed record GeoDbCity(
-        string? Type,
-        string City,
-        string? Country,
-        string CountryCode,
-        double Latitude,
-        double Longitude,
-        int? Population);
 
     private sealed record SearchGeocodingResult(
         string? Name,

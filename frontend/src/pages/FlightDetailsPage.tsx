@@ -687,13 +687,13 @@ export function FlightDetailsPage() {
                     <div className="flight-details-page__weather-grid">
                       {weatherForecast.map((city) => (
                         <section
-                          key={`${city.city}-${city.countryCode}`}
+                          key={`${city.city}`}
                           className="flight-details-page__weather-city"
-                          aria-label={`${city.city} ${city.countryCode}`}
+                          aria-label={`${city.city}`}
                         >
                           <header className="flight-details-page__weather-city-header">
                             <strong>{city.city}</strong>
-                            <span>{city.country} ({city.countryCode})</span>
+                            <span>{city.country}</span>
                           </header>
 
                           <ul className="flight-details-page__weather-list">

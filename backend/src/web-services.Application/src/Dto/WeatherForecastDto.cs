@@ -9,5 +9,4 @@ public sealed record WeatherForecastDayDto(
 public sealed record CityWeatherForecastDto(
     string City,
     string Country,
-    string CountryCode,
     IReadOnlyList<WeatherForecastDayDto> Forecast);
