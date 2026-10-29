@@ -271,6 +271,10 @@
   gap: 0.65rem;
 }
 
+.flight-details-page__card--weather {
+  grid-column: 1 / -1;
+}
+
 .flight-details-page__card h3 {
   margin: 0 0 0.65rem;
   font-size: 0.93rem;
@@ -303,6 +307,88 @@
   font-size: 0.86rem;
   line-height: 1.35;
   overflow-wrap: anywhere;
+}
+
+.flight-details-page__weather-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.flight-details-page__weather-city {
+  border: 1px solid color-mix(in srgb, var(--border-default) 72%, transparent);
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--bg-surface) 90%, transparent);
+  padding: 0.58rem;
+  display: grid;
+  gap: 0.42rem;
+}
+
+.flight-details-page__weather-city-header {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.flight-details-page__weather-city-header strong {
+  font-size: 0.9rem;
+  color: var(--text-primary);
+}
+
+.flight-details-page__weather-city-header span {
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+}
+
+.flight-details-page__weather-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.44rem;
+}
+
+.flight-details-page__weather-item {
+  border: 1px solid color-mix(in srgb, var(--border-default) 62%, transparent);
+  border-radius: 0.62rem;
+  background: color-mix(in srgb, var(--bg-elevated) 92%, transparent);
+  padding: 0.44rem 0.5rem;
+  display: grid;
+  gap: 0.18rem;
+}
+
+.flight-details-page__weather-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+}
+
+.flight-details-page__weather-date {
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.flight-details-page__weather-condition {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.flight-details-page__weather-icon {
+  width: 2.5rem;
+  height: 2.5rem;
+  color: color-mix(in srgb, var(--color-primary) 62%, var(--text-primary));
+}
+
+.flight-details-page__weather-meta {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
 }
 
 .flight-details-page__map-wrap {
@@ -583,6 +669,10 @@
   }
 
   .flight-details-page__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .flight-details-page__weather-grid {
     grid-template-columns: 1fr;
   }
 }
