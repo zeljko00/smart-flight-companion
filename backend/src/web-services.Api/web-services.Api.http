@@ -1,6 +1,6 @@
 @web_services.Api_HostAddress = http://localhost:5062
 
-GET {{web_services.Api_HostAddress}}/weatherforecast/
+GET {{web_services.Api_HostAddress}}/api/weather/destination-forecast?lat=44.8186&lng=20.3091
 Accept: application/json
 
 ###

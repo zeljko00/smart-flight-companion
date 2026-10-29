@@ -1,5 +1,16 @@
 import { useEffect, useState, type FormEvent } from 'react'
-import { ArrowLeft } from 'lucide-react'
+import {
+  ArrowLeft,
+  Cloud,
+  CloudDrizzle,
+  CloudFog,
+  CloudLightning,
+  CloudRain,
+  CloudSnow,
+  CloudSun,
+  Sun,
+  type LucideIcon,
+} from 'lucide-react'
 import type { LatLngTuple } from 'leaflet'
 import { MapContainer, Marker, Polyline, Popup, TileLayer } from 'react-leaflet'
 import { useTranslation } from 'react-i18next'
@@ -15,6 +26,10 @@ import {
   createBoardingPass,
   type SeatType,
 } from '../services/boardingPassesService'
+import {
+  fetchDestinationWeatherForecast,
+  type CityWeatherForecast,
+} from '../services/weatherService'
 import { fetchFlightById, type FlightDetails } from '../services/flightsService'
 import { AuthHeader } from '../components/AuthHeader'
 import { UserInfo } from '../components/UserInfo'
@@ -91,6 +106,60 @@ function buildRouteArc(start: LatLngTuple, end: LatLngTuple): LatLngTuple[] {
   return points
 }
 
+type WeatherPresentation = {
+  icon: LucideIcon
+  labelKey: string
+}
+
+function getWeatherPresentation(code: number): WeatherPresentation {
+  if (code === 0) {
+    return { icon: Sun, labelKey: 'flightDetails.weather.labels.clearSky' }
+  }
+
+  if (code === 1) {
+    return { icon: CloudSun, labelKey: 'flightDetails.weather.labels.mainlyClear' }
+  }
+
+  if (code === 2) {
+    return { icon: CloudSun, labelKey: 'flightDetails.weather.labels.partlyCloudy' }
+  }
+
+  if (code === 3) {
+    return { icon: Cloud, labelKey: 'flightDetails.weather.labels.overcast' }
+  }
+
+  if (code === 45 || code === 48) {
+    return { icon: CloudFog, labelKey: 'flightDetails.weather.labels.fog' }
+  }
+
+  if (code === 51 || code === 53 || code === 55 || code === 56 || code === 57) {
+    return { icon: CloudDrizzle, labelKey: 'flightDetails.weather.labels.drizzle' }
+  }
+
+  if (
+    code === 61 ||
+    code === 63 ||
+    code === 65 ||
+    code === 66 ||
+    code === 67 ||
+    code === 80 ||
+    code === 81 ||
+    code === 82
+  ) {
+    return { icon: CloudRain, labelKey: 'flightDetails.weather.labels.rain' }
+  }
+
+  if (code === 71 || code === 73 || code === 75 || code === 77 || code === 85 || code === 86) {
+    return { icon: CloudSnow, labelKey: 'flightDetails.weather.labels.snow' }
+  }
+
+  if (code === 95 || code === 96 || code === 99) {
+    return { icon: CloudLightning, labelKey: 'flightDetails.weather.labels.thunderstorm' }
+  }
+
+  return { icon: Cloud, labelKey: 'flightDetails.weather.labels.unknown' }
+}
+
 export function FlightDetailsPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
@@ -114,6 +183,9 @@ export function FlightDetailsPage() {
   const [isPurchasingBoardingPass, setIsPurchasingBoardingPass] = useState(false)
   const [purchaseSuccessMessage, setPurchaseSuccessMessage] = useState<string | null>(null)
   const [purchaseErrorMessage, setPurchaseErrorMessage] = useState<string | null>(null)
+  const [weatherForecast, setWeatherForecast] = useState<CityWeatherForecast[]>([])
+  const [isWeatherLoading, setIsWeatherLoading] = useState(false)
+  const [weatherErrorMessage, setWeatherErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
     if (!flightId) {
@@ -257,6 +329,25 @@ export function FlightDetailsPage() {
     }).format(value)
   }
 
+  const formatWeatherDate = (value: string) => {
+    const parsedDate = new Date(value)
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return value
+    }
+
+    return new Intl.DateTimeFormat(i18n.language, {
+      dateStyle: 'medium',
+    }).format(parsedDate)
+  }
+
+  const formatTemperature = (value: number) => {
+    return new Intl.NumberFormat(i18n.language, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 1,
+    }).format(value)
+  }
+
   const seatOffers: Array<{ seat: SeatType; label: string; price: number; priceLabel: string }> = flight
     ? [
         {
@@ -393,6 +484,48 @@ export function FlightDetailsPage() {
         ],
       ]
     : null
+
+  useEffect(() => {
+    if (arrivalLatitude === null || arrivalLongitude === null) {
+      setWeatherForecast([])
+      setIsWeatherLoading(false)
+      setWeatherErrorMessage(null)
+      return
+    }
+
+    let isDisposed = false
+
+    void (async () => {
+      setIsWeatherLoading(true)
+      setWeatherErrorMessage(null)
+
+      try {
+        const result = await fetchDestinationWeatherForecast(arrivalLatitude, arrivalLongitude)
+        if (!isDisposed) {
+          setWeatherForecast(result)
+        }
+      } catch (error) {
+        if (isDisposed) {
+          return
+        }
+
+        if (error instanceof ApiError && error.status === 404) {
+          setWeatherForecast([])
+          return
+        }
+
+        setWeatherErrorMessage(t('flightDetails.weather.loadError'))
+      } finally {
+        if (!isDisposed) {
+          setIsWeatherLoading(false)
+        }
+      }
+    })()
+
+    return () => {
+      isDisposed = true
+    }
+  }, [arrivalLatitude, arrivalLongitude, t])
 
   return (
     <main className="flight-details-page">
@@ -531,6 +664,70 @@ export function FlightDetailsPage() {
                     />
                     <DetailField label={t('flightDetails.fields.arrivalAirportAddress')} value={flight.arrivalAirport.address} />
                   </dl>
+                </article>
+
+                <article className="flight-details-page__card flight-details-page__card--weather">
+                  <h3>{t('flightDetails.sections.weather')}</h3>
+
+                  {isWeatherLoading ? (
+                    <p className="flight-details-page__status">{t('flightDetails.weather.loading')}</p>
+                  ) : null}
+
+                  {!isWeatherLoading && weatherErrorMessage ? (
+                    <p className="flight-details-page__status flight-details-page__status--error" role="alert">
+                      {weatherErrorMessage}
+                    </p>
+                  ) : null}
+
+                  {!isWeatherLoading && !weatherErrorMessage && weatherForecast.length === 0 ? (
+                    <p className="flight-details-page__map-fallback">{t('flightDetails.weather.empty')}</p>
+                  ) : null}
+
+                  {!isWeatherLoading && !weatherErrorMessage && weatherForecast.length > 0 ? (
+                    <div className="flight-details-page__weather-grid">
+                      {weatherForecast.map((city) => (
+                        <section
+                          key={`${city.city}`}
+                          className="flight-details-page__weather-city"
+                          aria-label={`${city.city}`}
+                        >
+                          <header className="flight-details-page__weather-city-header">
+                            <strong>{city.city}</strong>
+                            <span>{city.country}</span>
+                          </header>
+
+                          <ul className="flight-details-page__weather-list">
+                            {city.forecast.map((day) => (
+                              <li key={`${city.city}-${day.date}`} className="flight-details-page__weather-item">
+                                <div className="flight-details-page__weather-topline">
+                                  <p className="flight-details-page__weather-date">{formatWeatherDate(day.date)}</p>
+                                  <div className="flight-details-page__weather-condition">
+                                    {(() => {
+                                      const presentation = getWeatherPresentation(day.weatherCode)
+                                      const WeatherIcon = presentation.icon
+
+                                      return (
+                                        <>
+                                          <span>{t(presentation.labelKey)}</span>
+                                          <WeatherIcon className="flight-details-page__weather-icon" aria-hidden="true" />
+                                        </>
+                                      )
+                                    })()}
+                                  </div>
+                                </div>
+                                <p className="flight-details-page__weather-meta">
+                                  {t('flightDetails.weather.min')}: {formatTemperature(day.minTemperatureCelsius)} C
+                                </p>
+                                <p className="flight-details-page__weather-meta">
+                                  {t('flightDetails.weather.max')}: {formatTemperature(day.maxTemperatureCelsius)} C
+                                </p>
+                              </li>
+                            ))}
+                          </ul>
+                        </section>
+                      ))}
+                    </div>
+                  ) : null}
                 </article>
 
                 <article className="flight-details-page__card flight-details-page__card--boarding-pass">
