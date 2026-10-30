@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Caching.Distributed;
 using SmartFlightCompanion.WebServices.Application.Dto;
 
 namespace SmartFlightCompanion.WebServices.Application.Services;
@@ -9,11 +10,14 @@ namespace SmartFlightCompanion.WebServices.Application.Services;
 public sealed class WeatherService : IWeatherService
 {
     private const int TargetCityCount = 3;
+    private static readonly TimeSpan ForecastCacheDuration = TimeSpan.FromHours(1);
     private readonly HttpClient _httpClient;
+    private readonly IDistributedCache _cache;
 
-    public WeatherService(HttpClient httpClient)
+    public WeatherService(HttpClient httpClient, IDistributedCache cache)
     {
         _httpClient = httpClient;
+        _cache = cache;
     }
 
     public async Task<IReadOnlyList<CityWeatherForecastDto>?> GetForecastByDestinationCoordinates(
@@ -25,6 +29,13 @@ public sealed class WeatherService : IWeatherService
         if (context is null)
         {
             return null;
+        }
+
+        var cacheKey = $"weather:country:{context.CountryCode}:forecast";
+        var cachedForecast = await GetCachedForecast(cacheKey, cancellationToken);
+        if (cachedForecast is not null)
+        {
+            return cachedForecast;
         }
 
         var cityNames = await ResolveCitiesByCountry(context.CountryCode, cancellationToken);
@@ -61,7 +72,54 @@ public sealed class WeatherService : IWeatherService
             }
         }
 
-        return forecasts.AsReadOnly();
+        if (forecasts.Count == 0)
+        {
+            return null;
+        }
+
+        var result = forecasts.AsReadOnly();
+        await SetCachedForecast(cacheKey, result, cancellationToken);
+        return result;
+    }
+
+    private async Task<IReadOnlyList<CityWeatherForecastDto>?> GetCachedForecast(string cacheKey, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var payload = await _cache.GetStringAsync(cacheKey, cancellationToken);
+            if (string.IsNullOrWhiteSpace(payload))
+            {
+                return null;
+            }
+
+            var cachedForecast = JsonSerializer.Deserialize<List<CityWeatherForecastDto>>(payload);
+            return cachedForecast is { Count: > 0 } ? cachedForecast.AsReadOnly() : null;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private async Task SetCachedForecast(
+        string cacheKey,
+        IReadOnlyList<CityWeatherForecastDto> forecast,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var payload = JsonSerializer.Serialize(forecast);
+            var options = new DistributedCacheEntryOptions
+            {
+                AbsoluteExpirationRelativeToNow = ForecastCacheDuration
+            };
+
+            await _cache.SetStringAsync(cacheKey, payload, options, cancellationToken);
+        }
+        catch (JsonException)
+        {
+            // Ignore cache serialization errors to avoid affecting live weather responses.
+        }
     }
 
     private async Task<CountryContext?> ResolveCountry(
