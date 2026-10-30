@@ -11,6 +11,11 @@ builder.Services.AddControllers(options =>
     options.Conventions.Insert(0, new GlobalRoutePrefixConvention("api"));
 });
 builder.Services.AddInfrastructure(builder.Configuration);
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = builder.Configuration.GetConnectionString("Redis") ?? "cache:6379";
+    options.InstanceName = "sfc:";
+});
 builder.Services.AddScoped<IAirportService, AirportService>();
 builder.Services.AddScoped<IFlightService, FlightService>();
 builder.Services.AddScoped<ICommentService, CommentService>();

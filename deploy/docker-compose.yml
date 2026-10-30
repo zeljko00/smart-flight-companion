@@ -11,6 +11,15 @@ services:
       - sfc-data-network
     restart: unless-stopped
 
+  cache:
+    image: redis:7-alpine
+    container_name: cache
+    volumes:
+      - redis_data:/data
+    networks:
+      - sfc-data-network
+    restart: unless-stopped
+
   backend:
     build:
       context: ../backend
@@ -32,6 +41,7 @@ services:
       - sfc-data-network
     depends_on:
       - database
+      - cache
     restart: unless-stopped
 
   payment-gateway:
@@ -88,6 +98,7 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:
   pgadmin_data:
   nuget-cache:
   api-obj:
