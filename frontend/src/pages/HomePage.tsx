@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react'
+import { createElement, useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { Download, Funnel } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -15,6 +15,7 @@ import {
   fetchBoardingPassesByUserId,
   type UserBoardingPass,
 } from '../services/boardingPassesService'
+import { fetchLatestNews, type NewsArticle } from '../services/newsService'
 import '../style/HomePage.css'
 
 type HomeLocationState = {
@@ -57,6 +58,104 @@ function parseLocalDateInput(value: string): Date | undefined {
   return Number.isNaN(parsed.getTime()) ? undefined : parsed
 }
 
+const ALLOWED_NEWS_TAGS = new Set([
+  'p',
+  'br',
+  'strong',
+  'b',
+  'em',
+  'i',
+  'u',
+  'ul',
+  'ol',
+  'li',
+  'blockquote',
+  'code',
+  'pre',
+  'a',
+])
+
+function isAllowedNewsUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value)
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
+function parseNewsSummaryToReact(summary: string): ReactNode {
+  if (typeof window === 'undefined') {
+    return summary
+  }
+
+  const parser = new DOMParser()
+  const document = parser.parseFromString(`<div>${summary}</div>`, 'text/html')
+  const root = document.body.firstElementChild
+
+  if (!root) {
+    return summary
+  }
+
+  const mapNodes = (nodes: ChildNode[], keyPrefix: string): ReactNode[] => {
+    const mapped: ReactNode[] = []
+
+    nodes.forEach((node, index) => {
+      const key = `${keyPrefix}-${index}`
+
+      if (node.nodeType === Node.TEXT_NODE) {
+        const textContent = node.textContent ?? ''
+        if (textContent) {
+          mapped.push(textContent)
+        }
+        return
+      }
+
+      if (node.nodeType !== Node.ELEMENT_NODE) {
+        return
+      }
+
+      const element = node as HTMLElement
+      const tagName = element.tagName.toLowerCase()
+      const children = mapNodes(Array.from(element.childNodes), key)
+
+      if (!ALLOWED_NEWS_TAGS.has(tagName)) {
+        mapped.push(...children)
+        return
+      }
+
+      if (tagName === 'a') {
+        const href = element.getAttribute('href')?.trim() ?? ''
+
+        if (!href || !isAllowedNewsUrl(href)) {
+          mapped.push(...children)
+          return
+        }
+
+        mapped.push(
+          createElement(
+            'a',
+            {
+              key,
+              href,
+              target: '_blank',
+              rel: 'noopener noreferrer',
+            },
+            children,
+          ),
+        )
+        return
+      }
+
+      mapped.push(createElement(tagName, { key }, children))
+    })
+
+    return mapped
+  }
+
+  return mapNodes(Array.from(root.childNodes), 'home-news-summary')
+}
+
 export function HomePage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
@@ -82,6 +181,9 @@ export function HomePage() {
   const [isBoardingPassesLoading, setIsBoardingPassesLoading] = useState(false)
   const [boardingPassesErrorMessage, setBoardingPassesErrorMessage] = useState<string | null>(null)
   const [downloadingBoardingPassId, setDownloadingBoardingPassId] = useState<string | null>(null)
+  const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([])
+  const [isNewsLoading, setIsNewsLoading] = useState(false)
+  const [newsErrorMessage, setNewsErrorMessage] = useState<string | null>(null)
 
   const loadFlights = useCallback(
     async (filters: FlightSearchFilters = {}) => {
@@ -198,6 +300,34 @@ export function HomePage() {
     }
   }, [t, user?.id])
 
+  useEffect(() => {
+    let isDisposed = false
+
+    void (async () => {
+      setIsNewsLoading(true)
+      setNewsErrorMessage(null)
+
+      try {
+        const result = await fetchLatestNews(6)
+        if (!isDisposed) {
+          setNewsArticles(result)
+        }
+      } catch {
+        if (!isDisposed) {
+          setNewsErrorMessage(t('home.news.loadError'))
+        }
+      } finally {
+        if (!isDisposed) {
+          setIsNewsLoading(false)
+        }
+      }
+    })()
+
+    return () => {
+      isDisposed = true
+    }
+  }, [t])
+
   const handleLogout = () => {
     navigate('/', { replace: true })
   }
@@ -274,6 +404,23 @@ export function HomePage() {
       currency: 'EUR',
       maximumFractionDigits: 2,
     }).format(value)
+  }
+
+  const formatNewsDate = (value: string | null) => {
+    if (!value) {
+      return t('home.news.unknownDate')
+    }
+
+    const parsedDate = new Date(value)
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return t('home.news.unknownDate')
+    }
+
+    return new Intl.DateTimeFormat(i18n.language, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(parsedDate)
   }
 
   const handleDownloadBoardingPassPdf = async (boardingPass: UserBoardingPass) => {
@@ -472,6 +619,42 @@ export function HomePage() {
               </table>
             </section>
           ) : null}
+
+          <section className="home-page__news-section" aria-label={t('home.news.listAria')}>
+            <div className="home-page__news-header">
+              <h3>{t('home.news.title')}</h3>
+            </div>
+
+            {isNewsLoading ? (
+              <p className="home-page__status">{t('home.news.loading')}</p>
+            ) : null}
+
+            {!isNewsLoading && newsErrorMessage ? (
+              <p className="home-page__status home-page__status--error" role="alert">
+                {newsErrorMessage}
+              </p>
+            ) : null}
+
+            {!isNewsLoading && !newsErrorMessage && newsArticles.length === 0 ? (
+              <p className="home-page__status">{t('home.news.empty')}</p>
+            ) : null}
+
+            {!isNewsLoading && !newsErrorMessage && newsArticles.length > 0 ? (
+              <ol className="home-page__news-list" aria-label={t('home.news.listAria')}>
+                {newsArticles.map((article) => (
+                  <li key={`${article.link}-${article.title}`} className="home-page__news-item">
+                      {article.title}
+                    <p className="home-page__news-time">{formatNewsDate(article.publishedAt)}</p>
+                    {article.summary ? (
+                      <div className="home-page__news-summary">
+                        {parseNewsSummaryToReact(article.summary)}
+                      </div>
+                    ) : null}
+                  </li>
+                ))}
+              </ol>
+            ) : null}
+          </section>
 
           <section className="home-page__boarding-pass-section" aria-label={t('home.boardingPasses.tableAria')}>
             <div className="home-page__boarding-pass-header">

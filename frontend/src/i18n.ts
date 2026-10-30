@@ -187,6 +187,14 @@ const resources = {
           details: 'Details',
           openDetails: 'Open',
         },
+        news: {
+          title: 'Travel news',
+          listAria: 'Travel news articles',
+          loading: 'Loading travel news...',
+          loadError: 'Could not load travel news right now.',
+          empty: 'No travel news is available at the moment.',
+          unknownDate: 'Unknown date',
+        },
         boardingPasses: {
           tableAria: 'My boarding passes table',
           title: 'My boarding passes',
@@ -475,6 +483,14 @@ const resources = {
           status: 'Status',
           details: 'Detalji',
           openDetails: 'Otvori',
+        },
+        news: {
+          title: 'Putne novosti',
+          listAria: 'Putne novosti',
+          loading: 'Ucitavanje putnih novosti...',
+          loadError: 'Trenutno nije moguce ucitati putne novosti.',
+          empty: 'Putne novosti trenutno nisu dostupne.',
+          unknownDate: 'Nepoznat datum',
         },
         boardingPasses: {
           tableAria: 'Tabela mojih bording karata',
