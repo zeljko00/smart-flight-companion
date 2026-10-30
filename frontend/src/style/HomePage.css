@@ -368,6 +368,109 @@
   margin-top: 0.35rem;
 }
 
+.home-page__news-section {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.35rem;
+}
+
+.home-page__news-header h3 {
+  margin: 0;
+  font-size: 0.98rem;
+  font-family: var(--font-display);
+  color: var(--text-primary);
+}
+
+.home-page__news-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.56rem;
+}
+
+.home-page__news-item {
+  border: 1px solid color-mix(in srgb, var(--border-default) 68%, transparent);
+  border-radius: 0.82rem;
+  background: color-mix(in srgb, var(--bg-surface) 90%, transparent);
+  padding: 0.56rem 0.62rem;
+  display: grid;
+  gap: 0.24rem;
+}
+
+.home-page__news-link {
+  color: var(--text-primary);
+  font-size: 0.86rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.home-page__news-link:hover {
+  text-decoration: underline;
+}
+
+.home-page__news-time {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.home-page__news-summary {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.home-page__news-summary p,
+.home-page__news-summary ul,
+.home-page__news-summary ol,
+.home-page__news-summary blockquote,
+.home-page__news-summary pre {
+  margin: 0.32rem 0 0;
+}
+
+.home-page__news-summary p:first-child,
+.home-page__news-summary ul:first-child,
+.home-page__news-summary ol:first-child,
+.home-page__news-summary blockquote:first-child,
+.home-page__news-summary pre:first-child {
+  margin-top: 0;
+}
+
+.home-page__news-summary ul,
+.home-page__news-summary ol {
+  padding-left: 1.08rem;
+}
+
+.home-page__news-summary a {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.home-page__news-summary code,
+.home-page__news-summary pre {
+  font-family: var(--font-mono);
+  background: color-mix(in srgb, var(--bg-elevated) 92%, transparent);
+  border-radius: 0.42rem;
+}
+
+.home-page__news-summary code {
+  padding: 0.04rem 0.25rem;
+}
+
+.home-page__news-summary pre {
+  padding: 0.48rem;
+  overflow-x: auto;
+}
+
+.home-page__news-summary blockquote {
+  border-left: 2px solid color-mix(in srgb, var(--color-primary) 40%, transparent);
+  padding-left: 0.54rem;
+  color: var(--text-primary);
+}
+
 .home-page__boarding-pass-header h3 {
   margin: 0;
   font-size: 0.98rem;
