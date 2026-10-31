@@ -6,7 +6,6 @@ import { ApiError } from '../services/apiClient'
 import type { UserDto } from '../services/authService'
 import { usersService } from '../services/usersService'
 import { AuthHeader } from '../components/AuthHeader'
-import { AirportsPanel } from '../components/AirportsPanel'
 import { RequestLogsPanel } from '../components/RequestLogsPanel'
 import { UserInfo } from '../components/UserInfo'
 import '../style/AdminPage.css'
@@ -317,8 +316,6 @@ export function AdminPage() {
 
             </div>
           ) : null}
-
-          {activeTab === 'airports' ? <AirportsPanel /> : null}
 
           {activeTab === 'requestLogs' ? <RequestLogsPanel /> : null}
 

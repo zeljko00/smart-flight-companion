@@ -277,7 +277,7 @@ export function RequestLogsPanel() {
               {items.map((entry) => (
                 <tr key={entry.id}>
                   <td className="request-logs__cell-time">{formatTimestamp(entry.receivedAt)}</td>
-                  <td>{entry.ipAddress}</td>
+                  <td className="request-logs__cell-ip">{entry.ipAddress}</td>
                   <td><span className="request-logs__method">{entry.httpMethod}</span></td>
                   <td className="request-logs__cell-path">{entry.path}</td>
                   <td>

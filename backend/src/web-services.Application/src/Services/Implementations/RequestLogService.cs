@@ -92,7 +92,7 @@ public sealed class RequestLogService : IRequestLogService
                             .FontColor(Colors.Blue.Darken2);
                         var fromText = from.HasValue ? FormatTimestamp(from.Value) : "beginning";
                         var toText = to.HasValue ? FormatTimestamp(to.Value) : "now";
-                        column.Item().Text($"Window (UTC): {fromText} - {toText}");
+                        column.Item().Text($"Time span: {fromText} - {toText}");
 
                         var summary = $"Requests: {totalCount}";
                         if (totalCount > requestLogs.Count)

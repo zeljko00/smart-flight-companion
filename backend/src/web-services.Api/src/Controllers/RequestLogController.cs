@@ -62,6 +62,6 @@ public sealed class RequestLogController : ControllerBase
         var fromLabel = from.HasValue ? from.Value.UtcDateTime.ToString("yyyyMMddTHHmmss") : "start";
         var toLabel = to.HasValue ? to.Value.UtcDateTime.ToString("yyyyMMddTHHmmss") : "now";
 
-        return File(pdfBytes, "application/pdf", $"request-log-{fromLabel}-{toLabel}.pdf");
+        return File(pdfBytes, "application/pdf", $"log-{fromLabel}-{toLabel}.pdf");
     }
 }
