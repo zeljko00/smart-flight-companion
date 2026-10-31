@@ -68,7 +68,7 @@ namespace SmartFlightCompanion.WebServices.Infrastructure.Persistence.Migrations
                     b.HasIndex("IATA")
                         .IsUnique();
 
-                    b.ToTable("Airports");
+                    b.ToTable("Airports", (string)null);
                 });
 
             modelBuilder.Entity("SmartFlightCompanion.WebServices.Infrastructure.Entities.BoardingGuide", b =>
@@ -98,7 +98,7 @@ namespace SmartFlightCompanion.WebServices.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("FlightId");
 
-                    b.ToTable("BoardingGuides");
+                    b.ToTable("BoardingGuides", (string)null);
                 });
 
             modelBuilder.Entity("SmartFlightCompanion.WebServices.Infrastructure.Entities.BoardingPass", b =>
@@ -133,7 +133,7 @@ namespace SmartFlightCompanion.WebServices.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("BoardingPasses");
+                    b.ToTable("BoardingPasses", (string)null);
                 });
 
             modelBuilder.Entity("SmartFlightCompanion.WebServices.Infrastructure.Entities.Comment", b =>
@@ -162,7 +162,7 @@ namespace SmartFlightCompanion.WebServices.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("FlightId");
 
-                    b.ToTable("Comments");
+                    b.ToTable("Comments", (string)null);
                 });
 
             modelBuilder.Entity("SmartFlightCompanion.WebServices.Infrastructure.Entities.Flight", b =>
@@ -173,11 +173,13 @@ namespace SmartFlightCompanion.WebServices.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("Aircraft")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
 
                     b.Property<string>("Airline")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
 
                     b.Property<Guid>("ArrivalAirportId")
                         .HasColumnType("uuid");
@@ -238,7 +240,41 @@ namespace SmartFlightCompanion.WebServices.Infrastructure.Persistence.Migrations
                     b.HasIndex("FlightNumber")
                         .IsUnique();
 
-                    b.ToTable("Flights");
+                    b.ToTable("Flights", (string)null);
+                });
+
+            modelBuilder.Entity("SmartFlightCompanion.WebServices.Infrastructure.Entities.RequestLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("HttpMethod")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("IpAddress")
+                        .IsRequired()
+                        .HasMaxLength(45)
+                        .HasColumnType("character varying(45)");
+
+                    b.Property<string>("Path")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<DateTimeOffset>("ReceivedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("StatusCode")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReceivedAt");
+
+                    b.ToTable("RequestLogs", (string)null);
                 });
 
             modelBuilder.Entity("SmartFlightCompanion.WebServices.Infrastructure.Entities.User", b =>
@@ -288,7 +324,7 @@ namespace SmartFlightCompanion.WebServices.Infrastructure.Persistence.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("SmartFlightCompanion.WebServices.Infrastructure.Entities.BoardingGuide", b =>

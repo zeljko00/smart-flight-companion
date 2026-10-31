@@ -31,7 +31,7 @@ WHERE NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = :'app_username')
 SELECT format('GRANT CONNECT ON DATABASE %I TO %I', :'app_database', :'app_username')
 \gexec
 
-SELECT format('GRANT USAGE ON SCHEMA public TO %I', :'app_username')
+SELECT format('GRANT USAGE, CREATE ON SCHEMA public TO %I', :'app_username')
 \gexec
 
 SELECT format('GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO %I', :'app_username')

@@ -7,4 +7,5 @@ public interface IAirportService
     Task<AirportDto?> GetById(Guid id, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<AirportDto>> GetAll(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<AirportDto>> Search(string query, CancellationToken cancellationToken = default);
+    Task<AirportDto> Create(AirportCreateRequestDto request, CancellationToken cancellationToken = default);
 }

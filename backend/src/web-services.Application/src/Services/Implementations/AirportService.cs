@@ -29,4 +29,10 @@ public class AirportService : IAirportService
         var airports = await _airportRepository.SearchAsync(query, cancellationToken);
         return airports.Select(AirportDto.FromEntity).ToList().AsReadOnly();
     }
+
+    public async Task<AirportDto> Create(AirportCreateRequestDto request, CancellationToken cancellationToken = default)
+    {
+        var airport = await _airportRepository.CreateAsync(request.ToEntity(), cancellationToken);
+        return AirportDto.FromEntity(airport);
+    }
 }

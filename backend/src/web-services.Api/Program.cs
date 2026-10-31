@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
+using SmartFlightCompanion.WebServices.Api.Middleware;
 using SmartFlightCompanion.WebServices.Application.Services;
 using SmartFlightCompanion.WebServices.Infrastructure;
 
@@ -21,13 +23,26 @@ builder.Services.AddScoped<IFlightService, FlightService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IBoardingPassService, BoardingPassService>();
+builder.Services.AddScoped<IRequestLogService, RequestLogService>();
 builder.Services.AddHttpClient<IWeatherService, WeatherService>();
 builder.Services.AddHttpClient<INewsService, NewsService>();
+
+// The backend is only reachable through the reverse proxy, so its forwarded headers are trusted
+// (the proxy appends the real client address to X-Forwarded-For).
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+app.UseForwardedHeaders();
+app.UseMiddleware<RequestLoggingMiddleware>();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())

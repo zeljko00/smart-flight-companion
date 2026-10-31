@@ -1,6 +1,49 @@
+using System.ComponentModel.DataAnnotations;
 using SmartFlightCompanion.WebServices.Infrastructure.Entities;
 
 namespace SmartFlightCompanion.WebServices.Application.Dto;
+
+public sealed class AirportCreateRequestDto
+{
+    [Required, MaxLength(255)]
+    public string? Name { get; set; }
+
+    [Required, RegularExpression(@"^[A-Za-z]{3}$", ErrorMessage = "IATA code must consist of exactly 3 letters.")]
+    public string? IATA { get; set; }
+
+    [Required, MaxLength(50)]
+    public string? City { get; set; }
+
+    [Required, MaxLength(50)]
+    public string? Country { get; set; }
+
+    [Required, MaxLength(255)]
+    public string? Address { get; set; }
+
+    [Required, Range(-90, 90)]
+    public double? Latitude { get; set; }
+
+    [Required, Range(-180, 180)]
+    public double? Longitude { get; set; }
+
+    [MaxLength(2000)]
+    public string? Description { get; set; }
+
+    public Airport ToEntity()
+    {
+        return new Airport
+        {
+            Name = Name!.Trim(),
+            IATA = IATA!.Trim().ToUpperInvariant(),
+            City = City!.Trim(),
+            Country = Country!.Trim(),
+            Address = Address!.Trim(),
+            Latitude = Latitude!.Value,
+            Longitude = Longitude!.Value,
+            Description = Description?.Trim() ?? string.Empty
+        };
+    }
+}
 
 public sealed record AirportSummaryDto(
     string Name,
