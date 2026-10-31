@@ -26,10 +26,40 @@ public sealed class FlightRepository : Repository<Flight>, IFlightRepository
             .Include(flight => flight.DepartureAirport)
             .Include(flight => flight.ArrivalAirport)
             .Where(flight => flight.DepartureTime >= DateTimeOffset.UtcNow)
+            .OrderBy(flight => flight.DepartureTime)
+            .ThenBy(flight => flight.FlightNumber)
             .ToListAsync(cancellationToken);
     }
 
-    public async Task<IReadOnlyList<Flight>> Search(
+    public async Task<PagedResult<Flight>> GetPaged(int? page, int? pageSize, CancellationToken cancellationToken = default)
+    {
+        var now = DateTimeOffset.UtcNow;
+
+        var baseQuery = Context.Flights
+            .AsNoTracking()
+            .Where(flight => flight.DepartureTime >= now);
+
+        var totalCount = await baseQuery.CountAsync(cancellationToken);
+
+        IQueryable<Flight> itemsQuery = baseQuery
+            .Include(flight => flight.DepartureAirport)
+            .Include(flight => flight.ArrivalAirport)
+            .OrderBy(flight => flight.DepartureTime)
+            .ThenBy(flight => flight.FlightNumber);
+
+        if (page.HasValue && pageSize.HasValue)
+        {
+            var skip = (page.Value - 1) * pageSize.Value;
+            itemsQuery = itemsQuery.Skip(skip).Take(pageSize.Value);
+        }
+
+        var items = await itemsQuery
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<Flight>(items, totalCount);
+    }
+
+    public async Task<PagedResult<Flight>> Search(
         string? flightNumber,
         string? departure,
         string? destination,
@@ -37,6 +67,8 @@ public sealed class FlightRepository : Repository<Flight>, IFlightRepository
         string? airline,
         decimal? maxPrice,
         DateTimeOffset? departureTime,
+        int? page,
+        int? pageSize,
         CancellationToken cancellationToken = default)
     {
         var normalizedFlightNumber = NormalizeOrNull(flightNumber);
@@ -47,8 +79,6 @@ public sealed class FlightRepository : Repository<Flight>, IFlightRepository
 
         var query = Context.Flights
             .AsNoTracking()
-            .Include(flight => flight.DepartureAirport)
-            .Include(flight => flight.ArrivalAirport)
             .AsQueryable();
 
         if (normalizedFlightNumber is not null)
@@ -100,7 +130,24 @@ public sealed class FlightRepository : Repository<Flight>, IFlightRepository
             query = query.Where(flight => time.Date ==  flight.ScheduledDepartureTime.Date);
         }
 
-        return await query.ToListAsync(cancellationToken);
+        var totalCount = await query.CountAsync(cancellationToken);
+
+        IQueryable<Flight> itemsQuery = query
+            .Include(flight => flight.DepartureAirport)
+            .Include(flight => flight.ArrivalAirport)
+            .OrderBy(flight => flight.ScheduledDepartureTime)
+            .ThenBy(flight => flight.FlightNumber);
+
+        if (page.HasValue && pageSize.HasValue)
+        {
+            var skip = (page.Value - 1) * pageSize.Value;
+            itemsQuery = itemsQuery.Skip(skip).Take(pageSize.Value);
+        }
+
+        var items = await itemsQuery
+            .ToListAsync(cancellationToken);
+
+        return new PagedResult<Flight>(items, totalCount);
     }
 
     private static string? NormalizeOrNull(string? value)

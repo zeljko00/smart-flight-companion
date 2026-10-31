@@ -5,8 +5,8 @@ namespace SmartFlightCompanion.WebServices.Application.Services;
 public interface IFlightService
 {
     Task<FlightDto?> GetById(Guid id, CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<FlightDto>> GetAll(CancellationToken cancellationToken = default);
-    Task<IReadOnlyList<FlightDto>> Search(
+    Task<PagedResultDto<FlightDto>> GetAll(int? page, int? pageSize, CancellationToken cancellationToken = default);
+    Task<PagedResultDto<FlightDto>> Search(
         string? flightNumber,
         string? departure,
         string? destination,
@@ -14,5 +14,7 @@ public interface IFlightService
         string? airline,
         decimal? maxPrice,
         DateTimeOffset? departureTime,
+        int? page,
+        int? pageSize,
         CancellationToken cancellationToken = default);
 }

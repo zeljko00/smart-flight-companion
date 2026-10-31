@@ -28,13 +28,13 @@ public sealed class FlightService : IFlightService
         return FlightDto.FromEntity(flight) with { SeatsFree = seatsFree }; 
     }
 
-    public async Task<IReadOnlyList<FlightDto>> GetAll(CancellationToken cancellationToken = default)
+    public async Task<PagedResultDto<FlightDto>> GetAll(int? page, int? pageSize, CancellationToken cancellationToken = default)
     {
-        var flights = await _flightRepository.GetAsync(cancellationToken);
+        var flights = await _flightRepository.GetPaged(page, pageSize, cancellationToken);
 
-        var result = new List<FlightDto>(flights.Count);
+        var result = new List<FlightDto>(flights.Items.Count);
 
-        foreach (var flightEntity in flights)
+        foreach (var flightEntity in flights.Items)
         {
             var flight = FlightDto.FromEntity(flightEntity);
             var count = await _boardingPassService.GetCountByFlightId(flight.Id, cancellationToken);
@@ -43,10 +43,21 @@ public sealed class FlightService : IFlightService
             result.Add(flight with { SeatsFree = seatsFree });
         }
 
-        return result.AsReadOnly();
+        var effectivePage = page ?? 1;
+        var effectivePageSize = pageSize ?? Math.Max(1, flights.Items.Count);
+        var hasNextPage = page.HasValue && pageSize.HasValue
+            ? (effectivePage * effectivePageSize) < flights.TotalCount
+            : false;
+
+        return new PagedResultDto<FlightDto>(
+            result.AsReadOnly(),
+            effectivePage,
+            effectivePageSize,
+            flights.TotalCount,
+            hasNextPage);
     }
 
-    public async Task<IReadOnlyList<FlightDto>> Search(
+    public async Task<PagedResultDto<FlightDto>> Search(
         string? flightNumber,
         string? departure,
         string? destination,
@@ -54,6 +65,8 @@ public sealed class FlightService : IFlightService
         string? airline,
         decimal? maxPrice,
         DateTimeOffset? departureTime,
+        int? page,
+        int? pageSize,
         CancellationToken cancellationToken = default)
     {
         var flights = await _flightRepository.Search(
@@ -64,11 +77,13 @@ public sealed class FlightService : IFlightService
             airline,
             maxPrice,
             departureTime,
+            page,
+            pageSize,
             cancellationToken);
 
-        var result = new List<FlightDto>(flights.Count);
+        var result = new List<FlightDto>(flights.Items.Count);
 
-        foreach (var flightEntity in flights)
+        foreach (var flightEntity in flights.Items)
         {
             var flight = FlightDto.FromEntity(flightEntity);
             var count = await _boardingPassService.GetCountByFlightId(flight.Id, cancellationToken);
@@ -77,6 +92,17 @@ public sealed class FlightService : IFlightService
             result.Add(flight with { SeatsFree = seatsFree });
         }
 
-        return result.AsReadOnly();
+        var effectivePage = page ?? 1;
+        var effectivePageSize = pageSize ?? Math.Max(1, flights.Items.Count);
+        var hasNextPage = page.HasValue && pageSize.HasValue
+            ? (effectivePage * effectivePageSize) < flights.TotalCount
+            : false;
+
+        return new PagedResultDto<FlightDto>(
+            result.AsReadOnly(),
+            effectivePage,
+            effectivePageSize,
+            flights.TotalCount,
+            hasNextPage);
     }
 }

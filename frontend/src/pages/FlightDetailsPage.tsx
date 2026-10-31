@@ -46,6 +46,8 @@ type FlightDetailsLocationState = {
     maxPrice: string
     status: string
     isFilterPanelOpen: boolean
+    page?: number
+    pageSize?: number
   }
 }
 
