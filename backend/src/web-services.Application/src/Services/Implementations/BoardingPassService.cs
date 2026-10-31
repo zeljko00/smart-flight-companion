@@ -2,10 +2,13 @@ using SmartFlightCompanion.WebServices.Application.Dto;
 using SmartFlightCompanion.WebServices.Infrastructure.Persistence.Abstractions;
 using SmartFlightCompanion.WebServices.Infrastructure.Entities;
 using SmartFlightCompanion.WebServices.Infrastructure.Mail;
+using Microsoft.Extensions.Configuration;
 using QRCoder;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace SmartFlightCompanion.WebServices.Application.Services;
 
@@ -15,17 +18,77 @@ public sealed class BoardingPassService : IBoardingPassService
     private readonly IUserRepository _userRepository;
     private readonly IFlightRepository _flightRepository;
     private readonly IEmailQueue _emailQueue;
+    private readonly string? _rsaPrivateKeyPem;
+    private readonly string? _rsaPublicKeyPem;
 
     public BoardingPassService(
         IBoardingPassRepository BoardingPassRepository,
         IUserRepository userRepository,
         IFlightRepository flightRepository,
-        IEmailQueue emailQueue)
+        IEmailQueue emailQueue,
+        IConfiguration configuration)
     {
         _BoardingPassRepository = BoardingPassRepository;
         _userRepository = userRepository;
         _flightRepository = flightRepository;
         _emailQueue = emailQueue;
+
+        _rsaPrivateKeyPem = ResolvePemValue(
+            pemPath: configuration["DigitalSignature:PrivateKeyPath"],
+            settingName: "DigitalSignature:PrivateKeyPem");
+
+        _rsaPublicKeyPem = ResolvePemValue(
+            pemPath: configuration["DigitalSignature:PublicKeyPath"],
+            settingName: "DigitalSignature:PublicKeyPem");
+
+        if (string.IsNullOrWhiteSpace(_rsaPrivateKeyPem))
+        {
+            throw new InvalidOperationException("Missing RSA private key. Set DigitalSignature:PrivateKeyPem (or DigitalSignature__PrivateKeyPem) or DigitalSignature:PrivateKeyPath (or DigitalSignature__PrivateKeyPath).");
+        }
+
+        try
+        {
+            using var signingRsa = RSA.Create();
+            signingRsa.ImportFromPem(_rsaPrivateKeyPem);
+        }
+        catch (CryptographicException)
+        {
+            throw new InvalidOperationException("Invalid RSA private key format in DigitalSignature configuration.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(_rsaPublicKeyPem))
+        {
+            try
+            {
+                using var verifyRsa = RSA.Create();
+                verifyRsa.ImportFromPem(_rsaPublicKeyPem);
+            }
+            catch (CryptographicException)
+            {
+                throw new InvalidOperationException("Invalid RSA public key format in DigitalSignature configuration.");
+            }
+        }
+    }
+
+    private static string? ResolvePemValue(string? pemPath, string settingName)
+    {
+        if (!string.IsNullOrWhiteSpace(pemPath))
+        {
+            if (!File.Exists(pemPath))
+            {
+                throw new InvalidOperationException($"Configured key file for {settingName} was not found at path: {pemPath}");
+            }
+
+            var fromFile = File.ReadAllText(pemPath, Encoding.UTF8).Trim();
+            if (string.IsNullOrWhiteSpace(fromFile))
+            {
+                throw new InvalidOperationException($"Configured key file for {settingName} is empty: {pemPath}");
+            }
+
+            return fromFile;
+        }
+
+        return null;
     }
 
     public async Task<BoardingPassDto?> Create(Guid flightId, Guid ownerId, Seat seat, CancellationToken cancellationToken = default)
@@ -74,7 +137,7 @@ public sealed class BoardingPassService : IBoardingPassService
 
         var result = await _BoardingPassRepository.CreateAsync(boardingPass, cancellationToken);
 
-        var qrPayload = BuildQrPayload(result);
+        var qrPayload = BuildSignedQrPayload(result);
         var qrCodePng = GenerateQrCodePng(qrPayload);
         var boardingPassPdf = GenerateBoardingPassPdf(result, qrCodePng);
         var route = $"{result.Flight.DepartureAirport.IATA} -> {result.Flight.ArrivalAirport.IATA}";
@@ -121,10 +184,23 @@ public sealed class BoardingPassService : IBoardingPassService
             return null;
         }
 
-        var qrPayload = BuildQrPayload(boardingPass);
+        var qrPayload = BuildSignedQrPayload(boardingPass);
         var qrCodePng = GenerateQrCodePng(qrPayload);
 
         return GenerateBoardingPassPdf(boardingPass, qrCodePng);
+    }
+
+    private string BuildSignedQrPayload(BoardingPass boardingPass)
+    {
+        var payload = BuildQrPayload(boardingPass);
+        var signature = ComputeSignature(payload);
+
+        return string.Join(
+            '\n',
+            [
+                payload,
+                $"signature:{signature}"
+            ]);
     }
 
     private static string BuildQrPayload(BoardingPass boardingPass)
@@ -140,6 +216,17 @@ public sealed class BoardingPassService : IBoardingPassService
                 $"route:{route}",
                 $"owner:{owner}"
             ]);
+    }
+
+    private string ComputeSignature(string payload)
+    {
+        var payloadBytes = Encoding.UTF8.GetBytes(payload);
+        using var rsa = RSA.Create();
+        var pem = (_rsaPrivateKeyPem ?? string.Empty).Replace("\\n", "\n");
+        rsa.ImportFromPem(pem);
+        var signature = rsa.SignData(payloadBytes, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+
+        return Convert.ToBase64String(signature);
     }
 
     private static byte[] GenerateQrCodePng(string payload)
