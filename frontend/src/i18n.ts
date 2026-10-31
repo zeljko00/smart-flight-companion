@@ -187,6 +187,13 @@ const resources = {
           details: 'Details',
           openDetails: 'Open',
         },
+        pagination: {
+          aria: 'Flight table pagination',
+          previous: 'Previous',
+          next: 'Next',
+          page: 'Page {{page}}',
+          pageSize: 'Rows per page',
+        },
         news: {
           title: 'Travel news',
           listAria: 'Travel news articles',
@@ -483,6 +490,13 @@ const resources = {
           status: 'Status',
           details: 'Detalji',
           openDetails: 'Otvori',
+        },
+        pagination: {
+          aria: 'Paginacija tabele letova',
+          previous: 'Prethodna',
+          next: 'Sledeca',
+          page: 'Strana {{page}}',
+          pageSize: 'Redova po strani',
         },
         news: {
           title: 'Putne novosti',

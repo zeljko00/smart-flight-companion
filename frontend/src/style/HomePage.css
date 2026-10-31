@@ -245,7 +245,7 @@
   color: #fff;
 }
 
-.home-page__button--primary:hover {
+.home-page__button--primary:hover:not(:disabled) {
   background: var(--color-primary-hover);
 }
 
@@ -255,8 +255,16 @@
   color: var(--text-primary);
 }
 
-.home-page__button--secondary:hover {
+.home-page__button--secondary:hover:not(:disabled) {
   background: color-mix(in srgb, var(--bg-elevated) 90%, transparent);
+}
+
+.home-page__button:disabled {
+  cursor: not-allowed;
+  color: color-mix(in srgb, var(--text-secondary) 80%, transparent);
+  border-color: color-mix(in srgb, var(--border-default) 45%, transparent);
+  background: color-mix(in srgb, var(--bg-elevated) 65%, transparent);
+  box-shadow: none;
 }
 
 .home-page__status {
@@ -323,6 +331,46 @@
 
 .home-page__table tbody tr:last-child td {
   border-bottom: 0;
+}
+
+.home-page__pagination {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.home-page__pagination-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  min-width: 6.8rem;
+  text-align: center;
+}
+
+.home-page__pagination-size {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.home-page__pagination-size select {
+  min-height: 2rem;
+  border-radius: 0.62rem;
+  border: 1px solid color-mix(in srgb, var(--border-default) 72%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  color: var(--text-primary);
+  padding: 0 0.55rem;
+}
+
+.home-page__pagination-size select:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--color-primary) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
 }
 
 .home-page__inline-action {

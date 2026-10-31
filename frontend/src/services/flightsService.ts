@@ -103,6 +103,27 @@ export type FlightSearchFilters = {
   maxPrice?: number
 }
 
+export type FlightPaginationParams = {
+  page?: number
+  pageSize?: number
+}
+
+type ApiPagedResponse<TItem> = {
+  items: TItem[]
+  page: number
+  pageSize: number
+  totalCount: number
+  hasNextPage: boolean
+}
+
+export type FlightTablePage = {
+  items: FlightTableRow[]
+  page: number
+  pageSize: number
+  totalCount: number
+  hasNextPage: boolean
+}
+
 function parseDate(value?: string): Date | null {
   if (!value) {
     return null
@@ -190,10 +211,8 @@ function formatDuration(departureAt: Date, arrivalAt: Date): string {
 }
 
 export async function fetchUpcomingFlights(limit = 12): Promise<UpcomingFlight[]> {
-  const nowIso = new Date().toISOString()
-  const flights = await apiRequest<ApiFlight[]>(
-    `/flights/search?arrivalTime=${encodeURIComponent(nowIso)}`,
-  )
+  const response = await apiRequest<ApiPagedResponse<ApiFlight> | ApiFlight[]>('/flights/search')
+  const flights = Array.isArray(response) ? response : response.items
   const now = Date.now()
 
   return flights
@@ -220,8 +239,22 @@ export async function fetchUpcomingFlights(limit = 12): Promise<UpcomingFlight[]
     .slice(0, limit)
 }
 
-export async function fetchAllFlights(filters: FlightSearchFilters = {}): Promise<FlightTableRow[]> {
+export async function fetchAllFlights(
+  filters: FlightSearchFilters = {},
+  pagination: FlightPaginationParams = {},
+): Promise<FlightTablePage> {
   const queryParams = new URLSearchParams()
+  const page =
+    typeof pagination.page === 'number' && Number.isFinite(pagination.page) && pagination.page >= 1
+      ? Math.floor(pagination.page)
+      : 1
+  const pageSize =
+    typeof pagination.pageSize === 'number' && Number.isFinite(pagination.pageSize) && pagination.pageSize >= 1
+      ? Math.floor(pagination.pageSize)
+      : 20
+
+  queryParams.set('page', page.toString())
+  queryParams.set('pageSize', pageSize.toString())
 
   if (filters.airline?.trim()) {
     queryParams.set('airline', filters.airline.trim())
@@ -251,9 +284,9 @@ export async function fetchAllFlights(filters: FlightSearchFilters = {}): Promis
     ? `/flights/search?${queryParams.toString()}`
     : '/flights/search'
 
-  const flights = await apiRequest<ApiFlight[]>(searchPath)
+  const response = await apiRequest<ApiPagedResponse<ApiFlight>>(searchPath)
 
-  return flights
+  const items = response.items
     .map((flight) => {
       const departureAt = parseDate(flight.departureTime) ?? parseDate(flight.scheduledDepartureTime)
 
@@ -284,6 +317,14 @@ export async function fetchAllFlights(filters: FlightSearchFilters = {}): Promis
 
       return a.departureAt.getTime() - b.departureAt.getTime()
     })
+
+  return {
+    items,
+    page: response.page,
+    pageSize: response.pageSize,
+    totalCount: response.totalCount,
+    hasNextPage: response.hasNextPage,
+  }
 }
 
 export async function fetchFlightById(id: string): Promise<FlightDetails> {

@@ -21,11 +21,29 @@ public sealed class FlightsController : ControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(IReadOnlyList<FlightDto>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<IReadOnlyList<FlightDto>>> GetAll(
-        CancellationToken cancellationToken)
+    [ProducesResponseType(typeof(PagedResultDto<FlightDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<PagedResultDto<FlightDto>>> GetAll(
+        CancellationToken cancellationToken,
+        [FromQuery] int? page,
+        [FromQuery] int? pageSize)
     {
-        var flights = await _flightService.GetAll(cancellationToken);
+        if (page.HasValue && page.Value < 1)
+        {
+            return BadRequest("Page must be greater than or equal to 1.");
+        }
+
+        if (pageSize.HasValue && (pageSize.Value < 1))
+        {
+            return BadRequest("Page size must be greater than or equal to 1.");
+        }
+
+        if (!page.HasValue || !pageSize.HasValue)
+        {
+            page = null;
+            pageSize = null;
+        }
+
+        var flights = await _flightService.GetAll(page, pageSize, cancellationToken);
 
         return Ok(flights);
     }
@@ -47,13 +65,32 @@ public sealed class FlightsController : ControllerBase
     }
 
     [HttpGet("search")]
-    [ProducesResponseType(typeof(IReadOnlyList<FlightDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(PagedResultDto<FlightDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<IReadOnlyList<FlightDto>>> Search(
+    public async Task<ActionResult<PagedResultDto<FlightDto>>> Search(
         [FromQuery] SearchFlightsRequest request,
         CancellationToken cancellationToken)
     {
-        var flights = await _flightService.Search(request.FlightNumber, request.Departure, request.Destination, request.Status, request.Airline, request.MaxPrice, request.DepartureTime, cancellationToken);
+        if (request.Page.HasValue && request.Page.Value < 1)
+        {
+            return BadRequest("Page must be greater than or equal to 1.");
+        }
+
+        if (request.PageSize.HasValue && (request.PageSize.Value < 1))
+        {
+            return BadRequest("Page size must be greater than or equal to 1.");
+        }
+
+        var page = request.Page;
+        var pageSize = request.PageSize;
+        
+        if (!page.HasValue || !pageSize.HasValue)
+        {
+            page = null;
+            pageSize = null;
+        }
+
+        var flights = await _flightService.Search(request.FlightNumber, request.Departure, request.Destination, request.Status, request.Airline, request.MaxPrice, request.DepartureTime, page, pageSize, cancellationToken);
 
         return Ok(flights);
     }
@@ -121,4 +158,10 @@ public sealed class SearchFlightsRequest
 
     [FromQuery(Name = "departure")]
     public DateTimeOffset? DepartureTime { get; set; }
+
+    [FromQuery(Name = "page")]
+    public int? Page { get; set; }
+
+    [FromQuery(Name = "pageSize")]
+    public int? PageSize { get; set; }
 }

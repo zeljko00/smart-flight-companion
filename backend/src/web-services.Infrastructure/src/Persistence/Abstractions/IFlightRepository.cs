@@ -4,7 +4,9 @@ namespace SmartFlightCompanion.WebServices.Infrastructure.Persistence.Abstractio
 
 public interface IFlightRepository : IRepository<Flight>
 {
-    Task<IReadOnlyList<Flight>> Search(
+    Task<PagedResult<Flight>> GetPaged(int? page, int? pageSize, CancellationToken cancellationToken = default);
+
+    Task<PagedResult<Flight>> Search(
         string? flightNumber,
         string? departure,
         string? destination,
@@ -12,5 +14,7 @@ public interface IFlightRepository : IRepository<Flight>
         string? airline,
         decimal? maxPrice,
         DateTimeOffset? departureTime,
+        int? page,
+        int? pageSize,
         CancellationToken cancellationToken = default);
 }

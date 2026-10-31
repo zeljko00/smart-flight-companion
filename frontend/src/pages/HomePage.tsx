@@ -28,7 +28,53 @@ type HomeLocationState = {
     maxPrice: string
     status: string
     isFilterPanelOpen: boolean
+    page?: number
+    pageSize?: number
   }
+}
+
+const HOME_PAGINATION_STORAGE_KEY = 'home-pagination'
+
+type HomePaginationState = {
+  page: number
+  pageSize: number
+}
+
+function readSavedPaginationState(): HomePaginationState | null {
+  if (typeof window === 'undefined') {
+    return null
+  }
+
+  try {
+    const raw = window.localStorage.getItem(HOME_PAGINATION_STORAGE_KEY)
+    if (!raw) {
+      return null
+    }
+
+    const parsed = JSON.parse(raw) as Partial<HomePaginationState>
+    const page = Number(parsed.page)
+    const pageSize = Number(parsed.pageSize)
+
+    if (!Number.isInteger(page) || page < 1) {
+      return null
+    }
+
+    if (!Number.isInteger(pageSize) || pageSize < 1 || pageSize > 100) {
+      return null
+    }
+
+    return { page, pageSize }
+  } catch {
+    return null
+  }
+}
+
+function savePaginationState(state: HomePaginationState): void {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.localStorage.setItem(HOME_PAGINATION_STORAGE_KEY, JSON.stringify(state))
 }
 
 function toLocalDateInputValue(date: Date): string {
@@ -163,6 +209,15 @@ export function HomePage() {
   const locationState = (location.state as HomeLocationState | null) ?? null
   const user = locationState?.user ?? null
   const preservedFilters = locationState?.homeFilters
+  const savedPagination = readSavedPaginationState()
+  const initialPage =
+    typeof preservedFilters?.page === 'number' && preservedFilters.page >= 1
+      ? preservedFilters.page
+      : savedPagination?.page ?? 1
+  const initialPageSize =
+    typeof preservedFilters?.pageSize === 'number' && preservedFilters.pageSize >= 1 && preservedFilters.pageSize <= 100
+      ? preservedFilters.pageSize
+      : savedPagination?.pageSize ?? 20
   const statusOptions = ['Scheduled', 'Delayed', 'Departed', 'Arrived', 'Cancelled']
   const initialDepartureFilter = preservedFilters?.departureTime || toLocalDateInputValue(new Date())
 
@@ -175,6 +230,11 @@ export function HomePage() {
   const [maxPriceFilter, setMaxPriceFilter] = useState(preservedFilters?.maxPrice ?? '')
   const [statusFilter, setStatusFilter] = useState(preservedFilters?.status ?? '')
   const [minDepartureTime, setMinDepartureTime] = useState(initialDepartureFilter)
+  const [currentPage, setCurrentPage] = useState(initialPage)
+  const [pageSize, setPageSize] = useState(initialPageSize)
+  const [totalFlights, setTotalFlights] = useState(0)
+  const [hasNextPage, setHasNextPage] = useState(false)
+  const [hasInitializedFlights, setHasInitializedFlights] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [boardingPasses, setBoardingPasses] = useState<UserBoardingPass[]>([])
@@ -186,21 +246,47 @@ export function HomePage() {
   const [newsErrorMessage, setNewsErrorMessage] = useState<string | null>(null)
 
   const loadFlights = useCallback(
-    async (filters: FlightSearchFilters = {}) => {
+    async (filters: FlightSearchFilters = {}, page = 1, size = pageSize) => {
       setIsLoading(true)
       setErrorMessage(null)
 
       try {
-        const result = await fetchAllFlights(filters)
-        setFlights(result)
+        const result = await fetchAllFlights(filters, { page, pageSize: size })
+        setFlights(result.items)
+        setCurrentPage(result.page)
+        setPageSize(result.pageSize)
+        setTotalFlights(result.totalCount)
+        setHasNextPage(result.hasNextPage)
+        savePaginationState({
+          page: result.page,
+          pageSize: result.pageSize,
+        })
       } catch {
         setErrorMessage(t('home.loadError'))
+        setHasNextPage(false)
       } finally {
         setIsLoading(false)
       }
     },
-    [t],
+    [pageSize, t],
   )
+
+  const buildCurrentFilters = useCallback((): FlightSearchFilters => {
+    const parsedMaxPrice = maxPriceFilter.trim() ? Number(maxPriceFilter) : undefined
+    const maxPrice =
+      typeof parsedMaxPrice === 'number' && Number.isFinite(parsedMaxPrice) && parsedMaxPrice >= 0
+        ? parsedMaxPrice
+        : undefined
+
+    return {
+      airline: airlineFilter,
+      start: startFilter,
+      destination: destinationFilter,
+      departureTime: parseLocalDateInput(departureTimeFilter),
+      maxPrice,
+      status: statusFilter,
+    }
+  }, [airlineFilter, departureTimeFilter, destinationFilter, maxPriceFilter, startFilter, statusFilter])
 
   useEffect(() => {
     const refreshMinTime = () => {
@@ -224,6 +310,10 @@ export function HomePage() {
   }, [])
 
   useEffect(() => {
+    if (hasInitializedFlights) {
+      return
+    }
+
     let isDisposed = false
 
     void (async () => {
@@ -238,20 +328,34 @@ export function HomePage() {
             ? maxPriceParsed
             : undefined
 
-        const result = await fetchAllFlights({
-          airline: preservedFilters?.airline || undefined,
-          start: preservedFilters?.start || undefined,
-          destination: preservedFilters?.destination || undefined,
-          departureTime: parseLocalDateInput(initialDepartureFilter),
-          maxPrice,
-          status: preservedFilters?.status || undefined,
-        })
+        const result = await fetchAllFlights(
+          {
+            airline: preservedFilters?.airline || undefined,
+            start: preservedFilters?.start || undefined,
+            destination: preservedFilters?.destination || undefined,
+            departureTime: parseLocalDateInput(initialDepartureFilter),
+            maxPrice,
+            status: preservedFilters?.status || undefined,
+          },
+          { page: initialPage, pageSize: initialPageSize },
+        )
         if (!isDisposed) {
-          setFlights(result)
+          setFlights(result.items)
+          setCurrentPage(result.page)
+          setPageSize(result.pageSize)
+          setTotalFlights(result.totalCount)
+          setHasNextPage(result.hasNextPage)
+          savePaginationState({
+            page: result.page,
+            pageSize: result.pageSize,
+          })
+          setHasInitializedFlights(true)
         }
       } catch {
         if (!isDisposed) {
           setErrorMessage(t('home.loadError'))
+          setHasNextPage(false)
+          setHasInitializedFlights(true)
         }
       } finally {
         if (!isDisposed) {
@@ -263,7 +367,7 @@ export function HomePage() {
     return () => {
       isDisposed = true
     }
-  }, [initialDepartureFilter, preservedFilters, t])
+  }, [hasInitializedFlights, initialDepartureFilter, initialPage, initialPageSize, preservedFilters, t])
 
   useEffect(() => {
     if (!user?.id) {
@@ -344,6 +448,8 @@ export function HomePage() {
           maxPrice: maxPriceFilter,
           status: statusFilter,
           isFilterPanelOpen,
+          page: currentPage,
+          pageSize,
         },
       },
     })
@@ -366,7 +472,7 @@ export function HomePage() {
       departureTime,
       maxPrice,
       status: statusFilter,
-    })
+    }, 1, pageSize)
   }
 
   const handleFilterReset = async () => {
@@ -378,8 +484,38 @@ export function HomePage() {
     setMinDepartureTime(nowValue)
     setMaxPriceFilter('')
     setStatusFilter('')
-    await loadFlights({ departureTime: parseLocalDateInput(nowValue) })
+    await loadFlights({ departureTime: parseLocalDateInput(nowValue) }, 1, pageSize)
   }
+
+  const handlePreviousPage = async () => {
+    if (currentPage <= 1 || isLoading) {
+      return
+    }
+
+    await loadFlights(buildCurrentFilters(), currentPage - 1, pageSize)
+  }
+
+  const handleNextPage = async () => {
+    if (!hasNextPage || isLoading) {
+      return
+    }
+
+    await loadFlights(buildCurrentFilters(), currentPage + 1, pageSize)
+  }
+
+  const handlePageSizeChange = async (value: string) => {
+    const parsed = Number(value)
+    if (!Number.isInteger(parsed) || parsed < 1) {
+      return
+    }
+
+    await loadFlights(buildCurrentFilters(), 1, parsed)
+  }
+
+  const canGoNextPage = !isLoading
+    && flights.length > 0
+    && hasNextPage
+    && (currentPage * pageSize) < totalFlights
 
   const formatDateTime = (value: string) => {
     const parsedDate = new Date(value)
@@ -459,7 +595,7 @@ export function HomePage() {
               <p>{t('home.subtitle')}</p>
               <button
                 type="button"
-                className="home-page__filter-toggle"
+                className="home-page__filterbackend/secrets/qr-signing/signing-cert.pem backend/secrets/qr-signing/signing-cert.escaped.txt backend/secrets/qr-signing/public.pem backend/secrets/qr-signing/public.escaped.txt backend/secrets/qr-signing/private.pem backend/secrets/qr-signing/private.escaped.txt-toggle"
                 onClick={() => setIsFilterPanelOpen((currentValue) => !currentValue)}
                 aria-expanded={isFilterPanelOpen}
                 aria-controls="home-page-filter-panel"
@@ -618,6 +754,53 @@ export function HomePage() {
                 </tbody>
               </table>
             </section>
+          ) : null}
+
+          {!errorMessage ? (
+            <div className="home-page__pagination" aria-label={t('home.pagination.aria')}>
+              <button
+                type="button"
+                className="home-page__button home-page__button--secondary"
+                onClick={() => {
+                  void handlePreviousPage()
+                }}
+                disabled={isLoading || currentPage <= 1}
+              >
+                {t('home.pagination.previous')}
+              </button>
+
+              <span className="home-page__pagination-label">
+                {t('home.pagination.page', { page: currentPage })}
+              </span>
+
+              <button
+                type="button"
+                className="home-page__button home-page__button--secondary"
+                onClick={() => {
+                  void handleNextPage()
+                }}
+                disabled={!canGoNextPage}
+              >
+                {t('home.pagination.next')}
+              </button>
+
+              <label className="home-page__pagination-size">
+                <span>{t('home.pagination.pageSize')}</span>
+                <select
+                  value={pageSize}
+                  onChange={(event) => {
+                    void handlePageSizeChange(event.target.value)
+                  }}
+                  disabled={isLoading}
+                >
+                  {[2, 5, 10, 20, 50].map((sizeOption) => (
+                    <option key={sizeOption} value={sizeOption}>
+                      {sizeOption}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
           ) : null}
 
           <section className="home-page__news-section" aria-label={t('home.news.listAria')}>
