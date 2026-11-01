@@ -8,11 +8,12 @@ import { usersService } from '../services/usersService'
 import { AuthHeader } from '../components/AuthHeader'
 import { AirportsPanel } from '../components/AirportsPanel'
 import { FlightsPanel, type FlightsViewState } from '../components/FlightsPanel'
+import { CommentsPanel } from '../components/CommentsPanel'
 import { RequestLogsPanel } from '../components/RequestLogsPanel'
 import { UserInfo } from '../components/UserInfo'
 import '../style/AdminPage.css'
 
-type AdminTab = 'users' | 'airports' | 'flights' | 'requestLogs' | 'operations' | 'settings'
+type AdminTab = 'users' | 'airports' | 'flights' | 'comments' | 'requestLogs' | 'operations' | 'settings'
 type UserAction = 'authorize' | 'block' | null
 type AdminLocationState = {
   adminUser?: UserDto
@@ -279,6 +280,13 @@ export function AdminPage() {
             </button>
             <button
               type="button"
+              className={`admin-tabs__tab ${activeTab === 'comments' ? 'admin-tabs__tab--active' : ''}`}
+              onClick={() => setActiveTab('comments')}
+            >
+              <span>{t('admin.tabs.comments')}</span>
+            </button>
+            <button
+              type="button"
               className={`admin-tabs__tab ${activeTab === 'requestLogs' ? 'admin-tabs__tab--active' : ''}`}
               onClick={() => setActiveTab('requestLogs')}
             >
@@ -345,6 +353,8 @@ export function AdminPage() {
           {activeTab === 'flights' ? (
             <FlightsPanel initialView={locationState?.flightsView} onOpenFlight={handleOpenFlight} />
           ) : null}
+
+          {activeTab === 'comments' ? <CommentsPanel /> : null}
 
           {activeTab === 'requestLogs' ? <RequestLogsPanel /> : null}
 
