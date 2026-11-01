@@ -20,6 +20,20 @@ services:
       - sfc-data-network
     restart: unless-stopped
 
+  storage:
+    image: chainguard/minio:latest
+    container_name: storage
+    command: server /data --console-address ":9001"
+    env_file:
+      - ../storage/config/.env
+    ports:
+      - "9001:9001"
+    volumes:
+      - minio_data:/dataB
+    networks:
+      - sfc-internal-network
+    restart: unless-stopped
+
   backend:
     build:
       context: ../backend
@@ -42,6 +56,7 @@ services:
     depends_on:
       - database
       - cache
+      - storage
     restart: unless-stopped
 
   payment-gateway:
@@ -61,6 +76,8 @@ services:
       - /app/node_modules
     networks:
       - sfc-internal-network
+    depends_on:
+      - backend
     restart: unless-stopped
 
   proxy:
@@ -99,6 +116,7 @@ services:
 volumes:
   postgres_data:
   redis_data:
+  minio_data:
   pgadmin_data:
   nuget-cache:
   api-obj:
