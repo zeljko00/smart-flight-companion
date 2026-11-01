@@ -17,9 +17,6 @@ public sealed class AirportCreateRequestDto
     [Required, MaxLength(50)]
     public string? Country { get; set; }
 
-    [Required, MaxLength(255)]
-    public string? Address { get; set; }
-
     [Required, Range(-90, 90)]
     public double? Latitude { get; set; }
 
@@ -29,7 +26,8 @@ public sealed class AirportCreateRequestDto
     [MaxLength(2000)]
     public string? Description { get; set; }
 
-    public Airport ToEntity()
+    /// <summary>The address is not part of the request; it is resolved from the coordinates.</summary>
+    public Airport ToEntity(string address)
     {
         return new Airport
         {
@@ -37,7 +35,7 @@ public sealed class AirportCreateRequestDto
             IATA = IATA!.Trim().ToUpperInvariant(),
             City = City!.Trim(),
             Country = Country!.Trim(),
-            Address = Address!.Trim(),
+            Address = address,
             Latitude = Latitude!.Value,
             Longitude = Longitude!.Value,
             Description = Description?.Trim() ?? string.Empty

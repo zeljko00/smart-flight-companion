@@ -6,10 +6,12 @@ namespace SmartFlightCompanion.WebServices.Application.Services;
 public class AirportService : IAirportService
 {
     private readonly IAirportRepository _airportRepository;
+    private readonly IGeocodingService _geocodingService;
 
-    public AirportService(IAirportRepository airportRepository)
+    public AirportService(IAirportRepository airportRepository, IGeocodingService geocodingService)
     {
         _airportRepository = airportRepository;
+        _geocodingService = geocodingService;
     }
 
     public async Task<AirportDto?> GetById(Guid id, CancellationToken cancellationToken = default)
@@ -32,7 +34,14 @@ public class AirportService : IAirportService
 
     public async Task<AirportDto> Create(AirportCreateRequestDto request, CancellationToken cancellationToken = default)
     {
-        var airport = await _airportRepository.CreateAsync(request.ToEntity(), cancellationToken);
+        var address = await _geocodingService.ReverseGeocode(
+                request.Latitude!.Value,
+                request.Longitude!.Value,
+                cancellationToken)
+            ?? throw new AddressResolutionException(
+                "Could not determine an address for the selected location. Choose another point or try again later.");
+
+        var airport = await _airportRepository.CreateAsync(request.ToEntity(address), cancellationToken);
         return AirportDto.FromEntity(airport);
     }
 }

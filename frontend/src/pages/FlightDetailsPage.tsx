@@ -38,6 +38,10 @@ import '../style/FlightDetailsPage.css'
 
 type FlightDetailsLocationState = {
   user?: UserDto
+  returnTo?: {
+    path: string
+    state?: unknown
+  }
   homeFilters?: {
     airline: string
     start: string
@@ -169,6 +173,8 @@ export function FlightDetailsPage() {
   const { flightId } = useParams<{ flightId: string }>()
   const locationState = (location.state as FlightDetailsLocationState | null) ?? null
   const user = locationState?.user ?? null
+  const isAdminView =
+    user?.role.toLowerCase() === 'admin' || (locationState?.returnTo?.path.startsWith('/admin') ?? false)
   const homeFilters = locationState?.homeFilters
 
   const [flight, setFlight] = useState<FlightDetails | null>(null)
@@ -230,7 +236,7 @@ export function FlightDetailsPage() {
   }, [flightId, t])
 
   useEffect(() => {
-    if (!flightId) {
+    if (!flightId || isAdminView) {
       setComments([])
       setCommentsErrorMessage(null)
       setIsCommentsLoading(false)
@@ -262,9 +268,14 @@ export function FlightDetailsPage() {
     return () => {
       isDisposed = true
     }
-  }, [flightId, t])
+  }, [flightId, isAdminView, t])
 
   const handleBack = () => {
+    if (locationState?.returnTo) {
+      navigate(locationState.returnTo.path, { state: locationState.returnTo.state })
+      return
+    }
+
     navigate('/home', {
       state: {
         user,
@@ -488,7 +499,7 @@ export function FlightDetailsPage() {
     : null
 
   useEffect(() => {
-    if (arrivalLatitude === null || arrivalLongitude === null) {
+    if (isAdminView || arrivalLatitude === null || arrivalLongitude === null) {
       setWeatherForecast([])
       setIsWeatherLoading(false)
       setWeatherErrorMessage(null)
@@ -527,7 +538,7 @@ export function FlightDetailsPage() {
     return () => {
       isDisposed = true
     }
-  }, [arrivalLatitude, arrivalLongitude, t])
+  }, [arrivalLatitude, arrivalLongitude, isAdminView, t])
 
   return (
     <main className="flight-details-page">
@@ -632,13 +643,29 @@ export function FlightDetailsPage() {
 
                 <article className="flight-details-page__card">
                   <h3>{t('flightDetails.sections.schedule')}</h3>
-                  <dl>
-                    <DetailField label={t('flightDetails.fields.scheduledDeparture')} value={flight.scheduledDepartureLabel} />
-                    <DetailField label={t('flightDetails.fields.scheduledArrival')} value={flight.scheduledArrivalLabel} />
-                    <DetailField label={t('flightDetails.fields.departure')} value={flight.departureLabel} />
-                    <DetailField label={t('flightDetails.fields.arrival')} value={flight.arrivalLabel} />
+                  <table className="flight-details-page__schedule">
+                    <thead>
+                      <tr>
+                        <td />
+                        <th scope="col">{t('flightDetails.fields.scheduled')}</th>
+                        <th scope="col">{t('flightDetails.fields.actual')}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <th scope="row">{t('flightDetails.fields.departure')}</th>
+                        <td>{flight.scheduledDepartureLabel}</td>
+                        <td>{flight.departureLabel}</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">{t('flightDetails.fields.arrival')}</th>
+                        <td>{flight.scheduledArrivalLabel}</td>
+                        <td>{flight.arrivalLabel}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <dl className="flight-details-page__schedule-extra">
                     <DetailField label={t('flightDetails.fields.duration')} value={flight.durationLabel} />
-
                   </dl>
                 </article>
 
@@ -668,6 +695,8 @@ export function FlightDetailsPage() {
                   </dl>
                 </article>
 
+                {!isAdminView ? (
+                  <>
                 <article className="flight-details-page__card flight-details-page__card--weather">
                   <h3>{t('flightDetails.sections.weather')}</h3>
 
@@ -897,6 +926,8 @@ export function FlightDetailsPage() {
                     </button>
                   </form>
                 </article>
+                  </>
+                ) : null}
               </section>
             </div>
           ) : null}

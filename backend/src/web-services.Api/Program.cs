@@ -26,6 +26,14 @@ builder.Services.AddScoped<IBoardingPassService, BoardingPassService>();
 builder.Services.AddScoped<IRequestLogService, RequestLogService>();
 builder.Services.AddHttpClient<IWeatherService, WeatherService>();
 builder.Services.AddHttpClient<INewsService, NewsService>();
+builder.Services.AddHttpClient<IGeocodingService, NominatimGeocodingService>(client =>
+{
+    var geocoding = builder.Configuration.GetSection("Geocoding");
+    client.BaseAddress = new Uri(geocoding["BaseUrl"] ?? "https://nominatim.openstreetmap.org/");
+    // Nominatim rejects anonymous clients; the User-Agent must identify the application.
+    client.DefaultRequestHeaders.UserAgent.ParseAdd(geocoding["UserAgent"] ?? "SmartFlightCompanion/1.0");
+    client.Timeout = TimeSpan.FromSeconds(10);
+});
 
 // The backend is only reachable through the reverse proxy, so its forwarded headers are trusted
 // (the proxy appends the real client address to X-Forwarded-For).

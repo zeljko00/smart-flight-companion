@@ -19,6 +19,18 @@ public sealed class FlightRepository : Repository<Flight>, IFlightRepository
             .FirstOrDefaultAsync(flight => flight.Id == id, cancellationToken);
     }
 
+    public override async Task UpdateAsync(Flight flight, CancellationToken cancellationToken = default)
+    {
+        // A tracked flight (e.g. loaded via GetByIdAsync) is saved through change tracking, so the
+        // related airports are not marked as modified. Only detached flights need an explicit Update.
+        if (Context.Entry(flight).State == EntityState.Detached)
+        {
+            Set.Update(flight);
+        }
+
+        await SaveChangesAsync(cancellationToken);
+    }
+
     public override async Task<IReadOnlyList<Flight>> GetAsync(CancellationToken cancellationToken = default)
     {
         return await Context.Flights

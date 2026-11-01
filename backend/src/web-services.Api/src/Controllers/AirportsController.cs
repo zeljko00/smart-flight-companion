@@ -67,6 +67,7 @@ public sealed class AirportsController : ControllerBase
     [ProducesResponseType(typeof(AirportDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
     public async Task<ActionResult<AirportDto>> Create(
         [FromBody] AirportCreateRequestDto request,
         CancellationToken cancellationToken)
@@ -79,6 +80,10 @@ public sealed class AirportsController : ControllerBase
         catch (DuplicateResourceException)
         {
             return Conflict("An airport with this IATA code already exists.");
+        }
+        catch (AddressResolutionException exception)
+        {
+            return UnprocessableEntity(exception.Message);
         }
     }
 }

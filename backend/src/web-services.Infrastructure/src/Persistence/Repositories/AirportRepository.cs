@@ -30,6 +30,20 @@ public sealed class AirportRepository : Repository<Airport>, IAirportRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<Airport?> GetByIataAsync(string iata, CancellationToken cancellationToken = default)
+    {
+        var normalizedIata = Normalize(iata);
+
+        if (normalizedIata is null)
+        {
+            return null;
+        }
+
+        // Tracked on purpose: the result is assigned to a Flight navigation property.
+        return await Context.Airports
+            .FirstOrDefaultAsync(airport => airport.IATA == normalizedIata, cancellationToken);
+    }
+
     private static string? Normalize(string value)
     {
         return string.IsNullOrWhiteSpace(value)

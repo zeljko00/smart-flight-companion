@@ -1,0 +1,439 @@
+.flights {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.flights__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.flights__filters,
+.flights__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.flights__search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.3rem;
+  min-width: 12rem;
+  padding: 0 0.7rem;
+  border-radius: 0.68rem;
+  border: 1px solid color-mix(in srgb, var(--border-default) 72%, transparent);
+  background: color-mix(in srgb, var(--auth-input-bg) 92%, transparent);
+  color: var(--text-secondary);
+}
+
+.flights__search--short {
+  min-width: 9rem;
+  max-width: 11rem;
+}
+
+.flights__search:focus-within {
+  border-color: color-mix(in srgb, var(--color-primary) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
+}
+
+.flights__search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+}
+
+.flights__select,
+.flights__field input,
+.flights__field select {
+  min-height: 2.3rem;
+  border-radius: 0.68rem;
+  border: 1px solid color-mix(in srgb, var(--border-default) 72%, transparent);
+  background: color-mix(in srgb, var(--auth-input-bg) 92%, transparent);
+  color: var(--text-primary);
+  padding: 0 0.62rem;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+}
+
+.flights__field select {
+  width: 100%;
+  min-width: 0;
+  text-overflow: ellipsis;
+}
+
+.flights__select:focus,
+.flights__field input:focus,
+.flights__field select:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--color-primary) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
+}
+
+.flights__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.38rem;
+  min-height: 2.3rem;
+  border-radius: 0.7rem;
+  border: 1px solid transparent;
+  padding: 0 0.86rem;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.flights__button:focus-visible,
+.flights__icon-button:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+  outline-offset: 2px;
+}
+
+.flights__button--primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.flights__button--primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.flights__button--secondary {
+  border-color: color-mix(in srgb, var(--border-default) 80%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 90%, transparent);
+  color: var(--text-primary);
+}
+
+.flights__button--secondary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--bg-elevated) 90%, transparent);
+}
+
+.flights__button--ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.flights__button--ghost:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--bg-elevated) 90%, transparent);
+}
+
+.flights__button:disabled,
+.flights__icon-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.flights__icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--border-default) 80%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 90%, transparent);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.flights__icon-button:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--bg-elevated) 90%, transparent);
+}
+
+.flights__spinner {
+  animation: flights-spin 0.8s linear infinite;
+}
+
+.flights__form {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--border-default) 72%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--bg-elevated) 93%, transparent);
+}
+
+.flights__form h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.flights__fieldset {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.flights__fieldset legend {
+  padding: 0;
+  margin-bottom: 0.5rem;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+.flights__form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.flights__form-grid--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.flights__form-grid--four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.flights__field {
+  display: grid;
+  gap: 0.24rem;
+  min-width: 0;
+}
+
+.flights__field span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-secondary);
+}
+
+.flights__hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.flights__hint--error {
+  color: var(--color-error);
+}
+
+.flights__form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.flights__message {
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--bg-elevated) 88%, transparent);
+}
+
+.flights__message--error {
+  color: var(--color-error);
+  border: 1px solid color-mix(in srgb, var(--color-error) 24%, transparent);
+  background: color-mix(in srgb, var(--color-error) 10%, transparent);
+}
+
+.flights__message--success {
+  color: var(--color-success);
+  border: 1px solid color-mix(in srgb, var(--color-success) 24%, transparent);
+  background: color-mix(in srgb, var(--color-success) 10%, transparent);
+}
+
+.flights__table-wrap {
+  border: 1px solid color-mix(in srgb, var(--border-default) 72%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--bg-elevated) 93%, transparent);
+  overflow: auto;
+  transition: opacity 160ms ease;
+}
+
+.flights__table-wrap--loading {
+  opacity: 0.6;
+}
+
+.flights__table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: collapse;
+}
+
+.flights__table thead th {
+  text-align: left;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding: 0.72rem 0.85rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-default) 72%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 68%, transparent);
+}
+
+.flights__row {
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.flights__row:hover {
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+}
+
+.flights__row:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--color-primary) 52%, transparent);
+  outline-offset: -2px;
+  background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+}
+
+.flights__table tbody td {
+  padding: 0.62rem 0.85rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-default) 64%, transparent);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+
+.flights__table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.flights__number {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.flights__route,
+.flights__nowrap {
+  white-space: nowrap;
+}
+
+.flights__cell-actions {
+  text-align: right;
+}
+
+.flights__status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.3rem;
+  padding: 0.05rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.flights__status--success {
+  color: var(--color-success);
+  border-color: color-mix(in srgb, var(--color-success) 28%, transparent);
+  background: color-mix(in srgb, var(--color-success) 10%, transparent);
+}
+
+.flights__status--warning {
+  color: var(--color-warning);
+  border-color: color-mix(in srgb, var(--color-warning) 28%, transparent);
+  background: color-mix(in srgb, var(--color-warning) 10%, transparent);
+}
+
+.flights__status--error {
+  color: var(--color-error);
+  border-color: color-mix(in srgb, var(--color-error) 28%, transparent);
+  background: color-mix(in srgb, var(--color-error) 10%, transparent);
+}
+
+.flights__status--neutral {
+  color: var(--text-secondary);
+  border-color: color-mix(in srgb, var(--border-default) 80%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 80%, transparent);
+}
+
+.flights__pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.flights__pagination-label {
+  min-width: 6.8rem;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.flights__total {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.flights__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@keyframes flights-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 900px) {
+  .flights__form-grid,
+  .flights__form-grid--four {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .flights__toolbar,
+  .flights__filters,
+  .flights__actions {
+    width: 100%;
+  }
+
+  .flights__search,
+  .flights__search--short,
+  .flights__select {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+
+  .flights__actions .flights__button {
+    flex: 1 1 0;
+  }
+
+  .flights__form-grid,
+  .flights__form-grid--two,
+  .flights__form-grid--four {
+    grid-template-columns: 1fr;
+  }
+}
