@@ -28,6 +28,7 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<ICommentRepository, CommentRepository>();
         services.AddScoped<IBoardingPassRepository, BoardingPassRepository>();
+        services.AddScoped<IRequestLogRepository, RequestLogRepository>();
 
 
         services.Configure<SmtpOptions>(configuration.GetSection(SmtpOptions.SectionName));

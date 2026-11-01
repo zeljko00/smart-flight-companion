@@ -6,10 +6,11 @@ import { ApiError } from '../services/apiClient'
 import type { UserDto } from '../services/authService'
 import { usersService } from '../services/usersService'
 import { AuthHeader } from '../components/AuthHeader'
+import { RequestLogsPanel } from '../components/RequestLogsPanel'
 import { UserInfo } from '../components/UserInfo'
 import '../style/AdminPage.css'
 
-type AdminTab = 'users' | 'operations' | 'settings'
+type AdminTab = 'users' | 'airports' | 'requestLogs' | 'operations' | 'settings'
 type UserAction = 'authorize' | 'block' | null
 type AdminLocationState = {
   adminUser?: UserDto
@@ -248,6 +249,20 @@ export function AdminPage() {
             </button>
             <button
               type="button"
+              className={`admin-tabs__tab ${activeTab === 'airports' ? 'admin-tabs__tab--active' : ''}`}
+              onClick={() => setActiveTab('airports')}
+            >
+              <span>{t('admin.tabs.airports')}</span>
+            </button>
+            <button
+              type="button"
+              className={`admin-tabs__tab ${activeTab === 'requestLogs' ? 'admin-tabs__tab--active' : ''}`}
+              onClick={() => setActiveTab('requestLogs')}
+            >
+              <span>{t('admin.tabs.requestLogs')}</span>
+            </button>
+            <button
+              type="button"
               className={`admin-tabs__tab ${activeTab === 'operations' ? 'admin-tabs__tab--active' : ''}`}
               onClick={() => setActiveTab('operations')}
             >
@@ -264,15 +279,15 @@ export function AdminPage() {
             </button>
           </nav>
 
-          {isLoading ? <p className="admin-page__status">{t('admin.loading')}</p> : null}
+          {activeTab === 'users' && isLoading ? <p className="admin-page__status">{t('admin.loading')}</p> : null}
 
-          {!isLoading && errorMessage ? (
+          {activeTab === 'users' && !isLoading && errorMessage ? (
             <p className="admin-page__status admin-page__status--error" role="alert">
               {errorMessage}
             </p>
           ) : null}
 
-          {!isLoading && !errorMessage && noticeMessage ? (
+          {activeTab === 'users' && !isLoading && !errorMessage && noticeMessage ? (
             <p className="admin-page__status admin-page__status--success">{noticeMessage}</p>
           ) : null}
 
@@ -302,7 +317,9 @@ export function AdminPage() {
             </div>
           ) : null}
 
-          {!isLoading && !errorMessage && activeTab !== 'users' ? (
+          {activeTab === 'requestLogs' ? <RequestLogsPanel /> : null}
+
+          {!isLoading && !errorMessage && (activeTab === 'operations' || activeTab === 'settings') ? (
             <p className="admin-page__status">{t('admin.comingSoon')}</p>
           ) : null}
         </article>

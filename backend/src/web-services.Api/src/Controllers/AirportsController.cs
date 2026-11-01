@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using SmartFlightCompanion.WebServices.Application.Dto;
 using SmartFlightCompanion.WebServices.Application.Services;
+using SmartFlightCompanion.WebServices.Infrastructure.Persistence;
 
 namespace SmartFlightCompanion.WebServices.Api.Controllers;
 
@@ -60,6 +61,25 @@ public sealed class AirportsController : ControllerBase
         }
 
         return Ok(airports);
+    }
+
+    [HttpPost]
+    [ProducesResponseType(typeof(AirportDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<AirportDto>> Create(
+        [FromBody] AirportCreateRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var airport = await _airportService.Create(request, cancellationToken);
+            return CreatedAtAction(nameof(GetById), new { id = airport.Id }, airport);
+        }
+        catch (DuplicateResourceException)
+        {
+            return Conflict("An airport with this IATA code already exists.");
+        }
     }
 }
 

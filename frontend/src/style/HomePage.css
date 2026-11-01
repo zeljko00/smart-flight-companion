@@ -348,6 +348,11 @@
   text-align: center;
 }
 
+.home-page__pagination-total {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
 .home-page__pagination-size {
   margin-left: auto;
   display: inline-flex;

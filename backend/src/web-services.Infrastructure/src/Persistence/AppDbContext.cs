@@ -16,6 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<BoardingGuide> BoardingGuides => Set<BoardingGuide>();
     public DbSet<BoardingPass> BoardingPasses => Set<BoardingPass>();
     public DbSet<Comment> Comments => Set<Comment>();
+    public DbSet<RequestLog> RequestLogs => Set<RequestLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -70,6 +71,14 @@ public class AppDbContext : DbContext
             entity.HasOne(boardingGuide => boardingGuide.Flight)
                 .WithMany()
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<RequestLog>(entity =>
+        {
+            entity.Property(requestLog => requestLog.IpAddress).HasMaxLength(RequestLog.MaxIpAddressLength);
+            entity.Property(requestLog => requestLog.HttpMethod).HasMaxLength(RequestLog.MaxMethodLength);
+            entity.Property(requestLog => requestLog.Path).HasMaxLength(RequestLog.MaxPathLength);
+            entity.HasIndex(requestLog => requestLog.ReceivedAt);
         });
     }
 }

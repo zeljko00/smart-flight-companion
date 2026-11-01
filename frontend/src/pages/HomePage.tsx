@@ -516,6 +516,7 @@ export function HomePage() {
     && flights.length > 0
     && hasNextPage
     && (currentPage * pageSize) < totalFlights
+  const totalPages = Math.max(1, Math.ceil(totalFlights / pageSize))
 
   const formatDateTime = (value: string) => {
     const parsedDate = new Date(value)
@@ -769,8 +770,8 @@ export function HomePage() {
                 {t('home.pagination.previous')}
               </button>
 
-              <span className="home-page__pagination-label">
-                {t('home.pagination.page', { page: currentPage })}
+              <span className="home-page__pagination-label" aria-live="polite">
+                {t('home.pagination.page', { page: currentPage, total: totalPages })}
               </span>
 
               <button
@@ -783,6 +784,10 @@ export function HomePage() {
               >
                 {t('home.pagination.next')}
               </button>
+
+              <span className="home-page__pagination-total">
+                {t('home.pagination.total', { count: totalFlights })}
+              </span>
 
               <label className="home-page__pagination-size">
                 <span>{t('home.pagination.pageSize')}</span>
