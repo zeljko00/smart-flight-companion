@@ -17,4 +17,8 @@ public interface IFlightService
         int? page,
         int? pageSize,
         CancellationToken cancellationToken = default);
+
+    Task<FlightDto> Create(FlightRequestDto request, CancellationToken cancellationToken = default);
+
+    Task<FlightDto?> Update(Guid id, FlightRequestDto request, CancellationToken cancellationToken = default);
 }

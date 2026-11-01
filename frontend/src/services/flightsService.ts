@@ -108,6 +108,36 @@ export type FlightPaginationParams = {
   pageSize?: number
 }
 
+export const FLIGHT_STATUS_OPTIONS = ['Scheduled', 'Delayed', 'Departed', 'Arrived', 'Cancelled'] as const
+
+// Payload accepted by POST /flights and PUT /flights/{id}. Times are ISO-8601 strings.
+export type FlightRequest = {
+  flightNumber: string
+  departureAirportIata: string
+  arrivalAirportIata: string
+  status: string
+  terminal: number
+  gate: string
+  airline: string
+  aircraft: string
+  seatCapacity: number
+  scheduledDepartureTime: string
+  scheduledArrivalTime: string
+  departureTime?: string
+  arrivalTime?: string
+  economyPrice: number | null
+  premiumEconomyPrice: number | null
+  businessPrice: number | null
+  firstClassPrice: number | null
+}
+
+// Raw flight values (not display labels) used to prefill the edit form.
+export type FlightEditData = FlightRequest & {
+  id: string
+  departureTime: string
+  arrivalTime: string
+}
+
 type ApiPagedResponse<TItem> = {
   items: TItem[]
   page: number
@@ -191,6 +221,33 @@ function priceLabel(value?: number | null): string {
   }
 
   return formatPrice(value)
+}
+
+function priceValue(value?: number | null): number | null {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : null
+}
+
+function toEditData(flight: ApiFlight): FlightEditData {
+  return {
+    id: flight.id,
+    flightNumber: flight.flightNumber || flight.fligtNumber || '',
+    departureAirportIata: flight.departureAirport?.iata ?? '',
+    arrivalAirportIata: flight.arrivalAirport?.iata ?? '',
+    status: flight.status || 'Scheduled',
+    terminal: typeof flight.terminal === 'number' ? flight.terminal : 0,
+    gate: flight.gate ?? '',
+    airline: flight.airline ?? '',
+    aircraft: flight.aircraft ?? '',
+    seatCapacity: typeof flight.seatCapacity === 'number' ? flight.seatCapacity : 0,
+    scheduledDepartureTime: flight.scheduledDepartureTime ?? '',
+    scheduledArrivalTime: flight.scheduledArrivalTime ?? '',
+    departureTime: flight.departureTime ?? '',
+    arrivalTime: flight.arrivalTime ?? '',
+    economyPrice: priceValue(flight.economyPrice),
+    premiumEconomyPrice: priceValue(flight.premiumEconomyPrice),
+    businessPrice: priceValue(flight.businessPrice),
+    firstClassPrice: priceValue(flight.firstClassPrice),
+  }
 }
 
 function formatDuration(departureAt: Date, arrivalAt: Date): string {
@@ -383,4 +440,28 @@ export async function fetchFlightById(id: string): Promise<FlightDetails> {
     businessPriceLabel: priceLabel(flight.businessPrice),
     firstClassPriceLabel: priceLabel(flight.firstClassPrice),
   }
+}
+
+export async function fetchFlightForEdit(id: string): Promise<FlightEditData> {
+  const flight = await apiRequest<ApiFlight>(`/flights/${encodeURIComponent(id)}`)
+
+  return toEditData(flight)
+}
+
+export async function createFlight(request: FlightRequest): Promise<FlightEditData> {
+  const flight = await apiRequest<ApiFlight>('/flights', {
+    method: 'POST',
+    body: request,
+  })
+
+  return toEditData(flight)
+}
+
+export async function updateFlight(id: string, request: FlightRequest): Promise<FlightEditData> {
+  const flight = await apiRequest<ApiFlight>(`/flights/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: request,
+  })
+
+  return toEditData(flight)
 }

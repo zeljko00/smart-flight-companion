@@ -6,14 +6,18 @@ import { ApiError } from '../services/apiClient'
 import type { UserDto } from '../services/authService'
 import { usersService } from '../services/usersService'
 import { AuthHeader } from '../components/AuthHeader'
+import { AirportsPanel } from '../components/AirportsPanel'
+import { FlightsPanel, type FlightsViewState } from '../components/FlightsPanel'
 import { RequestLogsPanel } from '../components/RequestLogsPanel'
 import { UserInfo } from '../components/UserInfo'
 import '../style/AdminPage.css'
 
-type AdminTab = 'users' | 'airports' | 'requestLogs' | 'operations' | 'settings'
+type AdminTab = 'users' | 'airports' | 'flights' | 'requestLogs' | 'operations' | 'settings'
 type UserAction = 'authorize' | 'block' | null
 type AdminLocationState = {
   adminUser?: UserDto
+  activeTab?: AdminTab
+  flightsView?: FlightsViewState
 }
 
 function formatDate(value: string): string {
@@ -32,9 +36,10 @@ export function AdminPage() {
   const { t, i18n } = useTranslation()
   const navigate = useNavigate()
   const location = useLocation()
-  const adminUser = (location.state as AdminLocationState | null)?.adminUser ?? null
+  const locationState = location.state as AdminLocationState | null
+  const adminUser = locationState?.adminUser ?? null
   const [users, setUsers] = useState<UserDto[]>([])
-  const [activeTab, setActiveTab] = useState<AdminTab>('users')
+  const [activeTab, setActiveTab] = useState<AdminTab>(locationState?.activeTab ?? 'users')
   const [isLoading, setIsLoading] = useState(true)
   const [isMutatingId, setIsMutatingId] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
@@ -203,6 +208,18 @@ export function AdminPage() {
     navigate('/', { replace: true })
   }
 
+  const handleOpenFlight = (flightId: string, flightsView: FlightsViewState) => {
+    navigate(`/flights/${encodeURIComponent(flightId)}`, {
+      state: {
+        user: adminUser ?? undefined,
+        returnTo: {
+          path: '/admin/console',
+          state: { adminUser: adminUser ?? undefined, activeTab: 'flights', flightsView },
+        },
+      },
+    })
+  }
+
   return (
     <main className="admin-page">
       <div className="admin-page__ambient" aria-hidden="true" />
@@ -245,7 +262,6 @@ export function AdminPage() {
               onClick={() => setActiveTab('users')}
             >
               <span>{t('admin.tabs.users')}</span>
-              <small>{users.length}</small>
             </button>
             <button
               type="button"
@@ -253,6 +269,13 @@ export function AdminPage() {
               onClick={() => setActiveTab('airports')}
             >
               <span>{t('admin.tabs.airports')}</span>
+            </button>
+            <button
+              type="button"
+              className={`admin-tabs__tab ${activeTab === 'flights' ? 'admin-tabs__tab--active' : ''}`}
+              onClick={() => setActiveTab('flights')}
+            >
+              <span>{t('admin.tabs.flights')}</span>
             </button>
             <button
               type="button"
@@ -317,9 +340,15 @@ export function AdminPage() {
             </div>
           ) : null}
 
+          {activeTab === 'airports' ? <AirportsPanel /> : null}
+
+          {activeTab === 'flights' ? (
+            <FlightsPanel initialView={locationState?.flightsView} onOpenFlight={handleOpenFlight} />
+          ) : null}
+
           {activeTab === 'requestLogs' ? <RequestLogsPanel /> : null}
 
-          {!isLoading && !errorMessage && (activeTab === 'operations' || activeTab === 'settings') ? (
+          {activeTab === 'operations' || activeTab === 'settings' ? (
             <p className="admin-page__status">{t('admin.comingSoon')}</p>
           ) : null}
         </article>

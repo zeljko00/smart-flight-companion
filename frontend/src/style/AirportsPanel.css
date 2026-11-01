@@ -1,0 +1,458 @@
+.airports {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.airports__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.airports__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.airports__search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1 1 18rem;
+  max-width: 28rem;
+  min-height: 2.3rem;
+  padding: 0 0.7rem;
+  border-radius: 0.68rem;
+  border: 1px solid color-mix(in srgb, var(--border-default) 72%, transparent);
+  background: color-mix(in srgb, var(--auth-input-bg) 92%, transparent);
+  color: var(--text-secondary);
+}
+
+.airports__search:focus-within {
+  border-color: color-mix(in srgb, var(--color-primary) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
+}
+
+.airports__search input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+}
+
+/* The custom clear button replaces the browser's built-in one. */
+.airports__search input::-webkit-search-cancel-button,
+.airports__search input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+  display: none;
+}
+
+.airports__search input::-ms-clear {
+  display: none;
+}
+
+.airports__search-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.2rem;
+  border: 0;
+  border-radius: 0.4rem;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.airports__search-clear:hover {
+  color: var(--text-primary);
+}
+
+.airports__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.38rem;
+  min-height: 2.3rem;
+  border-radius: 0.7rem;
+  border: 1px solid transparent;
+  padding: 0 0.86rem;
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.airports__button:focus-visible,
+.airports__search-clear:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+  outline-offset: 2px;
+}
+
+.airports__button--primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.airports__button--primary:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.airports__button--secondary {
+  border-color: color-mix(in srgb, var(--border-default) 80%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 90%, transparent);
+  color: var(--text-primary);
+}
+
+.airports__button--secondary:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--bg-elevated) 90%, transparent);
+}
+
+.airports__button--ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.airports__button--ghost:hover:not(:disabled) {
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--bg-elevated) 90%, transparent);
+}
+
+.airports__button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.airports__spinner {
+  animation: airports-spin 0.8s linear infinite;
+}
+
+.airports__form {
+  display: grid;
+  gap: 0.85rem;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--border-default) 72%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--bg-elevated) 93%, transparent);
+}
+
+.airports__form h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1rem;
+  color: var(--text-primary);
+}
+
+.airports__form-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+
+.airports__field {
+  display: grid;
+  gap: 0.24rem;
+  min-width: 0;
+}
+
+.airports__field--wide {
+  grid-column: span 2;
+}
+
+.airports__field--full {
+  grid-column: 1 / -1;
+}
+
+.airports__field span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-secondary);
+}
+
+.airports__field input,
+.airports__field textarea {
+  min-height: 2.3rem;
+  border-radius: 0.68rem;
+  border: 1px solid color-mix(in srgb, var(--border-default) 72%, transparent);
+  background: color-mix(in srgb, var(--auth-input-bg) 92%, transparent);
+  color: var(--text-primary);
+  padding: 0 0.62rem;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+}
+
+.airports__field textarea {
+  padding: 0.55rem 0.62rem;
+  resize: vertical;
+}
+
+.airports__field input:focus,
+.airports__field textarea:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--color-primary) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
+}
+
+.airports__form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.airports__message {
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border-radius: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--bg-elevated) 88%, transparent);
+}
+
+.airports__message--error {
+  color: var(--color-error);
+  border: 1px solid color-mix(in srgb, var(--color-error) 24%, transparent);
+  background: color-mix(in srgb, var(--color-error) 10%, transparent);
+}
+
+.airports__message--success {
+  color: var(--color-success);
+  border: 1px solid color-mix(in srgb, var(--color-success) 24%, transparent);
+  background: color-mix(in srgb, var(--color-success) 10%, transparent);
+}
+
+.airports__table-wrap {
+  border: 1px solid color-mix(in srgb, var(--border-default) 72%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--bg-elevated) 93%, transparent);
+  overflow: auto;
+  transition: opacity 160ms ease;
+}
+
+.airports__table-wrap--loading {
+  opacity: 0.6;
+}
+
+.airports__table {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: collapse;
+}
+
+.airports__table thead th {
+  text-align: left;
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding: 0.72rem 0.85rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-default) 72%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 68%, transparent);
+}
+
+.airports__table tbody td {
+  padding: 0.62rem 0.85rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border-default) 64%, transparent);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  vertical-align: top;
+}
+
+.airports__table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.airports__iata {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.4rem;
+  padding: 0.05rem 0.5rem;
+  border-radius: 0.45rem;
+  background: var(--auth-badge-bg);
+  color: var(--auth-badge-text);
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.airports__name {
+  margin: 0;
+  font-weight: 700;
+}
+
+.airports__meta {
+  margin: 0.15rem 0 0;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.airports__cell-actions {
+  white-space: nowrap;
+}
+
+.airports__button--compact {
+  min-height: 2rem;
+  padding: 0 0.7rem;
+}
+
+.airport-map {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.airport-map__canvas {
+  width: 100%;
+  height: clamp(14rem, 32vw, 19rem);
+  border: 1px solid color-mix(in srgb, var(--border-default) 78%, transparent);
+  border-radius: 0.86rem;
+  overflow: hidden;
+  cursor: crosshair;
+}
+
+.airport-map__canvas--dialog {
+  height: clamp(18rem, 55vh, 30rem);
+  cursor: grab;
+}
+
+.airports__field .airport-map__hint {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text-secondary);
+}
+
+.airport-map__hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.airport-map__pin span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  border: 3px solid #fff;
+  border-radius: 50% 50% 50% 0;
+  background: var(--color-primary);
+  box-shadow: 0 3px 8px rgba(2, 6, 23, 0.35);
+  transform: rotate(-45deg);
+}
+
+.airport-dialog {
+  width: min(40rem, calc(100vw - 2rem));
+  max-height: calc(100vh - 2rem);
+  margin: auto;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--border-default) 78%, transparent);
+  border-radius: 1rem;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  box-shadow: var(--shadow-card);
+}
+
+.airport-dialog::backdrop {
+  background: rgba(2, 6, 23, 0.55);
+}
+
+.airport-dialog[open] {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.airport-dialog__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.airport-dialog__header h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+}
+
+.airport-dialog__header p {
+  margin: 0.15rem 0 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.airport-dialog__close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--border-default) 80%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 90%, transparent);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.airport-dialog__close:hover {
+  background: color-mix(in srgb, var(--bg-elevated) 90%, transparent);
+}
+
+.airport-dialog__close:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+  outline-offset: 2px;
+}
+
+.airports__total {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+@keyframes airports-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 760px) {
+  .airports__toolbar,
+  .airports__actions {
+    width: 100%;
+  }
+
+  .airports__search {
+    max-width: none;
+  }
+
+  .airports__actions .airports__button {
+    flex: 1 1 0;
+  }
+
+  .airports__form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .airports__field--wide,
+  .airports__field--full {
+    grid-column: auto;
+  }
+}

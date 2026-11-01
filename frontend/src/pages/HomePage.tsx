@@ -596,7 +596,7 @@ export function HomePage() {
               <p>{t('home.subtitle')}</p>
               <button
                 type="button"
-                className="home-page__filterbackend/secrets/qr-signing/signing-cert.pem backend/secrets/qr-signing/signing-cert.escaped.txt backend/secrets/qr-signing/public.pem backend/secrets/qr-signing/public.escaped.txt backend/secrets/qr-signing/private.pem backend/secrets/qr-signing/private.escaped.txt-toggle"
+                className="home-page__filter-toggle"
                 onClick={() => setIsFilterPanelOpen((currentValue) => !currentValue)}
                 aria-expanded={isFilterPanelOpen}
                 aria-controls="home-page-filter-panel"

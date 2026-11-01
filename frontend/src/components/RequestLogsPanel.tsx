@@ -27,6 +27,22 @@ function parseDateTimeInput(value: string, endOfMinute = false): Date | undefine
   return endOfMinute ? new Date(parsed.getTime() + END_OF_MINUTE_MS) : parsed
 }
 
+function getMethodClassName(method: string): string {
+  switch (method.toUpperCase()) {
+    case 'GET':
+      return 'request-logs__method--get'
+    case 'POST':
+      return 'request-logs__method--post'
+    case 'PUT':
+    case 'PATCH':
+      return 'request-logs__method--put'
+    case 'DELETE':
+      return 'request-logs__method--delete'
+    default:
+      return ''
+  }
+}
+
 function getStatusClassName(statusCode: number | null): string {
   if (statusCode === null) {
     return 'request-logs__status--pending'
@@ -278,7 +294,11 @@ export function RequestLogsPanel() {
                 <tr key={entry.id}>
                   <td className="request-logs__cell-time">{formatTimestamp(entry.receivedAt)}</td>
                   <td className="request-logs__cell-ip">{entry.ipAddress}</td>
-                  <td><span className="request-logs__method">{entry.httpMethod}</span></td>
+                  <td>
+                    <span className={`request-logs__method ${getMethodClassName(entry.httpMethod)}`}>
+                      {entry.httpMethod}
+                    </span>
+                  </td>
                   <td className="request-logs__cell-path">{entry.path}</td>
                   <td>
                     <span className={`request-logs__status ${getStatusClassName(entry.statusCode)}`}>

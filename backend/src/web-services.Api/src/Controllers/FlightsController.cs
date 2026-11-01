@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using SmartFlightCompanion.WebServices.Application.Dto;
 using SmartFlightCompanion.WebServices.Application.Services;
+using SmartFlightCompanion.WebServices.Infrastructure.Persistence;
 
 namespace SmartFlightCompanion.WebServices.Api.Controllers;
 
@@ -64,6 +65,59 @@ public sealed class FlightsController : ControllerBase
         return flight is null ? NotFound() : Ok(flight);
     }
 
+    [HttpPost]
+    [ProducesResponseType(typeof(FlightDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<FlightDto>> Create(
+        [FromBody] FlightRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var flight = await _flightService.Create(request, cancellationToken);
+            return CreatedAtAction(nameof(GetById), new { id = flight.Id }, flight);
+        }
+        catch (FlightValidationException exception)
+        {
+            return BadRequest(exception.Message);
+        }
+        catch (DuplicateResourceException)
+        {
+            return Conflict("A flight with this flight number already exists.");
+        }
+    }
+
+    [HttpPut("{id:guid}")]
+    [ProducesResponseType(typeof(FlightDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    public async Task<ActionResult<FlightDto>> Update(
+        Guid id,
+        [FromBody] FlightRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        if (id == Guid.Empty)
+        {
+            return BadRequest("Invalid flight ID.");
+        }
+
+        try
+        {
+            var flight = await _flightService.Update(id, request, cancellationToken);
+            return flight is null ? NotFound() : Ok(flight);
+        }
+        catch (FlightValidationException exception)
+        {
+            return BadRequest(exception.Message);
+        }
+        catch (DuplicateResourceException)
+        {
+            return Conflict("A flight with this flight number already exists.");
+        }
+    }
+
     [HttpGet("search")]
     [ProducesResponseType(typeof(PagedResultDto<FlightDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -83,7 +137,7 @@ public sealed class FlightsController : ControllerBase
 
         var page = request.Page;
         var pageSize = request.PageSize;
-        
+
         if (!page.HasValue || !pageSize.HasValue)
         {
             page = null;
