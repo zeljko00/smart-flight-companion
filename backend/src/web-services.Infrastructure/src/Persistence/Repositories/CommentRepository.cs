@@ -23,13 +23,18 @@ public sealed class CommentRepository : Repository<Comment>, ICommentRepository
 
     public async Task<IReadOnlyList<Comment>> GetAllGroupedByFlightAsync(CancellationToken cancellationToken = default)
     {
-        return await Context.Comments
+        var comments = await Context.Comments
             .AsNoTracking()
             .Include(comment => comment.Author)
             .Include(comment => comment.Flight)
-            .GroupBy(comment => comment.Flight)
-            .SelectMany(group => group)
+            .OrderBy(comment => comment.CreatedAt)
             .ToListAsync(cancellationToken);
+
+        // Grouped in memory: EF Core can't reliably translate GroupBy + SelectMany with Include.
+        return comments
+            .GroupBy(comment => comment.Flight.Id)
+            .SelectMany(group => group.OrderBy(comment => comment.CreatedAt))
+            .ToList();
     }
 
     public async Task<int> DeleteByIdAsync(Guid id, CancellationToken cancellationToken = default)

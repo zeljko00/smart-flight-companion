@@ -46,6 +46,18 @@ export async function fetchCommentsByFlight(flightId: string): Promise<FlightCom
     .sort((first, second) => new Date(first.createdAt).getTime() - new Date(second.createdAt).getTime())
 }
 
+export async function fetchAllComments(): Promise<FlightComment[]> {
+  const comments = await apiRequest<ApiComment[]>('/comments')
+
+  return comments
+    .map(toFlightComment)
+    .sort((first, second) => new Date(first.createdAt).getTime() - new Date(second.createdAt).getTime())
+}
+
+export async function deleteComment(id: string): Promise<void> {
+  await apiRequest<unknown>(`/comments/${encodeURIComponent(id)}`, { method: 'DELETE' })
+}
+
 export async function createComment(request: CreateCommentRequest): Promise<FlightComment> {
   const comment = await apiRequest<ApiComment>('/comments', {
     method: 'POST',
