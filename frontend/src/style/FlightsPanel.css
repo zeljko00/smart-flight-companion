@@ -67,6 +67,18 @@
   font-size: 0.85rem;
 }
 
+.flights__textarea {
+  min-height: 6rem;
+  border-radius: 0.68rem;
+  border: 1px solid color-mix(in srgb, var(--border-default) 72%, transparent);
+  background: color-mix(in srgb, var(--auth-input-bg) 92%, transparent);
+  color: var(--text-primary);
+  padding: 0.62rem;
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  resize: vertical;
+}
+
 .flights__field select {
   width: 100%;
   min-width: 0;
@@ -75,7 +87,8 @@
 
 .flights__select:focus,
 .flights__field input:focus,
-.flights__field select:focus {
+.flights__field select:focus,
+.flights__textarea:focus {
   outline: none;
   border-color: color-mix(in srgb, var(--color-primary) 55%, transparent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
@@ -156,6 +169,17 @@
   background: color-mix(in srgb, var(--bg-elevated) 90%, transparent);
 }
 
+.flights__icon-button--accent {
+  border-color: color-mix(in srgb, var(--color-primary) 42%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+  color: color-mix(in srgb, var(--color-primary) 78%, var(--text-primary));
+}
+
+.flights__icon-button--accent:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-primary) 20%, transparent);
+  border-color: color-mix(in srgb, var(--color-primary) 58%, transparent);
+}
+
 .flights__spinner {
   animation: flights-spin 0.8s linear infinite;
 }
@@ -228,6 +252,102 @@
   margin: 0;
   font-size: 0.78rem;
   color: var(--text-secondary);
+}
+
+.flights__file-upload {
+  display: grid;
+  gap: 0.42rem;
+}
+
+.flights__file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  border: 0;
+}
+
+.flights__file-picker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.42rem;
+  min-height: 2.3rem;
+  border-radius: 0.68rem;
+  border: 1px dashed color-mix(in srgb, var(--color-primary) 35%, var(--border-default));
+  background: color-mix(in srgb, var(--color-primary) 9%, transparent);
+  color: var(--text-primary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease;
+}
+
+.flights__file-picker:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 62%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 14%, transparent);
+}
+
+.flights__file-input:focus-visible + .flights__file-picker {
+  outline: 3px solid color-mix(in srgb, var(--color-primary) 30%, transparent);
+  outline-offset: 2px;
+}
+
+.flights__url-list {
+  display: grid;
+  gap: 0.45rem;
+  align-content: start;
+  grid-auto-rows: min-content;
+}
+
+.flights__url-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.45rem;
+  align-items: center;
+}
+
+.flights__url-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0.6rem;
+  border: 1px solid color-mix(in srgb, var(--border-default) 80%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 90%, transparent);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.flights__url-remove:hover {
+  color: var(--text-primary);
+  background: color-mix(in srgb, var(--bg-elevated) 90%, transparent);
+}
+
+.flights__url-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 2.1rem;
+  height: 2.1rem;
+  align-self: start;
+  border-radius: 0.65rem;
+  border: 1px dashed color-mix(in srgb, var(--color-primary) 40%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 8%, transparent);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.flights__url-add:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 58%, transparent);
+  background: color-mix(in srgb, var(--color-primary) 13%, transparent);
 }
 
 .flights__hint--error {
@@ -329,6 +449,9 @@
 }
 
 .flights__cell-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.4rem;
   text-align: right;
 }
 

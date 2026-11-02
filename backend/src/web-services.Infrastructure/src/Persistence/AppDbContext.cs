@@ -16,6 +16,7 @@ public class AppDbContext : DbContext
     public DbSet<BoardingGuide> BoardingGuides => Set<BoardingGuide>();
     public DbSet<BoardingPass> BoardingPasses => Set<BoardingPass>();
     public DbSet<Comment> Comments => Set<Comment>();
+    public DbSet<Media> Media => Set<Media>();
     public DbSet<RequestLog> RequestLogs => Set<RequestLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -79,6 +80,17 @@ public class AppDbContext : DbContext
             entity.Property(requestLog => requestLog.HttpMethod).HasMaxLength(RequestLog.MaxMethodLength);
             entity.Property(requestLog => requestLog.Path).HasMaxLength(RequestLog.MaxPathLength);
             entity.HasIndex(requestLog => requestLog.ReceivedAt);
+        });
+
+        modelBuilder.Entity<Media>(entity =>
+        {
+            entity.Property(media => media.Type)
+                .HasConversion<string>()
+                .HasMaxLength(20);
+
+            entity.HasOne(media => media.BoardingGuide)
+                .WithMany()
+                .OnDelete(DeleteBehavior.Cascade);
         });
     }
 }

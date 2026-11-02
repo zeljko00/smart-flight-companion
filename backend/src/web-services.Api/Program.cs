@@ -23,6 +23,7 @@ builder.Services.AddScoped<IFlightService, FlightService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IBoardingPassService, BoardingPassService>();
+builder.Services.AddScoped<IBoardingGuideService, BoardingGuideService>();
 builder.Services.AddScoped<IRequestLogService, RequestLogService>();
 builder.Services.AddHttpClient<IWeatherService, WeatherService>();
 builder.Services.AddHttpClient<INewsService, NewsService>();

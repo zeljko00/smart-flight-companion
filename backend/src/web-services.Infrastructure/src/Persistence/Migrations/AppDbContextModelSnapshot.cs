@@ -68,7 +68,7 @@ namespace SmartFlightCompanion.WebServices.Infrastructure.Persistence.Migrations
                     b.HasIndex("IATA")
                         .IsUnique();
 
-                    b.ToTable("Airports", (string)null);
+                    b.ToTable("Airports");
                 });
 
             modelBuilder.Entity("SmartFlightCompanion.WebServices.Infrastructure.Entities.BoardingGuide", b =>
@@ -90,15 +90,11 @@ namespace SmartFlightCompanion.WebServices.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("OpensAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("VideoUrl")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.HasKey("Id");
 
                     b.HasIndex("FlightId");
 
-                    b.ToTable("BoardingGuides", (string)null);
+                    b.ToTable("BoardingGuides");
                 });
 
             modelBuilder.Entity("SmartFlightCompanion.WebServices.Infrastructure.Entities.BoardingPass", b =>
@@ -133,7 +129,7 @@ namespace SmartFlightCompanion.WebServices.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("BoardingPasses", (string)null);
+                    b.ToTable("BoardingPasses");
                 });
 
             modelBuilder.Entity("SmartFlightCompanion.WebServices.Infrastructure.Entities.Comment", b =>
@@ -162,7 +158,7 @@ namespace SmartFlightCompanion.WebServices.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("FlightId");
 
-                    b.ToTable("Comments", (string)null);
+                    b.ToTable("Comments");
                 });
 
             modelBuilder.Entity("SmartFlightCompanion.WebServices.Infrastructure.Entities.Flight", b =>
@@ -240,7 +236,32 @@ namespace SmartFlightCompanion.WebServices.Infrastructure.Persistence.Migrations
                     b.HasIndex("FlightNumber")
                         .IsUnique();
 
-                    b.ToTable("Flights", (string)null);
+                    b.ToTable("Flights");
+                });
+
+            modelBuilder.Entity("SmartFlightCompanion.WebServices.Infrastructure.Entities.Media", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BoardingGuideId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BoardingGuideId");
+
+                    b.ToTable("Media");
                 });
 
             modelBuilder.Entity("SmartFlightCompanion.WebServices.Infrastructure.Entities.RequestLog", b =>
@@ -274,7 +295,7 @@ namespace SmartFlightCompanion.WebServices.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("ReceivedAt");
 
-                    b.ToTable("RequestLogs", (string)null);
+                    b.ToTable("RequestLogs");
                 });
 
             modelBuilder.Entity("SmartFlightCompanion.WebServices.Infrastructure.Entities.User", b =>
@@ -324,7 +345,7 @@ namespace SmartFlightCompanion.WebServices.Infrastructure.Persistence.Migrations
                     b.HasIndex("Username")
                         .IsUnique();
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("SmartFlightCompanion.WebServices.Infrastructure.Entities.BoardingGuide", b =>
@@ -393,6 +414,17 @@ namespace SmartFlightCompanion.WebServices.Infrastructure.Persistence.Migrations
                     b.Navigation("ArrivalAirport");
 
                     b.Navigation("DepartureAirport");
+                });
+
+            modelBuilder.Entity("SmartFlightCompanion.WebServices.Infrastructure.Entities.Media", b =>
+                {
+                    b.HasOne("SmartFlightCompanion.WebServices.Infrastructure.Entities.BoardingGuide", "BoardingGuide")
+                        .WithMany()
+                        .HasForeignKey("BoardingGuideId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("BoardingGuide");
                 });
 #pragma warning restore 612, 618
         }
