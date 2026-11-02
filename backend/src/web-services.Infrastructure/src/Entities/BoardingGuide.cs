@@ -13,5 +13,4 @@ public class BoardingGuide
     public required DateTimeOffset OpensAt { get; set; }
     [Required]
     public required DateTimeOffset ClosesAt { get; set; }
-    public string VideoUrl { get; set; } = string.Empty;
 }

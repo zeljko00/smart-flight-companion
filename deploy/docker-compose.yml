@@ -29,7 +29,7 @@ services:
     ports:
       - "9001:9001"
     volumes:
-      - minio_data:/dataB
+      - minio_data:/data
     networks:
       - sfc-internal-network
     restart: unless-stopped

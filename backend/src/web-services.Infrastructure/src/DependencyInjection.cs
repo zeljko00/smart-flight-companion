@@ -29,7 +29,8 @@ public static class DependencyInjection
         services.AddScoped<ICommentRepository, CommentRepository>();
         services.AddScoped<IBoardingPassRepository, BoardingPassRepository>();
         services.AddScoped<IRequestLogRepository, RequestLogRepository>();
-
+        services.AddScoped<IBoardingGuideRepository, BoardingGuideRepository>();
+        services.AddScoped<IMediaRepository, MediaRepository>();
 
         services.Configure<SmtpOptions>(configuration.GetSection(SmtpOptions.SectionName));
         services.AddSingleton<InMemoryEmailQueue>();

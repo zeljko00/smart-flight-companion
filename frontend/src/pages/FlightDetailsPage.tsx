@@ -31,6 +31,10 @@ import {
   type CityWeatherForecast,
 } from '../services/weatherService'
 import { fetchFlightById, type FlightDetails } from '../services/flightsService'
+import {
+  fetchBoardingGuidesByFlight,
+  type BoardingGuide,
+} from '../services/boardingGuidesService'
 import { AuthHeader } from '../components/AuthHeader'
 import { UserInfo } from '../components/UserInfo'
 import 'leaflet/dist/leaflet.css'
@@ -194,6 +198,9 @@ export function FlightDetailsPage() {
   const [weatherForecast, setWeatherForecast] = useState<CityWeatherForecast[]>([])
   const [isWeatherLoading, setIsWeatherLoading] = useState(false)
   const [weatherErrorMessage, setWeatherErrorMessage] = useState<string | null>(null)
+  const [boardingGuides, setBoardingGuides] = useState<BoardingGuide[]>([])
+  const [isBoardingGuidesLoading, setIsBoardingGuidesLoading] = useState(false)
+  const [boardingGuidesErrorMessage, setBoardingGuidesErrorMessage] = useState<string | null>(null)
 
   useEffect(() => {
     if (!flightId) {
@@ -359,6 +366,47 @@ export function FlightDetailsPage() {
       minimumFractionDigits: 0,
       maximumFractionDigits: 1,
     }).format(value)
+  }
+
+  const formatGuideDateTime = (value: string) => {
+    const parsedDate = new Date(value)
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return value
+    }
+
+    return new Intl.DateTimeFormat(i18n.language, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(parsedDate)
+  }
+
+  const formatTimeUntilClose = (value: string) => {
+    const closingDate = new Date(value)
+
+    if (Number.isNaN(closingDate.getTime())) {
+      return null
+    }
+
+    const diffMs = closingDate.getTime() - Date.now()
+    if (diffMs <= 0) {
+      return t('flightDetails.boardingGuides.closingNow')
+    }
+
+    const totalMinutes = Math.floor(diffMs / 60000)
+    const days = Math.floor(totalMinutes / (60 * 24))
+    const hours = Math.floor((totalMinutes % (60 * 24)) / 60)
+    const minutes = totalMinutes % 60
+
+    if (days > 0) {
+      return t('flightDetails.boardingGuides.closesInDaysHours', { days, hours })
+    }
+
+    if (hours > 0) {
+      return t('flightDetails.boardingGuides.closesInHoursMinutes', { hours, minutes })
+    }
+
+    return t('flightDetails.boardingGuides.closesInMinutes', { minutes })
   }
 
   const seatOffers: Array<{ seat: SeatType; label: string; price: number; priceLabel: string }> = flight
@@ -540,6 +588,41 @@ export function FlightDetailsPage() {
     }
   }, [arrivalLatitude, arrivalLongitude, isAdminView, t])
 
+  useEffect(() => {
+    if (!flightId) {
+      setBoardingGuides([])
+      setIsBoardingGuidesLoading(false)
+      setBoardingGuidesErrorMessage(null)
+      return
+    }
+
+    let isDisposed = false
+
+    void (async () => {
+      setIsBoardingGuidesLoading(true)
+      setBoardingGuidesErrorMessage(null)
+
+      try {
+        const guides = await fetchBoardingGuidesByFlight(flightId)
+        if (!isDisposed) {
+          setBoardingGuides(guides)
+        }
+      } catch {
+        if (!isDisposed) {
+          setBoardingGuidesErrorMessage(t('flightDetails.boardingGuides.loadError'))
+        }
+      } finally {
+        if (!isDisposed) {
+          setIsBoardingGuidesLoading(false)
+        }
+      }
+    })()
+
+    return () => {
+      isDisposed = true
+    }
+  }, [flightId, t])
+
   return (
     <main className="flight-details-page">
       <div className="flight-details-page__ambient" aria-hidden="true" />
@@ -693,6 +776,74 @@ export function FlightDetailsPage() {
                     />
                     <DetailField label={t('flightDetails.fields.arrivalAirportAddress')} value={flight.arrivalAirport.address} />
                   </dl>
+                </article>
+
+                <article className="flight-details-page__card flight-details-page__card--boarding-guides">
+                  <h3>{t('flightDetails.sections.boardingGuides')}</h3>
+
+                  {isBoardingGuidesLoading ? (
+                    <p className="flight-details-page__status">{t('flightDetails.boardingGuides.loading')}</p>
+                  ) : null}
+
+                  {!isBoardingGuidesLoading && boardingGuidesErrorMessage ? (
+                    <p className="flight-details-page__status flight-details-page__status--error" role="alert">
+                      {boardingGuidesErrorMessage}
+                    </p>
+                  ) : null}
+
+                  {!isBoardingGuidesLoading && !boardingGuidesErrorMessage && boardingGuides.length === 0 ? (
+                    <p className="flight-details-page__map-fallback">{t('flightDetails.boardingGuides.empty')}</p>
+                  ) : null}
+
+                  {!isBoardingGuidesLoading && !boardingGuidesErrorMessage && boardingGuides.length > 0 ? (
+                    <ol className="flight-details-page__boarding-guides-list">
+                      {boardingGuides.map((guide) => (
+                        <li key={guide.id} className="flight-details-page__boarding-guide-item">
+                          <h4>{guide.description}</h4>
+                          <div className="flight-details-page__boarding-guide-timing">
+                            <p className="flight-details-page__boarding-guide-window">
+                              {t('flightDetails.boardingGuides.closesAt')}: {formatGuideDateTime(guide.closesAt)}
+                            </p>
+                            <p className="flight-details-page__boarding-guide-deadline" role="status">
+                              <span>{t('flightDetails.boardingGuides.closesIn')}</span>
+                              <strong>{formatTimeUntilClose(guide.closesAt)}</strong>
+                            </p>
+                          </div>
+
+                          {guide.imageUrls.length > 0 ? (
+                            <div className="flight-details-page__boarding-guide-media-block">
+                              <ul className="flight-details-page__boarding-guide-media-grid">
+                                {guide.imageUrls.map((url) => (
+                                  <li key={url} className="flight-details-page__boarding-guide-media-item">
+                                    <a href={url} target="_blank" rel="noreferrer" title={url}>
+                                      <img src={url} alt={t('flightDetails.boardingGuides.imageAlt')} loading="lazy" />
+                                    </a>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : null}
+
+                          {guide.videoUrls.length > 0 ? (
+                            <div className="flight-details-page__boarding-guide-media-block">
+                              <ul className="flight-details-page__boarding-guide-media-grid">
+                                {guide.videoUrls.map((url) => (
+                                  <li key={url} className="flight-details-page__boarding-guide-media-item">
+                                    <video controls preload="metadata">
+                                      <source src={url} />
+                                      <a href={url} target="_blank" rel="noreferrer">
+                                        {t('flightDetails.boardingGuides.openVideo')}
+                                      </a>
+                                    </video>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ol>
+                  ) : null}
                 </article>
 
                 {!isAdminView ? (

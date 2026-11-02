@@ -1,8 +1,8 @@
-using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using SmartFlightCompanion.WebServices.Application.Dto;
 using SmartFlightCompanion.WebServices.Application.Services;
 using SmartFlightCompanion.WebServices.Infrastructure.Persistence;
+using System.Security.Claims;
 
 namespace SmartFlightCompanion.WebServices.Api.Controllers;
 
@@ -14,11 +14,14 @@ public sealed class FlightsController : ControllerBase
     private readonly ICommentService _commentService;
     private readonly IBoardingPassService _boardingPassService;
 
-    public FlightsController(IFlightService flightService, ICommentService commentService, IBoardingPassService boardingPassService)
+    private readonly IBoardingGuideService _boardingGuideService;
+
+    public FlightsController(IFlightService flightService, ICommentService commentService, IBoardingPassService boardingPassService, IBoardingGuideService boardingGuideService)
     {
         _flightService = flightService;
         _commentService = commentService;
         _boardingPassService = boardingPassService;
+        _boardingGuideService = boardingGuideService;
     }
 
     [HttpGet]
@@ -187,6 +190,79 @@ public sealed class FlightsController : ControllerBase
         }
 
         return Created(string.Empty, boardingPass);
+    }
+
+    [HttpGet("{flightId:guid}/boarding-guides")]
+    [ProducesResponseType(typeof(IReadOnlyList<BoardingGuideDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<IReadOnlyList<BoardingGuideDto>>> GetBoardingGuidesByFlight(
+        [FromRoute] Guid flightId,
+        CancellationToken cancellationToken)
+    {
+        if (flightId == Guid.Empty)
+        {
+            return BadRequest("Invalid flight ID.");
+        }
+        // TODO: take user from session
+        var guides = await _boardingGuideService.GetByFlightIdAsync(flightId, false, cancellationToken);
+        return Ok(guides);
+    }
+
+    [HttpPost("{flightId:guid}/boarding-guides")]
+    [ProducesResponseType(typeof(BoardingGuideDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<BoardingGuideDto>> CreateBoardingGuide(
+        [FromRoute] Guid flightId,
+        [FromBody] BoardingGuideDto request,
+        CancellationToken cancellationToken)
+    {
+        if (flightId == Guid.Empty)
+        {
+            return BadRequest("Invalid flight ID.");
+        }
+
+        var createRequest = new BoardingGuideDto
+        {
+            FlightId = flightId,
+            Description = request.Description,
+            OpensAt = request.OpensAt,
+            ClosesAt = request.ClosesAt,
+            ImageUrls = request.ImageUrls,
+            VideoUrls = request.VideoUrls,
+        };
+
+        var guide = await _boardingGuideService.CreateAsync(createRequest, cancellationToken);
+
+        if (guide is null)
+        {
+            return BadRequest("Failed to create boarding guide.");
+        }
+
+        return Created(string.Empty, guide);
+    }
+
+    [HttpPost("{flightId:guid}/boarding-guides/{guideId:guid}/media")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<string>> UploadMedia(
+        [FromRoute] Guid flightId,
+        [FromRoute] Guid guideId,
+        [FromBody] BoardingGuideMediaRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        if (flightId == Guid.Empty || guideId == Guid.Empty)
+        {
+            return BadRequest("Invalid flight or guide ID.");
+        }
+
+        var mediaUrl = await _boardingGuideService.UploadMediaUrlAsync(guideId, request.Type, request.Url, request.Extension, cancellationToken);
+
+        if (mediaUrl is null)
+        {
+            return BadRequest("Failed to upload media.");
+        }
+
+        return Created(string.Empty, mediaUrl);
     }
 }
 
