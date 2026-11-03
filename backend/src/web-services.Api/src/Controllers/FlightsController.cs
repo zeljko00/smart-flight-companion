@@ -181,8 +181,12 @@ public sealed class FlightsController : ControllerBase
             return BadRequest("Failed to create boarding pass.");
         }
 
-        Guid ownerId = Guid.Parse("cf5804db-9f79-4072-91c2-6a555c5e7d50"); // TODO: take ID from session
-        var boardingPass = await _boardingPassService.Create(flightId, ownerId, request.Seat, cancellationToken);
+        if (request.OwnerId == Guid.Empty)
+        {
+            return BadRequest("Invalid owner ID.");
+        }
+
+        var boardingPass = await _boardingPassService.Create(flightId, request.OwnerId, request.Seat, cancellationToken);
 
         if (boardingPass is null)
         {

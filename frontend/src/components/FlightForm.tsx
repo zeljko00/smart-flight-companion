@@ -369,6 +369,7 @@ export function FlightForm({ initial, isSaving, errorMessage, onSubmit, onCancel
               type="datetime-local"
               value={values.scheduledDepartureTime}
               required
+              disabled={isEdit}
               onChange={(event) => setField('scheduledDepartureTime', event.target.value)}
             />
           </label>
@@ -379,6 +380,7 @@ export function FlightForm({ initial, isSaving, errorMessage, onSubmit, onCancel
               type="datetime-local"
               value={values.scheduledArrivalTime}
               required
+              disabled={isEdit}
               onChange={(event) => setField('scheduledArrivalTime', event.target.value)}
             />
           </label>

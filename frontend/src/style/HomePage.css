@@ -427,6 +427,143 @@
   margin-top: 0.35rem;
 }
 
+.home-page__notifications-section {
+  display: grid;
+  gap: 0.55rem;
+  margin-top: 0.35rem;
+}
+
+.home-page__notifications-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.5rem;
+}
+
+.home-page__notifications-header h3 {
+  margin: 0;
+  font-size: 0.98rem;
+  font-family: var(--font-display);
+  color: var(--text-primary);
+}
+
+.home-page__notifications-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.56rem;
+}
+
+.home-page__notifications-item {
+  border: 1px solid color-mix(in srgb, var(--border-default) 82%, transparent);
+  border-left: 3px solid color-mix(in srgb, var(--color-primary) 34%, transparent);
+  border-radius: 0.82rem;
+  background: color-mix(in srgb, var(--bg-elevated) 84%, var(--bg-surface));
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-primary) 9%, transparent);
+  padding: 0.58rem 0.66rem;
+  display: grid;
+  gap: 0.24rem;
+}
+
+.home-page__notifications-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.home-page__notifications-title {
+  color: var(--text-primary);
+  font-size: 0.86rem;
+  font-weight: 650;
+}
+
+.home-page__notifications-time {
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+.home-page__notifications-message {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.home-page__toast {
+  position: fixed;
+  right: clamp(0.9rem, 2vw, 1.4rem);
+  top: clamp(0.9rem, 2.2vw, 1.4rem);
+  width: min(26rem, calc(100vw - 1.8rem));
+  border: 1px solid color-mix(in srgb, var(--color-primary) 36%, var(--border-default));
+  border-radius: 0.92rem;
+  background: color-mix(in srgb, var(--bg-surface) 95%, var(--color-primary) 5%);
+  box-shadow: var(--shadow-card);
+  padding: 0.66rem 0.72rem;
+  display: grid;
+  gap: 0.36rem;
+  z-index: 3000;
+  animation: home-toast-enter 240ms ease-out;
+}
+
+.home-page__toast-headline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.home-page__toast-title {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: color-mix(in srgb, var(--color-primary) 78%, var(--text-primary));
+}
+
+.home-page__toast-close {
+  min-height: 1.55rem;
+  border-radius: 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--border-default) 76%, transparent);
+  background: color-mix(in srgb, var(--bg-surface) 92%, transparent);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0.05rem 0.48rem;
+  cursor: pointer;
+}
+
+.home-page__toast-close:hover {
+  background: color-mix(in srgb, var(--bg-elevated) 92%, transparent);
+  color: var(--text-primary);
+}
+
+.home-page__toast-message {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.83rem;
+  line-height: 1.4;
+}
+
+.home-page__toast-time {
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+
+@keyframes home-toast-enter {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
 .home-page__news-header h3 {
   margin: 0;
   font-size: 0.98rem;
@@ -552,6 +689,12 @@
 
   .home-page__panel > .auth-header .app-logo__label {
     font-size: 1.02rem;
+  }
+
+  .home-page__toast {
+    right: 0.65rem;
+    width: min(22rem, calc(100vw - 1.3rem));
+    top: 0.65rem;
   }
 
   .home-page .admin-page__user-compact {
