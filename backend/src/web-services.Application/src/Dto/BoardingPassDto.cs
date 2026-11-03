@@ -41,5 +41,7 @@ public sealed record BoardingPassDto(
 
 public sealed record BoardingPassRequestDto(
     [Required]
-    Seat Seat
+    Seat Seat,
+    [Required]
+    Guid OwnerId
 );

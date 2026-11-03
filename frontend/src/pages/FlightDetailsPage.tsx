@@ -26,6 +26,7 @@ import {
   createBoardingPass,
   type SeatType,
 } from '../services/boardingPassesService'
+import { addPendingFlightSubscription } from '../services/notificationSubscriptionState'
 import {
   fetchDestinationWeatherForecast,
   type CityWeatherForecast,
@@ -457,6 +458,11 @@ export function FlightDetailsPage() {
       return
     }
 
+    if (!user?.id) {
+      setPurchaseErrorMessage(t('flightDetails.boardingPass.purchaseError'))
+      return
+    }
+
     if (seatOffers.length === 0) {
       setPurchaseErrorMessage(t('flightDetails.boardingPass.unavailable'))
       return
@@ -478,7 +484,8 @@ export function FlightDetailsPage() {
     setPurchaseSuccessMessage(null)
 
     try {
-      const boardingPass = await createBoardingPass(flightId, seatToBuy)
+      const boardingPass = await createBoardingPass(flightId, seatToBuy, user.id)
+      addPendingFlightSubscription(boardingPass.flightId || flightId)
 
       try {
         const refreshedFlight = await fetchFlightById(flightId)

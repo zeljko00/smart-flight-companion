@@ -29,6 +29,7 @@ export type BoardingPassPurchaseResult = {
 
 export type UserBoardingPass = {
   id: string
+  flightId: string
   flightNumber: string
   airline: string
   routeStart: string
@@ -86,6 +87,7 @@ function normalizeSeat(rawSeat: number | string | undefined): SeatType {
 export async function createBoardingPass(
   flightId: string,
   seat: SeatType,
+  ownerId: string,
 ): Promise<BoardingPassPurchaseResult> {
   const boardingPass = await apiRequest<ApiBoardingPass>(
     `/flights/${encodeURIComponent(flightId)}/boarding-passes`,
@@ -93,6 +95,7 @@ export async function createBoardingPass(
       method: 'POST',
       body: {
         seat: seatToApiValue[seat],
+        ownerId,
       },
     },
   )
@@ -115,6 +118,7 @@ function toUserBoardingPass(boardingPass: ApiBoardingPass): UserBoardingPass {
 
   return {
     id: boardingPass.id,
+    flightId: boardingPass.flightId ?? '',
     flightNumber: boardingPass.flightNumber?.trim() || 'Unknown #',
     airline: boardingPass.flightAirline?.trim() || 'Unknown airline',
     routeStart: `${departureIata}`,

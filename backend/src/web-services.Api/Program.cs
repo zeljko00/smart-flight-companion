@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using SmartFlightCompanion.WebServices.Api.Middleware;
+using SmartFlightCompanion.WebServices.Api.Signals;
 using SmartFlightCompanion.WebServices.Application.Services;
 using SmartFlightCompanion.WebServices.Infrastructure;
 
@@ -35,6 +36,8 @@ builder.Services.AddHttpClient<IGeocodingService, NominatimGeocodingService>(cli
     client.DefaultRequestHeaders.UserAgent.ParseAdd(geocoding["UserAgent"] ?? "SmartFlightCompanion/1.0");
     client.Timeout = TimeSpan.FromSeconds(10);
 });
+builder.Services.AddSignalR();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 // The backend is only reachable through the reverse proxy, so its forwarded headers are trusted
 // (the proxy appends the real client address to X-Forwarded-For).
@@ -64,6 +67,7 @@ app.UseHttpsRedirection();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<SignalHub>("/api/notifications");
 
 app.Run();
 

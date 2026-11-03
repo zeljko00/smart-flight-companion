@@ -1,4 +1,14 @@
-import { createElement, useCallback, useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import {
+  createElement,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from 'react'
+import { createPortal } from 'react-dom'
 import { Download, Funnel } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -16,6 +26,14 @@ import {
   type UserBoardingPass,
 } from '../services/boardingPassesService'
 import { fetchLatestNews, type NewsArticle } from '../services/newsService'
+import {
+  createNotificationConnection,
+  type NotificationDto,
+} from '../services/notificationsService'
+import {
+  clearPendingFlightSubscriptions,
+  readPendingFlightSubscriptions,
+} from '../services/notificationSubscriptionState'
 import '../style/HomePage.css'
 
 type HomeLocationState = {
@@ -39,6 +57,12 @@ type HomePaginationState = {
   page: number
   pageSize: number
 }
+
+type HomeNotification = NotificationDto & {
+  id: string
+}
+
+const TOAST_AUTO_HIDE_MS = 15_000
 
 function readSavedPaginationState(): HomePaginationState | null {
   if (typeof window === 'undefined') {
@@ -244,6 +268,24 @@ export function HomePage() {
   const [newsArticles, setNewsArticles] = useState<NewsArticle[]>([])
   const [isNewsLoading, setIsNewsLoading] = useState(false)
   const [newsErrorMessage, setNewsErrorMessage] = useState<string | null>(null)
+  const [notifications, setNotifications] = useState<HomeNotification[]>([])
+  const [notificationsErrorMessage, setNotificationsErrorMessage] = useState<string | null>(null)
+  const [activeToastNotification, setActiveToastNotification] = useState<HomeNotification | null>(null)
+  const [pendingSubscribedFlightIds, setPendingSubscribedFlightIds] = useState<string[]>(() =>
+    readPendingFlightSubscriptions(),
+  )
+
+  const notificationConnectionRef = useRef<ReturnType<typeof createNotificationConnection> | null>(null)
+
+  const subscribedFlightIds = useMemo(() => {
+    return Array.from(
+      new Set(
+        [...boardingPasses.map((boardingPass) => boardingPass.flightId), ...pendingSubscribedFlightIds]
+          .map((flightId) => flightId.trim())
+          .filter((flightId) => flightId.length > 0),
+      ),
+    )
+  }, [boardingPasses, pendingSubscribedFlightIds])
 
   const loadFlights = useCallback(
     async (filters: FlightSearchFilters = {}, page = 1, size = pageSize) => {
@@ -432,6 +474,108 @@ export function HomePage() {
     }
   }, [t])
 
+  useEffect(() => {
+    if (!user?.id) {
+      void notificationConnectionRef.current?.stop()
+      notificationConnectionRef.current = null
+      setNotificationsErrorMessage(null)
+      setNotifications([])
+      setActiveToastNotification(null)
+      return
+    }
+
+    const connection = createNotificationConnection({
+      onNotification: (notification) => {
+        const nextNotification: HomeNotification = {
+          ...notification,
+          id: `${notification.timestamp}-${notification.title}-${Math.random().toString(36).slice(2)}`,
+        }
+
+        setActiveToastNotification(nextNotification)
+
+        setNotifications((currentNotifications) => {
+          const deduped = currentNotifications.filter((item) => {
+            return !(
+              item.title === nextNotification.title
+              && item.message === nextNotification.message
+              && item.timestamp === nextNotification.timestamp
+            )
+          })
+
+          return [nextNotification, ...deduped].slice(0, 8)
+        })
+      },
+    })
+
+    notificationConnectionRef.current = connection
+
+    void (async () => {
+      try {
+        await connection.start()
+        setNotificationsErrorMessage(null)
+      } catch {
+        setNotificationsErrorMessage(t('home.notifications.connectError'))
+      }
+    })()
+
+    return () => {
+      if (notificationConnectionRef.current === connection) {
+        notificationConnectionRef.current = null
+      }
+
+      void connection.stop()
+    }
+  }, [t, user?.id])
+
+  useEffect(() => {
+    if (!activeToastNotification) {
+      return
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setActiveToastNotification((currentToast) => {
+        if (currentToast?.id !== activeToastNotification.id) {
+          return currentToast
+        }
+
+        return null
+      })
+    }, TOAST_AUTO_HIDE_MS)
+
+    return () => {
+      window.clearTimeout(timeoutId)
+    }
+  }, [activeToastNotification])
+
+  useEffect(() => {
+    if (user?.id) {
+      setPendingSubscribedFlightIds(readPendingFlightSubscriptions())
+      return
+    }
+
+    setPendingSubscribedFlightIds([])
+  }, [user?.id])
+
+  useEffect(() => {
+    if (!user?.id || !notificationConnectionRef.current) {
+      return
+    }
+
+    void notificationConnectionRef.current
+      .updateSubscriptions(user.id, subscribedFlightIds)
+      .then(() => {
+        if (pendingSubscribedFlightIds.length > 0) {
+          clearPendingFlightSubscriptions(pendingSubscribedFlightIds)
+          setPendingSubscribedFlightIds([])
+        }
+
+        setNotificationsErrorMessage(null)
+      })
+      .catch(() => {
+        setNotificationsErrorMessage(t('home.notifications.subscribeError'))
+      })
+  }, [pendingSubscribedFlightIds, subscribedFlightIds, t, user?.id])
+
   const handleLogout = () => {
     navigate('/', { replace: true })
   }
@@ -560,6 +704,45 @@ export function HomePage() {
     }).format(parsedDate)
   }
 
+  const formatNotificationDate = (value: string) => {
+    const parsedDate = new Date(value)
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return t('home.notifications.justNow')
+    }
+
+    return new Intl.DateTimeFormat(i18n.language, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(parsedDate)
+  }
+
+  const formatNotificationTitle = (title: string) => {
+    const normalizedTitle = title.trim()
+
+    if (normalizedTitle.toLowerCase() === 'flight updated') {
+      return t('home.notifications.eventTitles.flightUpdated')
+    }
+
+    return t('home.notifications.prettyTitle', { title: normalizedTitle })
+  }
+
+  const formatNotificationMessage = (message: string) => {
+    const normalizedMessage = message.trim()
+    const flightUpdatedPattern = /^Please note that flight\s+(.+?)\s+has been updated\.\s+Check the details for any changes\.?$/i
+    const flightUpdatedMatch = normalizedMessage.match(flightUpdatedPattern)
+
+    if (flightUpdatedMatch?.[1]) {
+      return t('home.notifications.prettyMessage', {
+        message: t('home.notifications.messages.flightUpdated', {
+          flightNumber: flightUpdatedMatch[1].trim(),
+        }),
+      })
+    }
+
+    return t('home.notifications.prettyMessage', { message: normalizedMessage })
+  }
+
   const handleDownloadBoardingPassPdf = async (boardingPass: UserBoardingPass) => {
     setBoardingPassesErrorMessage(null)
     setDownloadingBoardingPassId(boardingPass.id)
@@ -580,6 +763,30 @@ export function HomePage() {
       setDownloadingBoardingPassId(null)
     }
   }
+
+  const toastOverlay =
+    activeToastNotification && typeof document !== 'undefined'
+      ? createPortal(
+          <aside className="home-page__toast" role="status" aria-live="polite" aria-atomic="true">
+            <div className="home-page__toast-headline">
+              <strong className="home-page__toast-title">{t('home.notifications.toastLabel')}</strong>
+              <button
+                type="button"
+                className="home-page__toast-close"
+                onClick={() => setActiveToastNotification(null)}
+                aria-label={t('home.notifications.dismiss')}
+              >
+                {t('home.notifications.dismiss')}
+              </button>
+            </div>
+            <p className="home-page__toast-message">{formatNotificationMessage(activeToastNotification.message)}</p>
+            <time className="home-page__toast-time" dateTime={activeToastNotification.timestamp}>
+              {formatNotificationDate(activeToastNotification.timestamp)}
+            </time>
+          </aside>,
+          document.body,
+        )
+      : null
 
   return (
     <main className="home-page">
@@ -808,6 +1015,38 @@ export function HomePage() {
             </div>
           ) : null}
 
+          <section className="home-page__notifications-section" aria-label={t('home.notifications.listAria')}>
+            <div className="home-page__notifications-header">
+              <h3>{t('home.notifications.title')}</h3>
+            </div>
+
+            {notificationsErrorMessage ? (
+              <p className="home-page__status home-page__status--error" role="alert">
+                {notificationsErrorMessage}
+              </p>
+            ) : null}
+
+            {!notificationsErrorMessage && notifications.length === 0 ? (
+              <p className="home-page__status">{t('home.notifications.empty')}</p>
+            ) : null}
+
+            {!notificationsErrorMessage && notifications.length > 0 ? (
+              <ol className="home-page__notifications-list" aria-label={t('home.notifications.listAria')}>
+                {notifications.map((notification) => (
+                  <li key={notification.id} className="home-page__notifications-item">
+                    <div className="home-page__notifications-title-row">
+                      <strong className="home-page__notifications-title">{formatNotificationTitle(notification.title)}</strong>
+                      <time className="home-page__notifications-time" dateTime={notification.timestamp}>
+                        {formatNotificationDate(notification.timestamp)}
+                      </time>
+                    </div>
+                    <p className="home-page__notifications-message">{formatNotificationMessage(notification.message)}</p>
+                  </li>
+                ))}
+              </ol>
+            ) : null}
+          </section>
+
           <section className="home-page__news-section" aria-label={t('home.news.listAria')}>
             <div className="home-page__news-header">
               <h3>{t('home.news.title')}</h3>
@@ -923,6 +1162,7 @@ export function HomePage() {
           </section>
         </article>
       </section>
+      {toastOverlay}
     </main>
   )
 }

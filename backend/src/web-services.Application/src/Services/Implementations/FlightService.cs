@@ -10,14 +10,18 @@ public sealed class FlightService : IFlightService
     private readonly IAirportRepository _airportRepository;
     private readonly IBoardingPassService _boardingPassService;
 
+    private readonly INotificationService _notificationService;
+
     public FlightService(
         IFlightRepository flightRepository,
         IAirportRepository airportRepository,
-        IBoardingPassService boardingPassService)
+        IBoardingPassService boardingPassService,
+        INotificationService notificationService)
     {
         _flightRepository = flightRepository;
         _airportRepository = airportRepository;
         _boardingPassService = boardingPassService;
+        _notificationService = notificationService;
     }
 
     public async Task<FlightDto?> GetById(Guid id, CancellationToken cancellationToken = default)
@@ -179,6 +183,14 @@ public sealed class FlightService : IFlightService
         flight.FirstClassPrice = request.FirstClassPrice;
 
         await _flightRepository.UpdateAsync(flight, cancellationToken);
+
+        _notificationService.SendFlightNotificationAsync(
+            flight.Id,
+            new NotificationDto(
+                "Flight Updated",
+                $"Please note that flight {flight.FlightNumber} has been updated. Check the details for any changes.",
+                DateTimeOffset.UtcNow),
+            cancellationToken);
 
         return FlightDto.FromEntity(flight) with { SeatsFree = Math.Max(0, flight.SeatCapacity - issuedBoardingPasses) };
     }
