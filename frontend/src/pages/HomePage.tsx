@@ -62,7 +62,53 @@ type HomeNotification = NotificationDto & {
   id: string
 }
 
+type NotificationEventKind =
+  | 'flightUpdated'
+  | 'flightBoarding'
+  | 'flightGateClosure'
+  | 'flightDeparture'
+  | 'unknown'
+
 const TOAST_AUTO_HIDE_MS = 15_000
+
+function getNotificationEventKind(notification: NotificationDto): NotificationEventKind {
+  const normalizedTitle = notification.title.trim().toLowerCase()
+  const normalizedMessage = notification.message.trim()
+
+  if (normalizedTitle === 'flight updated') {
+    return 'flightUpdated'
+  }
+
+  if (normalizedTitle === 'flight boarding reminder') {
+    return 'flightBoarding'
+  }
+
+  if (normalizedTitle === 'flight gate reminder') {
+    return 'flightGateClosure'
+  }
+
+  if (normalizedTitle === 'flight departure reminder') {
+    return 'flightDeparture'
+  }
+
+  if (/^Please note that flight\s+.+?\s+has been updated\.\s+Check the details for any changes\.?$/i.test(normalizedMessage)) {
+    return 'flightUpdated'
+  }
+
+  if (/^Boarding for flight\s+.+?\s+started\.?$/i.test(normalizedMessage)) {
+    return 'flightBoarding'
+  }
+
+  if (/^Gate for flight\s+.+?\s+is closing\.?$/i.test(normalizedMessage)) {
+    return 'flightGateClosure'
+  }
+
+  if (/^Flight\s+.+?\s+is departing\.?$/i.test(normalizedMessage)) {
+    return 'flightDeparture'
+  }
+
+  return 'unknown'
+}
 
 function readSavedPaginationState(): HomePaginationState | null {
   if (typeof window === 'undefined') {
@@ -486,6 +532,13 @@ export function HomePage() {
 
     const connection = createNotificationConnection({
       onNotification: (notification) => {
+        const eventKind = getNotificationEventKind(notification)
+
+        if (eventKind === 'flightDeparture') {
+          handleLogout()
+          return
+        }
+
         const nextNotification: HomeNotification = {
           ...notification,
           id: `${notification.timestamp}-${notification.title}-${Math.random().toString(36).slice(2)}`,
@@ -719,9 +772,22 @@ export function HomePage() {
 
   const formatNotificationTitle = (title: string) => {
     const normalizedTitle = title.trim()
+    const normalizedTitleLower = normalizedTitle.toLowerCase()
 
-    if (normalizedTitle.toLowerCase() === 'flight updated') {
+    if (normalizedTitleLower === 'flight updated') {
       return t('home.notifications.eventTitles.flightUpdated')
+    }
+
+    if (normalizedTitleLower === 'flight boarding reminder') {
+      return t('home.notifications.eventTitles.flightBoarding')
+    }
+
+    if (normalizedTitleLower === 'flight gate reminder') {
+      return t('home.notifications.eventTitles.flightGateClosure')
+    }
+
+    if (normalizedTitleLower === 'flight departure reminder') {
+      return t('home.notifications.eventTitles.flightDeparture')
     }
 
     return t('home.notifications.prettyTitle', { title: normalizedTitle })
@@ -730,12 +796,42 @@ export function HomePage() {
   const formatNotificationMessage = (message: string) => {
     const normalizedMessage = message.trim()
     const flightUpdatedPattern = /^Please note that flight\s+(.+?)\s+has been updated\.\s+Check the details for any changes\.?$/i
+    const boardingPattern = /^Boarding for flight\s+(.+?)\s+started\.?$/i
+    const gateClosurePattern = /^Gate for flight\s+(.+?)\s+is closing\.?$/i
+    const departurePattern = /^Flight\s+(.+?)\s+is departing\.?$/i
     const flightUpdatedMatch = normalizedMessage.match(flightUpdatedPattern)
+    const boardingMatch = normalizedMessage.match(boardingPattern)
+    const gateClosureMatch = normalizedMessage.match(gateClosurePattern)
+    const departureMatch = normalizedMessage.match(departurePattern)
 
     if (flightUpdatedMatch?.[1]) {
       return t('home.notifications.prettyMessage', {
         message: t('home.notifications.messages.flightUpdated', {
           flightNumber: flightUpdatedMatch[1].trim(),
+        }),
+      })
+    }
+
+    if (boardingMatch?.[1]) {
+      return t('home.notifications.prettyMessage', {
+        message: t('home.notifications.messages.flightBoarding', {
+          flightNumber: boardingMatch[1].trim(),
+        }),
+      })
+    }
+
+    if (gateClosureMatch?.[1]) {
+      return t('home.notifications.prettyMessage', {
+        message: t('home.notifications.messages.flightGateClosure', {
+          flightNumber: gateClosureMatch[1].trim(),
+        }),
+      })
+    }
+
+    if (departureMatch?.[1]) {
+      return t('home.notifications.prettyMessage', {
+        message: t('home.notifications.messages.flightDeparture', {
+          flightNumber: departureMatch[1].trim(),
         }),
       })
     }

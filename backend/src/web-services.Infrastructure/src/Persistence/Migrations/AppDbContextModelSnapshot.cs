@@ -298,6 +298,43 @@ namespace SmartFlightCompanion.WebServices.Infrastructure.Persistence.Migrations
                     b.ToTable("RequestLogs");
                 });
 
+            modelBuilder.Entity("SmartFlightCompanion.WebServices.Infrastructure.Entities.ScheduledNotification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTimeOffset>("ScheduledForUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TargetId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TargetId", "Type", "ScheduledForUtc");
+
+                    b.ToTable("ScheduledNotifications");
+                });
+
             modelBuilder.Entity("SmartFlightCompanion.WebServices.Infrastructure.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")

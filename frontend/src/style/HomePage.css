@@ -456,10 +456,12 @@
 }
 
 .home-page__notifications-item {
-  border: 1px solid color-mix(in srgb, var(--border-default) 68%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-default) 82%, transparent);
+  border-left: 3px solid color-mix(in srgb, var(--color-primary) 34%, transparent);
   border-radius: 0.82rem;
-  background: color-mix(in srgb, var(--bg-surface) 90%, transparent);
-  padding: 0.56rem 0.62rem;
+  background: color-mix(in srgb, var(--bg-elevated) 84%, var(--bg-surface));
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--color-primary) 9%, transparent);
+  padding: 0.58rem 0.66rem;
   display: grid;
   gap: 0.24rem;
 }
@@ -474,6 +476,7 @@
 .home-page__notifications-title {
   color: var(--text-primary);
   font-size: 0.86rem;
+  font-weight: 650;
 }
 
 .home-page__notifications-time {

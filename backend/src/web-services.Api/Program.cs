@@ -1,7 +1,10 @@
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using SmartFlightCompanion.WebServices.Api.Middleware;
 using SmartFlightCompanion.WebServices.Api.Signals;
+using SmartFlightCompanion.WebServices.Application.Jobs;
 using SmartFlightCompanion.WebServices.Application.Services;
 using SmartFlightCompanion.WebServices.Infrastructure;
 
@@ -14,6 +17,13 @@ builder.Services.AddControllers(options =>
     options.Conventions.Insert(0, new GlobalRoutePrefixConvention("api"));
 });
 builder.Services.AddInfrastructure(builder.Configuration);
+var defaultConnectionString = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' was not found.");
+builder.Services.AddHangfire(configuration => configuration
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UsePostgreSqlStorage(options => options.UseNpgsqlConnection(defaultConnectionString)));
+builder.Services.AddHangfireServer();
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = builder.Configuration.GetConnectionString("Redis") ?? "cache:6379";
@@ -38,6 +48,8 @@ builder.Services.AddHttpClient<IGeocodingService, NominatimGeocodingService>(cli
 });
 builder.Services.AddSignalR();
 builder.Services.AddScoped<INotificationService, NotificationService>();
+builder.Services.AddScoped<IScheduledNotificationService, ScheduledNotificationService>();
+builder.Services.AddScoped<NotificationDispatchJob>();
 
 // The backend is only reachable through the reverse proxy, so its forwarded headers are trusted
 // (the proxy appends the real client address to X-Forwarded-For).
@@ -65,6 +77,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseAuthorization();
+
+app.UseHangfireDashboard("/api/jobs");
 
 app.MapControllers();
 app.MapHub<SignalHub>("/api/notifications");

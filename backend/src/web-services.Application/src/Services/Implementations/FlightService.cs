@@ -9,19 +9,49 @@ public sealed class FlightService : IFlightService
     private readonly IFlightRepository _flightRepository;
     private readonly IAirportRepository _airportRepository;
     private readonly IBoardingPassService _boardingPassService;
-
     private readonly INotificationService _notificationService;
+    private readonly IScheduledNotificationService _scheduledNotificationService;
+
 
     public FlightService(
         IFlightRepository flightRepository,
         IAirportRepository airportRepository,
         IBoardingPassService boardingPassService,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        IScheduledNotificationService scheduledNotificationService)
     {
         _flightRepository = flightRepository;
         _airportRepository = airportRepository;
         _boardingPassService = boardingPassService;
         _notificationService = notificationService;
+        _scheduledNotificationService = scheduledNotificationService;
+    }
+
+    private async Task ScheduleFlightNotificationsAsync(Flight flight, CancellationToken cancellationToken)
+    {
+        await _scheduledNotificationService.ScheduleNotificationAsync(
+            flight.Id,
+            NotificationType.Boarding,
+            "Flight Boarding Reminder",
+            $"Boarding for flight {flight.FlightNumber} started.",
+            flight.DepartureTime - TimeSpan.FromMinutes(60),
+            cancellationToken);
+
+        await _scheduledNotificationService.ScheduleNotificationAsync(
+            flight.Id,
+            NotificationType.GateClosure,
+            "Flight Gate Reminder",
+            $"Gate for flight {flight.FlightNumber} is closing.",
+            flight.DepartureTime - TimeSpan.FromMinutes(5),
+            cancellationToken);
+
+        await _scheduledNotificationService.ScheduleNotificationAsync(
+            flight.Id,
+            NotificationType.Departure,
+            "Flight Departure Reminder",
+            $"Flight {flight.FlightNumber} is departing.",
+            flight.DepartureTime,
+            cancellationToken);
     }
 
     public async Task<FlightDto?> GetById(Guid id, CancellationToken cancellationToken = default)
@@ -143,6 +173,8 @@ public sealed class FlightService : IFlightService
 
         var created = await _flightRepository.CreateAsync(flight, cancellationToken);
 
+        await ScheduleFlightNotificationsAsync(created, cancellationToken);
+
         return FlightDto.FromEntity(created) with { SeatsFree = created.SeatCapacity };
     }
 
@@ -155,7 +187,7 @@ public sealed class FlightService : IFlightService
             return null;
         }
 
-        var values = await ValidateAndResolve(request, cancellationToken);
+        var values = await ValidateAndResolve(request, cancellationToken, flight);
 
         var issuedBoardingPasses = await _boardingPassService.GetCountByFlightId(flight.Id, cancellationToken);
         if (request.SeatCapacity!.Value < issuedBoardingPasses)
@@ -163,6 +195,8 @@ public sealed class FlightService : IFlightService
             throw new FlightValidationException(
                 $"Seat capacity cannot be lower than the number of issued boarding passes ({issuedBoardingPasses}).");
         }
+
+        var departureChanged = (flight.DepartureTime != values.DepartureTime);
 
         flight.FlightNumber = values.FlightNumber;
         flight.DepartureAirport = values.DepartureAirport;
@@ -173,8 +207,6 @@ public sealed class FlightService : IFlightService
         flight.Airline = request.Airline!.Trim();
         flight.Aircraft = request.Aircraft!.Trim();
         flight.SeatCapacity = request.SeatCapacity!.Value;
-        flight.ScheduledDepartureTime = values.ScheduledDepartureTime;
-        flight.ScheduledArrivalTime = values.ScheduledArrivalTime;
         flight.DepartureTime = values.DepartureTime;
         flight.ArrivalTime = values.ArrivalTime;
         flight.EconomyPrice = request.EconomyPrice;
@@ -184,13 +216,18 @@ public sealed class FlightService : IFlightService
 
         await _flightRepository.UpdateAsync(flight, cancellationToken);
 
-        _notificationService.SendFlightNotificationAsync(
+        await _notificationService.SendFlightNotificationAsync(
             flight.Id,
             new NotificationDto(
                 "Flight Updated",
                 $"Please note that flight {flight.FlightNumber} has been updated. Check the details for any changes.",
                 DateTimeOffset.UtcNow),
             cancellationToken);
+
+        if (departureChanged)
+        {
+            await ScheduleFlightNotificationsAsync(flight, cancellationToken);
+        }
 
         return FlightDto.FromEntity(flight) with { SeatsFree = Math.Max(0, flight.SeatCapacity - issuedBoardingPasses) };
     }
@@ -205,7 +242,10 @@ public sealed class FlightService : IFlightService
         DateTimeOffset DepartureTime,
         DateTimeOffset ArrivalTime);
 
-    private async Task<ResolvedFlightValues> ValidateAndResolve(FlightRequestDto request, CancellationToken cancellationToken)
+    private async Task<ResolvedFlightValues> ValidateAndResolve(
+        FlightRequestDto request,
+        CancellationToken cancellationToken,
+        Flight? existingFlight = null)
     {
         if (!Enum.TryParse<FlightStatus>(request.Status, ignoreCase: true, out var status)
             || !Enum.IsDefined(status))
@@ -224,8 +264,24 @@ public sealed class FlightService : IFlightService
         }
 
         // Npgsql only accepts UTC offsets for timestamptz columns.
-        var scheduledDeparture = request.ScheduledDepartureTime!.Value.ToUniversalTime();
-        var scheduledArrival = request.ScheduledArrivalTime!.Value.ToUniversalTime();
+        var requestedScheduledDeparture = request.ScheduledDepartureTime!.Value.ToUniversalTime();
+        var requestedScheduledArrival = request.ScheduledArrivalTime!.Value.ToUniversalTime();
+
+        if (existingFlight is not null)
+        {
+            if (requestedScheduledDeparture != existingFlight.ScheduledDepartureTime)
+            {
+                throw new FlightValidationException("Scheduled departure time cannot be updated.");
+            }
+
+            if (requestedScheduledArrival != existingFlight.ScheduledArrivalTime)
+            {
+                throw new FlightValidationException("Scheduled arrival time cannot be updated.");
+            }
+        }
+
+        var scheduledDeparture = existingFlight?.ScheduledDepartureTime ?? requestedScheduledDeparture;
+        var scheduledArrival = existingFlight?.ScheduledArrivalTime ?? requestedScheduledArrival;
         var departure = request.DepartureTime?.ToUniversalTime() ?? scheduledDeparture;
         var arrival = request.ArrivalTime?.ToUniversalTime() ?? scheduledArrival;
 

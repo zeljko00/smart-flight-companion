@@ -18,6 +18,7 @@ public class AppDbContext : DbContext
     public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<Media> Media => Set<Media>();
     public DbSet<RequestLog> RequestLogs => Set<RequestLog>();
+    public DbSet<ScheduledNotification> ScheduledNotifications => Set<ScheduledNotification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -91,6 +92,21 @@ public class AppDbContext : DbContext
             entity.HasOne(media => media.BoardingGuide)
                 .WithMany()
                 .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ScheduledNotification>(entity =>
+        {
+            entity.Property(notification => notification.Type)
+                .HasConversion<string>()
+                .HasMaxLength(32);
+
+            entity.Property(notification => notification.Title)
+                .HasMaxLength(256);
+
+            entity.Property(notification => notification.Message)
+                .HasMaxLength(4000);
+
+            entity.HasIndex(notification => new { notification.TargetId, notification.Type, notification.ScheduledForUtc });
         });
     }
 }

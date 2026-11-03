@@ -416,9 +416,15 @@ const resources = {
           dismiss: 'Dismiss',
           eventTitles: {
             flightUpdated: 'Flight updated',
+            flightBoarding: 'Boarding started',
+            flightGateClosure: 'Gate closing',
+            flightDeparture: 'Flight departed',
           },
           messages: {
             flightUpdated: 'Flight {{flightNumber}} was updated.',
+            flightBoarding: 'Boarding for flight {{flightNumber}} has started.',
+            flightGateClosure: 'Gate for flight {{flightNumber}} is closing.',
+            flightDeparture: 'Flight {{flightNumber}} has departed.',
           },
           prettyTitle: 'Flight update: {{title}}',
           prettyMessage: '{{message}}',
@@ -969,9 +975,15 @@ const resources = {
           dismiss: 'Zatvori',
           eventTitles: {
             flightUpdated: 'Azuriranje leta',
+            flightBoarding: 'Boarding je poceo',
+            flightGateClosure: 'Gejt se zatvara',
+            flightDeparture: 'Let je poletio',
           },
           messages: {
             flightUpdated: 'Let {{flightNumber}} je azuriran.',
+            flightBoarding: 'Boarding za let {{flightNumber}} je poceo.',
+            flightGateClosure: 'Gejt za let {{flightNumber}} se zatvara.',
+            flightDeparture: 'Let {{flightNumber}} je poletio.',
           },
           prettyTitle: 'Azuriranje leta: {{title}}',
           prettyMessage: '{{message}}',
