@@ -34,6 +34,23 @@ SELECT format('GRANT CONNECT ON DATABASE %I TO %I', :'app_database', :'app_usern
 SELECT format('GRANT USAGE, CREATE ON SCHEMA public TO %I', :'app_username')
 \gexec
 
+CREATE SCHEMA IF NOT EXISTS hangfire;
+
+SELECT format('GRANT USAGE, CREATE ON SCHEMA hangfire TO %I', :'app_username')
+\gexec
+
+SELECT format('GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA hangfire TO %I', :'app_username')
+\gexec
+
+SELECT format('GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA hangfire TO %I', :'app_username')
+\gexec
+
+SELECT format('ALTER DEFAULT PRIVILEGES IN SCHEMA hangfire GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO %I', :'app_username')
+\gexec
+
+SELECT format('ALTER DEFAULT PRIVILEGES IN SCHEMA hangfire GRANT USAGE, SELECT, UPDATE ON SEQUENCES TO %I', :'app_username')
+\gexec
+
 SELECT format('GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO %I', :'app_username')
 \gexec
 
