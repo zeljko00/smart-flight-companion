@@ -59,9 +59,23 @@ services:
       - storage
     restart: unless-stopped
 
-  payment-gateway:
-    image: nginx:1.27-alpine
-    container_name: payment-gateway
+  payment-service:
+    build:
+      context: ../payment-gateway
+      dockerfile: ../payment-gateway/deploy/Dockerfile
+    container_name: payment-service
+    env_file:
+      - ../payment-gateway/config/.env
+    volumes:
+      - ../payment-gateway:/app
+      - payment-nuget-cache:/root/.nuget/packages
+      - payment-api-obj:/app/src/PaymentGateway.Api/obj
+      - payment-api-bin:/app/src/PaymentGateway.Api/bin
+      - payment-services-obj:/app/src/PaymentGateway.Application/obj
+      - payment-services-bin:/app/src/PaymentGateway.Application/bin
+      - payment-repository-obj:/app/src/PaymentGateway.Infrastructure/obj
+      - payment-repository-bin:/app/src/PaymentGateway.Infrastructure/bin
+      - internal-database:/app/src/PaymentGateway.Api/database
     networks:
       - sfc-internal-network
     restart: unless-stopped
@@ -125,6 +139,14 @@ volumes:
   services-bin:
   repository-obj:
   repository-bin:
+  payment-nuget-cache:
+  payment-api-obj:
+  payment-api-bin:
+  payment-services-obj:
+  payment-services-bin:
+  payment-repository-obj:
+  payment-repository-bin:
+  internal-database:
   
 networks:
   sfc-internal-network:
