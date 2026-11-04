@@ -1,0 +1,4 @@
+@PaymentGateway.Api_HostAddress = http://localhost:5268
+
+GET {{PaymentGateway.Api_HostAddress}}/api/payments
+Accept: application/json
