@@ -1,13 +1,25 @@
+using Microsoft.AspNetCore.Mvc.ApplicationModels;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
+
 using PaymentGateway.Api.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    options.Conventions.Insert(0, new GlobalRoutePrefixConvention("api"));
+});
 builder.Services.AddDbContext<PaymentGatewayDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("PaymentGatewayDb")));
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
 
@@ -18,6 +30,8 @@ if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+
+app.UseForwardedHeaders();
 
 using (var scope = app.Services.CreateScope())
 {
@@ -32,3 +46,24 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+
+internal sealed class GlobalRoutePrefixConvention(string prefix) : IApplicationModelConvention
+{
+    public void Apply(ApplicationModel application)
+    {
+        foreach (var controller in application.Controllers)
+        {
+            foreach (var selector in controller.Selectors)
+            {
+                if (selector.AttributeRouteModel is null)
+                {
+                    continue;
+                }
+
+                selector.AttributeRouteModel = AttributeRouteModel.CombineAttributeRouteModel(
+                    new AttributeRouteModel { Template = prefix },
+                    selector.AttributeRouteModel);
+            }
+        }
+    }
+}

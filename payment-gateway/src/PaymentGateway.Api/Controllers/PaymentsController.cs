@@ -6,7 +6,7 @@ using PaymentGateway.Api.Models;
 namespace PaymentGateway.Api.Controllers;
 
 [ApiController]
-[Route("/payments")]
+[Route("payments")]
 public sealed class PaymentsController(PaymentGatewayDbContext dbContext) : ControllerBase
 {
     [HttpPost]
