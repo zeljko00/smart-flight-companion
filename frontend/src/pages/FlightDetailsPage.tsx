@@ -23,7 +23,7 @@ import {
   type FlightComment,
 } from '../services/commentsService'
 import {
-  createBoardingPass,
+  createBoardingPassPaymentSession,
   type SeatType,
 } from '../services/boardingPassesService'
 import { addPendingFlightSubscription } from '../services/notificationSubscriptionState'
@@ -117,6 +117,47 @@ function buildRouteArc(start: LatLngTuple, end: LatLngTuple): LatLngTuple[] {
   return points
 }
 
+function encodeUserForReturnPath(user: UserDto): string {
+  return btoa(encodeURIComponent(JSON.stringify(user)))
+}
+
+function decodeUserFromReturnPath(raw: string | null): UserDto | null {
+  if (!raw) {
+    return null
+  }
+
+  try {
+    const decoded = decodeURIComponent(atob(raw))
+    const parsed = JSON.parse(decoded) as Partial<UserDto>
+
+    if (
+      typeof parsed.id !== 'string' ||
+      typeof parsed.username !== 'string' ||
+      typeof parsed.email !== 'string' ||
+      typeof parsed.firstName !== 'string' ||
+      typeof parsed.lastName !== 'string' ||
+      typeof parsed.role !== 'string' ||
+      typeof parsed.isActive !== 'boolean' ||
+      typeof parsed.createdAt !== 'string'
+    ) {
+      return null
+    }
+
+    return {
+      id: parsed.id,
+      username: parsed.username,
+      email: parsed.email,
+      firstName: parsed.firstName,
+      lastName: parsed.lastName,
+      role: parsed.role,
+      isActive: parsed.isActive,
+      createdAt: parsed.createdAt,
+    }
+  } catch {
+    return null
+  }
+}
+
 type WeatherPresentation = {
   icon: LucideIcon
   labelKey: string
@@ -176,8 +217,10 @@ export function FlightDetailsPage() {
   const navigate = useNavigate()
   const location = useLocation()
   const { flightId } = useParams<{ flightId: string }>()
+  const returnParams = new URLSearchParams(location.search)
+  const userFromReturnPath = decodeUserFromReturnPath(returnParams.get('u'))
   const locationState = (location.state as FlightDetailsLocationState | null) ?? null
-  const user = locationState?.user ?? null
+  const user = locationState?.user ?? userFromReturnPath
   const isAdminView =
     user?.role.toLowerCase() === 'admin' || (locationState?.returnTo?.path.startsWith('/admin') ?? false)
   const homeFilters = locationState?.homeFilters
@@ -192,7 +235,6 @@ export function FlightDetailsPage() {
   const [submitCommentErrorMessage, setSubmitCommentErrorMessage] = useState<string | null>(null)
   const [isSubmittingComment, setIsSubmittingComment] = useState(false)
   const [selectedSeatType, setSelectedSeatType] = useState<SeatType>('economy')
-  const [isPurchaseConfirmed, setIsPurchaseConfirmed] = useState(false)
   const [isPurchasingBoardingPass, setIsPurchasingBoardingPass] = useState(false)
   const [purchaseSuccessMessage, setPurchaseSuccessMessage] = useState<string | null>(null)
   const [purchaseErrorMessage, setPurchaseErrorMessage] = useState<string | null>(null)
@@ -202,6 +244,51 @@ export function FlightDetailsPage() {
   const [boardingGuides, setBoardingGuides] = useState<BoardingGuide[]>([])
   const [isBoardingGuidesLoading, setIsBoardingGuidesLoading] = useState(false)
   const [boardingGuidesErrorMessage, setBoardingGuidesErrorMessage] = useState<string | null>(null)
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    const paymentStatus = params.get('paymentStatus')
+
+    if (paymentStatus === 'succeeded') {
+      setPurchaseSuccessMessage(t('flightDetails.boardingPass.paymentSuccess'))
+      setPurchaseErrorMessage(null)
+
+      if (!flightId) {
+        return
+      }
+
+      void (async () => {
+        try {
+          const refreshedFlight = await fetchFlightById(flightId)
+          setFlight(refreshedFlight)
+          addPendingFlightSubscription(refreshedFlight.id)
+        } catch {
+          // Keep the success message from the redirect even when flight refresh fails.
+        }
+      })()
+      return
+    }
+
+    if (paymentStatus === 'failed') {
+      const reason = params.get('paymentFailureReason')
+      const knownReasons = [
+        'insufficient_funds',
+        'invalid_card',
+        'invalid_expiration',
+        'card_deactivated',
+        'card_expired',
+        'boarding_pass_issue_failed',
+        'canceled',
+      ]
+
+      setPurchaseSuccessMessage(null)
+      setPurchaseErrorMessage(
+        reason && knownReasons.includes(reason)
+          ? t(`flightDetails.boardingPass.paymentFailedReasons.${reason}`)
+          : t('flightDetails.boardingPass.paymentFailed'),
+      )
+    }
+  }, [flightId, location.search, t])
 
   useEffect(() => {
     if (!flightId) {
@@ -473,40 +560,18 @@ export function FlightDetailsPage() {
       return
     }
 
-    if (!isPurchaseConfirmed) {
-      setPurchaseErrorMessage(t('flightDetails.boardingPass.confirmRequired'))
-      return
-    }
-
     const seatToBuy = activeSeatOffer?.seat ?? selectedSeatType
     setIsPurchasingBoardingPass(true)
     setPurchaseErrorMessage(null)
     setPurchaseSuccessMessage(null)
 
     try {
-      const boardingPass = await createBoardingPass(flightId, seatToBuy, user.id)
-      addPendingFlightSubscription(boardingPass.flightId || flightId)
+      const encodedUser = encodeURIComponent(encodeUserForReturnPath(user))
+      const returnPath = `/flights/${encodeURIComponent(flightId)}?u=${encodedUser}`
+      const paymentSession = await createBoardingPassPaymentSession(flightId, seatToBuy, user.id, returnPath)
 
-      try {
-        const refreshedFlight = await fetchFlightById(flightId)
-        setFlight(refreshedFlight)
-      } catch {
-        // Purchase succeeded; keep success flow even if refresh fails.
-      }
-
-      const seatLabel = t(`flightDetails.boardingPass.seats.${boardingPass.seat}`)
-      const priceLabel =
-        typeof boardingPass.price === 'number'
-          ? formatPrice(boardingPass.price)
-          : activeSeatOffer?.priceLabel ?? t('home.columns.noPrice')
-
-      setPurchaseSuccessMessage(
-        t('flightDetails.boardingPass.purchaseSuccess', {
-          seat: seatLabel,
-          price: priceLabel,
-        }),
-      )
-      setIsPurchaseConfirmed(false)
+      setPurchaseSuccessMessage(t('flightDetails.boardingPass.redirectingToPayment'))
+      window.location.assign(paymentSession.checkoutUrl)
     } catch {
       setPurchaseErrorMessage(t('flightDetails.boardingPass.purchaseError'))
     } finally {
@@ -932,7 +997,6 @@ export function FlightDetailsPage() {
                           value={selectedSeatType}
                           onChange={(event) => {
                             setSelectedSeatType(event.target.value as SeatType)
-                            setIsPurchaseConfirmed(false)
                             setPurchaseErrorMessage(null)
                             setPurchaseSuccessMessage(null)
                           }}
@@ -962,21 +1026,6 @@ export function FlightDetailsPage() {
                         </p>
                       ) : null}
 
-                      <label className="flight-details-page__boarding-pass-confirm">
-                        <input
-                          type="checkbox"
-                          checked={isPurchaseConfirmed}
-                          onChange={(event) => {
-                            setIsPurchaseConfirmed(event.target.checked)
-                            if (purchaseErrorMessage) {
-                              setPurchaseErrorMessage(null)
-                            }
-                          }}
-                          disabled={isPurchasingBoardingPass || seatOffers.length === 0}
-                        />
-                        <span>{t('flightDetails.boardingPass.confirmLabel')}</span>
-                      </label>
-
                       {purchaseErrorMessage ? (
                         <p className="flight-details-page__purchase-note flight-details-page__purchase-note--error" role="alert">
                           {purchaseErrorMessage}
@@ -992,7 +1041,7 @@ export function FlightDetailsPage() {
                       <button
                         type="submit"
                         className="flight-details-page__comment-submit"
-                        disabled={isPurchasingBoardingPass || seatOffers.length === 0 || !isPurchaseConfirmed || isSoldOut}
+                        disabled={isPurchasingBoardingPass || seatOffers.length === 0 || isSoldOut}
                       >
                         {isPurchasingBoardingPass
                           ? t('flightDetails.boardingPass.purchasing')

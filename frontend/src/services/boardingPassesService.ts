@@ -19,12 +19,8 @@ type ApiBoardingPass = {
 }
 
 export type BoardingPassPurchaseResult = {
-  id: string
-  seat: SeatType
-  price: number | null
-  flightId: string
-  userId: string
-  issuedAt: string
+  paymentId: string
+  checkoutUrl: string
 }
 
 export type UserBoardingPass = {
@@ -84,31 +80,32 @@ function normalizeSeat(rawSeat: number | string | undefined): SeatType {
   return 'economy'
 }
 
-export async function createBoardingPass(
+type BoardingPassPaymentSessionResponse = {
+  paymentId: string
+  checkoutUrl: string
+}
+
+export async function createBoardingPassPaymentSession(
   flightId: string,
   seat: SeatType,
   ownerId: string,
+  returnPath: string,
 ): Promise<BoardingPassPurchaseResult> {
-  const boardingPass = await apiRequest<ApiBoardingPass>(
+  const response = await apiRequest<BoardingPassPaymentSessionResponse>(
     `/flights/${encodeURIComponent(flightId)}/boarding-passes`,
     {
       method: 'POST',
       body: {
         seat: seatToApiValue[seat],
         ownerId,
+        returnPath,
       },
     },
   )
 
   return {
-    id: boardingPass.id,
-    seat: normalizeSeat(boardingPass.seat),
-    price: typeof boardingPass.price === 'number' && Number.isFinite(boardingPass.price)
-      ? boardingPass.price
-      : null,
-    flightId: boardingPass.flightId ?? flightId,
-    userId: boardingPass.userId ?? '',
-    issuedAt: boardingPass.issuedAt ?? new Date().toISOString(),
+    paymentId: response.paymentId,
+    checkoutUrl: response.checkoutUrl,
   }
 }
 
