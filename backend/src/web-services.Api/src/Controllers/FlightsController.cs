@@ -13,14 +13,21 @@ public sealed class FlightsController : ControllerBase
     private readonly IFlightService _flightService;
     private readonly ICommentService _commentService;
     private readonly IBoardingPassService _boardingPassService;
+    private readonly IPaymentService _paymentService;
 
     private readonly IBoardingGuideService _boardingGuideService;
 
-    public FlightsController(IFlightService flightService, ICommentService commentService, IBoardingPassService boardingPassService, IBoardingGuideService boardingGuideService)
+    public FlightsController(
+        IFlightService flightService,
+        ICommentService commentService,
+        IBoardingPassService boardingPassService,
+        IPaymentService paymentService,
+        IBoardingGuideService boardingGuideService)
     {
         _flightService = flightService;
         _commentService = commentService;
         _boardingPassService = boardingPassService;
+        _paymentService = paymentService;
         _boardingGuideService = boardingGuideService;
     }
 
@@ -169,16 +176,16 @@ public sealed class FlightsController : ControllerBase
     }
 
     [HttpPost("{flightId:guid}/boarding-passes")]
-    [ProducesResponseType(typeof(BoardingPassDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(PaymentSessionDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<BoardingPassDto>> CreateBoardingPass(
+    public async Task<ActionResult<PaymentSessionDto>> CreateBoardingPassPaymentSession(
         [FromRoute] Guid flightId,
         [FromBody] BoardingPassRequestDto request,
         CancellationToken cancellationToken)
     {
         if (flightId == Guid.Empty)
         {
-            return BadRequest("Failed to create boarding pass.");
+            return BadRequest("Invalid flight ID.");
         }
 
         if (request.OwnerId == Guid.Empty)
@@ -186,14 +193,19 @@ public sealed class FlightsController : ControllerBase
             return BadRequest("Invalid owner ID.");
         }
 
-        var boardingPass = await _boardingPassService.Create(flightId, request.OwnerId, request.Seat, cancellationToken);
+        var session = await _paymentService.RequestPaymentSessionAsync(
+            flightId,
+            request.OwnerId,
+            request.Seat,
+            request.ReturnPath,
+            cancellationToken);
 
-        if (boardingPass is null)
+        if (session is null)
         {
-            return BadRequest("Failed to create boarding pass.");
+            return BadRequest("Failed to create boarding pass payment session.");
         }
 
-        return Created(string.Empty, boardingPass);
+        return Created(string.Empty, session);
     }
 
     [HttpGet("{flightId:guid}/boarding-guides")]

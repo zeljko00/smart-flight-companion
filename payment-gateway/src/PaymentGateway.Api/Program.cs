@@ -8,12 +8,16 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+var paymentGatewayDb = Environment.GetEnvironmentVariable("ConnectionStrings__PaymentGatewayDb")
+    ?? builder.Configuration.GetConnectionString("PaymentGatewayDb");
+
 builder.Services.AddControllers(options =>
 {
     options.Conventions.Insert(0, new GlobalRoutePrefixConvention("api"));
 });
 builder.Services.AddDbContext<PaymentGatewayDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("PaymentGatewayDb")));
+    options.UseSqlite(paymentGatewayDb));
+builder.Services.AddHttpClient();
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
