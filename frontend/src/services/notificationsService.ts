@@ -3,6 +3,7 @@ import {
   HubConnectionBuilder,
   HubConnectionState,
 } from '@microsoft/signalr'
+import { getAccessToken } from './authSession'
 
 export type NotificationDto = {
   title: string
@@ -94,7 +95,9 @@ export function createNotificationConnection(
   let startInFlight: Promise<void> | null = null
 
   const connection: HubConnection = new HubConnectionBuilder()
-    .withUrl(buildSignalRHubUrl())
+    .withUrl(buildSignalRHubUrl(), {
+      accessTokenFactory: () => getAccessToken() ?? '',
+    })
     .withAutomaticReconnect()
     .build()
 
