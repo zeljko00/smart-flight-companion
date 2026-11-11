@@ -33,6 +33,14 @@ type ValidationProblem = {
   errors?: Record<string, string[]>
 }
 
+function forceLogout(): void {
+  clearAuthSession()
+
+  if (typeof window !== 'undefined' && window.location.pathname !== '/') {
+    window.location.replace('/')
+  }
+}
+
 function extractErrorMessage(payload: unknown, status: number): string {
   if (typeof payload === 'string' && payload.trim()) {
     return payload
@@ -112,7 +120,7 @@ async function performRefresh(): Promise<boolean> {
     : await response.text().catch(() => '')
 
   if (!response.ok || !isAuthenticationResultDto(payload)) {
-    clearAuthSession()
+    forceLogout()
     return false
   }
 
@@ -134,7 +142,7 @@ async function refreshSession(): Promise<boolean> {
     try {
       return await performRefresh()
     } catch {
-      clearAuthSession()
+      forceLogout()
       return false
     } finally {
       refreshInFlight = null
