@@ -1,4 +1,5 @@
 import type { UserDto } from './authService'
+import { createStore } from 'zustand/vanilla'
 
 type AuthSession = {
   user: UserDto
@@ -6,36 +7,31 @@ type AuthSession = {
   refreshToken: string
 }
 
-let currentSession: AuthSession | null = null
+type AuthSessionState = {
+  session: AuthSession | null
+}
+
+const authSessionStore = createStore<AuthSessionState>(() => ({
+  session: null,
+}))
+
+function getCurrentSession(): AuthSession | null {
+  return authSessionStore.getState().session
+}
 
 export function setAuthSession(session: AuthSession): void {
-  currentSession = session
+  authSessionStore.setState({ session })
 }
 
 export function clearAuthSession(): void {
-  currentSession = null
+  authSessionStore.setState({ session: null })
 }
 
 export function getAccessToken(): string | null {
-  return currentSession?.accessToken ?? null
+  return getCurrentSession()?.accessToken ?? null
 }
 
-export function getRefreshToken(): string | null {
-  return currentSession?.refreshToken ?? null
-}
 
 export function getCurrentUser(): UserDto | null {
-  return currentSession?.user ?? null
-}
-
-export function updateTokens(accessToken: string, refreshToken: string): void {
-  if (!currentSession) {
-    return
-  }
-
-  currentSession = {
-    ...currentSession,
-    accessToken,
-    refreshToken,
-  }
+  return getCurrentSession()?.user ?? null
 }

@@ -9,6 +9,7 @@ namespace SmartFlightCompanion.WebServices.Api.Controllers;
 [Route("auth")]
 public sealed class AuthController : ControllerBase
 {
+    private const string RefreshTokenCookieName = "sfc_refresh_token";
     private readonly IAuthenticationService _authenticationService;
     private readonly IUserService _userService;
 
@@ -16,6 +17,19 @@ public sealed class AuthController : ControllerBase
     {
         _authenticationService = authenticationService;
         _userService = userService;
+    }
+
+    private void SetRefreshTokenCookie(string refreshToken)
+    {
+        Response.Cookies.Append(RefreshTokenCookieName, refreshToken, new CookieOptions
+        {
+            HttpOnly = true,
+            Secure = true,
+            SameSite = SameSiteMode.Strict,
+            Path = "/api/auth/refresh",
+            IsEssential = true,
+            Expires = DateTimeOffset.UtcNow.AddDays(30)
+        });
     }
 
     [AllowAnonymous]
@@ -39,7 +53,13 @@ public sealed class AuthController : ControllerBase
             Password = request.Password
         }, cancellationToken);
 
-        return authenticationResult is null ? Unauthorized("Failed to authenticate.") : Created(string.Empty, authenticationResult);
+        if (authenticationResult is null)
+        {
+            return Unauthorized("Failed to authenticate.");
+        }
+
+        SetRefreshTokenCookie(authenticationResult.RefreshToken);
+        return Created(string.Empty, authenticationResult);
     }
 
     [AllowAnonymous]
@@ -51,7 +71,13 @@ public sealed class AuthController : ControllerBase
         CancellationToken cancellationToken)
     {
         var authenticationResult = await _authenticationService.Login(request, cancellationToken);
-        return authenticationResult is null ? Unauthorized("Invalid username or password.") : Ok(authenticationResult);
+        if (authenticationResult is null)
+        {
+            return Unauthorized("Invalid username or password.");
+        }
+
+        SetRefreshTokenCookie(authenticationResult.RefreshToken);
+        return Ok(authenticationResult);
     }
 
     [AllowAnonymous]
@@ -59,10 +85,19 @@ public sealed class AuthController : ControllerBase
     [ProducesResponseType(typeof(AuthenticationResultDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<AuthenticationResultDto>> Refresh(
-        [FromBody] RefreshTokenRequestDto request,
         CancellationToken cancellationToken)
     {
-        var authenticationResult = await _authenticationService.Refresh(request.RefreshToken ?? string.Empty, cancellationToken);
-        return authenticationResult is null ? Unauthorized("Refresh token is invalid or expired.") : Ok(authenticationResult);
+
+        Request.Cookies.TryGetValue(RefreshTokenCookieName, out var refreshToken);
+
+        var authenticationResult = await _authenticationService.Refresh(refreshToken ?? string.Empty, cancellationToken);
+        
+        if (authenticationResult is null)
+        {
+            return Unauthorized("Refresh token is invalid or expired.");
+        }
+
+        SetRefreshTokenCookie(authenticationResult.RefreshToken);
+        return Ok(authenticationResult);
     }
 }

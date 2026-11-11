@@ -1,4 +1,4 @@
-import { clearAuthSession, getAccessToken, getRefreshToken, setAuthSession } from './authSession'
+import { clearAuthSession, getAccessToken, setAuthSession } from './authSession'
 import type { UserDto } from './authService'
 
 export class ApiError extends Error {
@@ -100,17 +100,13 @@ function isAuthenticationResultDto(payload: unknown): payload is AuthenticationR
 }
 
 async function performRefresh(): Promise<boolean> {
-  const refreshToken = getRefreshToken()
-  if (!refreshToken) {
-    return false
-  }
-
   const response = await fetch(buildUrl('/auth/refresh'), {
     method: 'POST',
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ refreshToken }),
+    body: JSON.stringify({}),
   })
 
   const contentType = response.headers.get('content-type') ?? ''
@@ -178,6 +174,7 @@ async function sendRequest(
 
   const response = await fetch(buildUrl(path), {
     ...options,
+    credentials: options.credentials ?? 'include',
     headers,
     body: buildRequestBody(options.body),
   })
