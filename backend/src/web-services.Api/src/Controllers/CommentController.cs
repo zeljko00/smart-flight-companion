@@ -1,8 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SmartFlightCompanion.WebServices.Application.Dto;
 using SmartFlightCompanion.WebServices.Application.Services;
-using SmartFlightCompanion.WebServices.Infrastructure.Mail;
 
 namespace SmartFlightCompanion.WebServices.Api.Controllers;
 

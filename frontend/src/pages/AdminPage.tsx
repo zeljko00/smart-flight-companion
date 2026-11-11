@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { Ban, KeyRound, Loader2, UserCheck } from 'lucide-react'
 import { ApiError } from '../services/apiClient'
 import type { UserDto } from '../services/authService'
+import { clearAuthSession } from '../services/authSession'
 import { usersService } from '../services/usersService'
 import { AuthHeader } from '../components/AuthHeader'
 import { AirportsPanel } from '../components/AirportsPanel'
@@ -206,6 +207,7 @@ export function AdminPage() {
   }
 
   const handleLogout = () => {
+    clearAuthSession()
     navigate('/', { replace: true })
   }
 

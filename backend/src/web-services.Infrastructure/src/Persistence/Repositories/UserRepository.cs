@@ -20,6 +20,13 @@ public sealed class UserRepository : Repository<User>, IUserRepository
             .FirstOrDefaultAsync(user => user.Username.ToUpper() == normalizedUsername, cancellationToken);
     }
 
+    public Task<User?> GetByRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
+    {
+        return Context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(user => user.RefreshToken == refreshToken, cancellationToken);
+    }
+
     public Task<bool> ExistsByUsernameAsync(string username, CancellationToken cancellationToken = default)
     {
         var normalizedUsername = Normalize(username);

@@ -40,6 +40,7 @@ import { AuthHeader } from '../components/AuthHeader'
 import { UserInfo } from '../components/UserInfo'
 import 'leaflet/dist/leaflet.css'
 import '../style/FlightDetailsPage.css'
+import { clearAuthSession } from '../services/authSession'
 
 type FlightDetailsLocationState = {
   user?: UserDto
@@ -380,6 +381,7 @@ export function FlightDetailsPage() {
   }
 
   const handleLogout = () => {
+    clearAuthSession()
     navigate('/', { replace: true })
   }
 

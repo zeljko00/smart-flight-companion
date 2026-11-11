@@ -263,22 +263,9 @@ public sealed class FlightService : IFlightService
             throw new FlightValidationException("Departure and arrival airports must be different.");
         }
 
-        // Npgsql only accepts UTC offsets for timestamptz columns.
+        // Npgsql only accepts UTC offsets for timestamp columns.
         var requestedScheduledDeparture = request.ScheduledDepartureTime!.Value.ToUniversalTime();
         var requestedScheduledArrival = request.ScheduledArrivalTime!.Value.ToUniversalTime();
-
-        if (existingFlight is not null)
-        {
-            if (requestedScheduledDeparture != existingFlight.ScheduledDepartureTime)
-            {
-                throw new FlightValidationException("Scheduled departure time cannot be updated.");
-            }
-
-            if (requestedScheduledArrival != existingFlight.ScheduledArrivalTime)
-            {
-                throw new FlightValidationException("Scheduled arrival time cannot be updated.");
-            }
-        }
 
         var scheduledDeparture = existingFlight?.ScheduledDepartureTime ?? requestedScheduledDeparture;
         var scheduledArrival = existingFlight?.ScheduledArrivalTime ?? requestedScheduledArrival;

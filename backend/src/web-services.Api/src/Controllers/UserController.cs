@@ -1,7 +1,10 @@
 using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SmartFlightCompanion.WebServices.Application.Dto;
 using SmartFlightCompanion.WebServices.Application.Services;
+using SmartFlightCompanion.WebServices.Infrastructure.Entities;
 using SmartFlightCompanion.WebServices.Infrastructure.Mail;
 
 namespace SmartFlightCompanion.WebServices.Api.Controllers;
@@ -19,43 +22,6 @@ public sealed class UserController : ControllerBase
         _userService = userService;
         _boardingPassService = boardingPassService;
         _emailQueue = emailQueue;
-    }
-
-    [HttpPost]
-    [ProducesResponseType(typeof(UserDto), StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<UserDto>> Register(
-        [FromBody] UserRegisterRequestDto request,
-        CancellationToken cancellationToken)
-    {
-        var user = await _userService.Register(request, cancellationToken);
-        if( user is null)
-        {
-            return BadRequest("Username not valid.");
-        }
-        else
-        {
-            return Created(string.Empty, user);
-        }
-    }
-
-    [HttpPost("login")]
-    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-
-    public async Task<ActionResult<UserDto>> Login(
-        [FromBody] UserLoginRequestDto request,
-        CancellationToken cancellationToken)
-    {
-        var user = await _userService.Login(request, cancellationToken);
-        if( user is null)
-        {
-            return Unauthorized("failure");
-        }
-        else
-        {
-            return Ok(user);
-        }
     }
 
     [HttpGet]

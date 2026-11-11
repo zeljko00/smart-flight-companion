@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using SmartFlightCompanion.WebServices.Application.Dto;
 using SmartFlightCompanion.WebServices.Application.Services;
+using SmartFlightCompanion.WebServices.Infrastructure.Entities;
 using SmartFlightCompanion.WebServices.Infrastructure.Persistence;
 using System.Security.Claims;
 
