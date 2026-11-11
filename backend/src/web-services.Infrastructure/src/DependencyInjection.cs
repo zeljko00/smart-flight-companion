@@ -32,6 +32,7 @@ public static class DependencyInjection
         services.AddScoped<IBoardingGuideRepository, BoardingGuideRepository>();
         services.AddScoped<IMediaRepository, MediaRepository>();
         services.AddScoped<IScheduledNotificationRepository, ScheduledNotificationRepository>();
+        services.AddScoped<IApiKeyRepository, ApiKeyRepository>();
 
         services.Configure<SmtpOptions>(configuration.GetSection(SmtpOptions.SectionName));
         services.AddSingleton<InMemoryEmailQueue>();

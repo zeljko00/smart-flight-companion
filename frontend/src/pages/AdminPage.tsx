@@ -8,6 +8,7 @@ import { clearAuthSession } from '../services/authSession'
 import { usersService } from '../services/usersService'
 import { AuthHeader } from '../components/AuthHeader'
 import { AirportsPanel } from '../components/AirportsPanel'
+import { ApiKeysPanel } from '../components/ApiKeysPanel'
 import { FlightsPanel, type FlightsViewState } from '../components/FlightsPanel'
 import { CommentsPanel } from '../components/CommentsPanel'
 import { RequestLogsPanel } from '../components/RequestLogsPanel'
@@ -299,8 +300,7 @@ export function AdminPage() {
               className={`admin-tabs__tab ${activeTab === 'operations' ? 'admin-tabs__tab--active' : ''}`}
               onClick={() => setActiveTab('operations')}
             >
-              <span>{t('admin.tabs.operations')}</span>
-              <small>{t('admin.tabSoon')}</small>
+              <span>{t('admin.tabs.apiKeys')}</span>
             </button>
             <button
               type="button"
@@ -360,7 +360,9 @@ export function AdminPage() {
 
           {activeTab === 'requestLogs' ? <RequestLogsPanel /> : null}
 
-          {activeTab === 'operations' || activeTab === 'settings' ? (
+          {activeTab === 'operations' ? <ApiKeysPanel /> : null}
+
+          {activeTab === 'settings' ? (
             <p className="admin-page__status">{t('admin.comingSoon')}</p>
           ) : null}
         </article>

@@ -131,8 +131,8 @@ function toUserBoardingPass(boardingPass: ApiBoardingPass): UserBoardingPass {
   }
 }
 
-export async function fetchBoardingPassesByUserId(userId: string): Promise<UserBoardingPass[]> {
-  const boardingPasses = await apiRequest<ApiBoardingPass[]>(`/users/${encodeURIComponent(userId)}/boarding-passes`)
+export async function fetchBoardingPassesByUserId(): Promise<UserBoardingPass[]> {
+  const boardingPasses = await apiRequest<ApiBoardingPass[]>(`/users/me/boarding-passes`)
 
   return boardingPasses
     .map(toUserBoardingPass)

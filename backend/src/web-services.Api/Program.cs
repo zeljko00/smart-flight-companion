@@ -1,10 +1,12 @@
 using Hangfire;
 using Hangfire.PostgreSql;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
+using SmartFlightCompanion.WebServices.Api.Auth;
 using SmartFlightCompanion.WebServices.Api.Middleware;
 using SmartFlightCompanion.WebServices.Api.Signals;
 using SmartFlightCompanion.WebServices.Application.Dto;
@@ -65,7 +67,8 @@ builder.Services.AddSignalR();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<IScheduledNotificationService, ScheduledNotificationService>();
 builder.Services.AddScoped<NotificationDispatchJob>();
-builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
+builder.Services.AddScoped<SmartFlightCompanion.WebServices.Application.Services.IAuthenticationService, SmartFlightCompanion.WebServices.Application.Services.AuthenticationService>();
+builder.Services.AddScoped<IApiKeyService, ApiKeyService>();
 
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>() ?? new JwtOptions();
@@ -123,11 +126,25 @@ builder.Services
                 }
             }
         };
-    });
+    })
+    .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(
+        ApiKeyAuthenticationDefaults.AuthenticationScheme,
+        options =>
+        {
+        });
 
 builder.Services.AddAuthorization(options =>
 {
+    options.AddPolicy("VerifiedUserOnly", policy =>
+        policy.RequireRole(Role.Admin.ToString(), Role.User.ToString()));
     options.AddPolicy("AdminOnly", policy => policy.RequireRole(Role.Admin.ToString()));
+    options.AddPolicy("JwtOrApiKey", policy =>
+    {
+        policy.AddAuthenticationSchemes(
+            JwtBearerDefaults.AuthenticationScheme,
+            ApiKeyAuthenticationDefaults.AuthenticationScheme);
+        policy.RequireAuthenticatedUser();
+    });
 });
 
 // The backend is only reachable through the reverse proxy, so its forwarded headers are trusted

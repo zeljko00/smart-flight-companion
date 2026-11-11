@@ -19,8 +19,29 @@ public sealed class AuthController : ControllerBase
         _userService = userService;
     }
 
+    private void DeleteRefreshTokenCookies()
+    {
+        Response.Cookies.Delete(RefreshTokenCookieName, new CookieOptions
+        {
+            Path = "/",
+            Secure = true,
+            SameSite = SameSiteMode.None,
+            HttpOnly = true,
+        });
+
+        Response.Cookies.Delete(RefreshTokenCookieName, new CookieOptions
+        {
+            Path = "/api/auth/refresh",
+            Secure = true,
+            SameSite = SameSiteMode.None,
+            HttpOnly = true,
+        });
+    }
+
     private void SetRefreshTokenCookie(string refreshToken)
     {
+        DeleteRefreshTokenCookies();
+
         Response.Cookies.Append(RefreshTokenCookieName, refreshToken, new CookieOptions
         {
             HttpOnly = true,
@@ -87,13 +108,19 @@ public sealed class AuthController : ControllerBase
     public async Task<ActionResult<AuthenticationResultDto>> Refresh(
         CancellationToken cancellationToken)
     {
-
         Request.Cookies.TryGetValue(RefreshTokenCookieName, out var refreshToken);
+
+        if (string.IsNullOrWhiteSpace(refreshToken))
+        {
+            DeleteRefreshTokenCookies();
+            return Unauthorized("Refresh token cookie is missing.");
+        }
 
         var authenticationResult = await _authenticationService.Refresh(refreshToken ?? string.Empty, cancellationToken);
         
         if (authenticationResult is null)
         {
+            DeleteRefreshTokenCookies();
             return Unauthorized("Refresh token is invalid or expired.");
         }
 

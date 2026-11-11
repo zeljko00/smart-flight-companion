@@ -363,27 +363,31 @@ export function FlightForm({ initial, isSaving, errorMessage, onSubmit, onCancel
       <fieldset className="flights__fieldset" disabled={isSaving}>
         <legend>{t('admin.flights.form.scheduleSection')}</legend>
         <div className="flights__form-grid flights__form-grid--two">
-          <label className="flights__field">
-            <span>{t('admin.flights.form.scheduledDeparture')}</span>
-            <input
-              type="datetime-local"
-              value={values.scheduledDepartureTime}
-              required
-              disabled={isEdit}
-              onChange={(event) => setField('scheduledDepartureTime', event.target.value)}
-            />
-          </label>
+          {isEdit === false && (
+          <>
+            <label className="flights__field">
+              <span>{t('admin.flights.form.scheduledDeparture')}</span>
+              <input
+                type="datetime-local"
+                value={values.scheduledDepartureTime}
+                required
+                disabled={isEdit}
+                onChange={(event) => setField('scheduledDepartureTime', event.target.value)}
+              />
+            </label>
 
-          <label className="flights__field">
-            <span>{t('admin.flights.form.scheduledArrival')}</span>
-            <input
-              type="datetime-local"
-              value={values.scheduledArrivalTime}
-              required
-              disabled={isEdit}
-              onChange={(event) => setField('scheduledArrivalTime', event.target.value)}
-            />
-          </label>
+            <label className="flights__field">
+              <span>{t('admin.flights.form.scheduledArrival')}</span>
+              <input
+                type="datetime-local"
+                value={values.scheduledArrivalTime}
+                required
+                disabled={isEdit}
+                onChange={(event) => setField('scheduledArrivalTime', event.target.value)}
+                />
+            </label>
+          </>
+          )}
 
           {/* A new flight has no actual times yet; the backend defaults them to the scheduled times. */}
           {isEdit ? (

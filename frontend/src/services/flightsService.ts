@@ -267,8 +267,16 @@ function formatDuration(departureAt: Date, arrivalAt: Date): string {
   return `${hours}h ${minutes}min`
 }
 
-export async function fetchUpcomingFlights(limit = 12): Promise<UpcomingFlight[]> {
-  const response = await apiRequest<ApiPagedResponse<ApiFlight> | ApiFlight[]>('/flights/search')
+export async function fetchUpcomingFlights(limit = 12, apiKey?: string): Promise<UpcomingFlight[]> {
+  const normalizedApiKey = apiKey?.trim()
+
+  const response = await apiRequest<ApiPagedResponse<ApiFlight> | ApiFlight[]>('/flights/search', {
+    headers: normalizedApiKey
+      ? {
+          'X-API-Key': normalizedApiKey,
+        }
+      : undefined,
+  })
   const flights = Array.isArray(response) ? response : response.items
   const now = Date.now()
 

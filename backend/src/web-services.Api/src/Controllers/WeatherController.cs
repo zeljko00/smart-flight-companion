@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SmartFlightCompanion.WebServices.Application.Dto;
 using SmartFlightCompanion.WebServices.Application.Services;
@@ -16,6 +17,7 @@ public sealed class WeatherController : ControllerBase
         _weatherService = weatherService;
     }
 
+    [Authorize(Policy = "VerifedUserOnly")]
     [HttpGet("destination")]
     [ProducesResponseType(typeof(IReadOnlyList<CityWeatherForecastDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

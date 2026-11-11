@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SmartFlightCompanion.WebServices.Application.Dto;
 using SmartFlightCompanion.WebServices.Application.Services;
@@ -16,6 +17,7 @@ public sealed class NewsController : ControllerBase
         _newsService = newsService;
     }
 
+    [Authorize(Policy = "VerifedUserOnly")]
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<NewsArticleDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

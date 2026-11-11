@@ -18,6 +18,7 @@ public sealed class AirportsController : ControllerBase
         _airportService = airportService;
     }
 
+    [Authorize(Policy = "JwtOrApiKey")]
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<AirportDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<AirportDto>>> GetAll(
@@ -28,6 +29,7 @@ public sealed class AirportsController : ControllerBase
         return Ok(airports);
     }
 
+    [Authorize(Policy = "AdminOnly")]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(AirportDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -44,6 +46,7 @@ public sealed class AirportsController : ControllerBase
         return airport is null ? NotFound() : Ok(airport);
     }
 
+    [Authorize(Policy = "JwtOrApiKey")]
     [HttpGet("search")]
     [ProducesResponseType(typeof(IReadOnlyList<AirportDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<AirportDto>>> Search(
@@ -64,6 +67,7 @@ public sealed class AirportsController : ControllerBase
         return Ok(airports);
     }
 
+    [Authorize(Policy = "AdminOnly")]
     [HttpPost]
     [ProducesResponseType(typeof(AirportDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
