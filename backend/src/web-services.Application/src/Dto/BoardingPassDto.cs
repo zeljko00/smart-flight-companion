@@ -43,7 +43,5 @@ public sealed record BoardingPassRequestDto(
     [Required]
     Seat Seat,
     [Required]
-    Guid OwnerId,
-    [Required]
     string ReturnPath
 );

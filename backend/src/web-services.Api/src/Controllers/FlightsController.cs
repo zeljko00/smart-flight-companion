@@ -197,14 +197,15 @@ public sealed class FlightsController : ControllerBase
             return BadRequest("Invalid flight ID.");
         }
 
-        if (request.OwnerId == Guid.Empty)
+        var authenticatedUserIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(authenticatedUserIdValue, out var authenticatedUserId))
         {
-            return BadRequest("Invalid owner ID.");
+            return Unauthorized("Invalid authenticated user context.");
         }
 
         var session = await _paymentService.RequestPaymentSessionAsync(
             flightId,
-            request.OwnerId,
+            authenticatedUserId,
             request.Seat,
             request.ReturnPath,
             cancellationToken);
