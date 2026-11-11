@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SmartFlightCompanion.WebServices.Application.Dto;
 using SmartFlightCompanion.WebServices.Application.Services;

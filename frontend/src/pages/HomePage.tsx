@@ -34,6 +34,7 @@ import {
   clearPendingFlightSubscriptions,
   readPendingFlightSubscriptions,
 } from '../services/notificationSubscriptionState'
+import { clearAuthSession } from '../services/authSession'
 import '../style/HomePage.css'
 
 type HomeLocationState = {
@@ -630,6 +631,7 @@ export function HomePage() {
   }, [pendingSubscribedFlightIds, subscribedFlightIds, t, user?.id])
 
   const handleLogout = () => {
+    clearAuthSession()
     navigate('/', { replace: true })
   }
 

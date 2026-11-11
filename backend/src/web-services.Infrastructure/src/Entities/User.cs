@@ -4,6 +4,7 @@ using System.ComponentModel.DataAnnotations;
 namespace SmartFlightCompanion.WebServices.Infrastructure.Entities;
 
 [Index(nameof(Username), IsUnique = true)]
+[Index(nameof(RefreshToken), IsUnique = true)]
 public class User
 {
     [Key]
@@ -21,4 +22,7 @@ public class User
     public Role Role { get; set; } = Role.Guest;
     public bool IsActive { get; set; } = true;
     public DateTimeOffset CreatedAt { get; private init; } = DateTimeOffset.UtcNow;
+    [MaxLength(256)]
+    public string? RefreshToken { get; set; }
+    public DateTimeOffset? RefreshTokenExpiresAt { get; set; }
 }

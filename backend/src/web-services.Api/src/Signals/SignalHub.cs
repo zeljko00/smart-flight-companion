@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
 namespace SmartFlightCompanion.WebServices.Api.Signals;
 
+[Authorize]
 public class SignalHub : Hub
 {
 	public Task JoinFlightGroup(Guid flightId)

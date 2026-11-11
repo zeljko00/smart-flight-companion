@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using SmartFlightCompanion.WebServices.Application.Dto;
 using SmartFlightCompanion.WebServices.Application.Services;
 
