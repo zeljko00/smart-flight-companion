@@ -127,7 +127,7 @@ public sealed class UserController : ControllerBase
         return Ok();
     }
 
-    [Authorize]
+    [Authorize(Policy = "VerifedUserOnly")]
     [HttpGet("me/boarding-passes")]
     [ProducesResponseType(typeof(IReadOnlyList<BoardingPassDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -144,7 +144,7 @@ public sealed class UserController : ControllerBase
         return Ok(boardingPasses);
     }
 
-    [Authorize]
+    [Authorize(Policy = "VerifedUserOnly")]
     [HttpGet("me/boarding-passes/{id:guid}/pdf")]
     [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

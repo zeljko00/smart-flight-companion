@@ -17,7 +17,7 @@ public sealed class NewsController : ControllerBase
         _newsService = newsService;
     }
 
-    [Authorize]
+    [Authorize(Policy = "VerifedUserOnly")]
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<NewsArticleDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

@@ -20,7 +20,7 @@ export function WelcomePage() {
       setErrorMessage(null)
 
       try {
-        const upcomingFlights = await fetchUpcomingFlights()
+        const upcomingFlights = await fetchUpcomingFlights(12, 'sfc_2AFD117D1DE491BDCFAE4455AF6C6D53728DC00C7449CC99B31C12813225915B')
         if (!isDisposed) {
           setFlights(upcomingFlights)
         }

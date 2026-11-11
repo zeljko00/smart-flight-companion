@@ -17,7 +17,7 @@ public sealed class WeatherController : ControllerBase
         _weatherService = weatherService;
     }
 
-    [Authorize]
+    [Authorize(Policy = "VerifedUserOnly")]
     [HttpGet("destination")]
     [ProducesResponseType(typeof(IReadOnlyList<CityWeatherForecastDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

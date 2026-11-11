@@ -19,6 +19,7 @@ public class AppDbContext : DbContext
     public DbSet<Media> Media => Set<Media>();
     public DbSet<RequestLog> RequestLogs => Set<RequestLog>();
     public DbSet<ScheduledNotification> ScheduledNotifications => Set<ScheduledNotification>();
+    public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -107,6 +108,21 @@ public class AppDbContext : DbContext
                 .HasMaxLength(4000);
 
             entity.HasIndex(notification => new { notification.TargetId, notification.Type, notification.ScheduledForUtc });
+        });
+
+        modelBuilder.Entity<ApiKey>(entity =>
+        {
+            entity.Property(apiKey => apiKey.Name)
+                .HasMaxLength(100);
+
+            entity.Property(apiKey => apiKey.KeyHash)
+                .HasMaxLength(64);
+
+            entity.HasIndex(apiKey => apiKey.Name)
+                .IsUnique();
+
+            entity.HasIndex(apiKey => apiKey.KeyHash)
+                .IsUnique();
         });
     }
 }

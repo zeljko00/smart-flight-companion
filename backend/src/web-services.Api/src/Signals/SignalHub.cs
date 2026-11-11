@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace SmartFlightCompanion.WebServices.Api.Signals;
 
-[Authorize]
+[Authorize(Policy = "VerifedUserOnly")]
 public class SignalHub : Hub
 {
 	public Task JoinFlightGroup(Guid flightId)

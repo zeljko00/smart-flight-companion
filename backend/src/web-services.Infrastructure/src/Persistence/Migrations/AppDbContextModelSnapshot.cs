@@ -71,6 +71,33 @@ namespace SmartFlightCompanion.WebServices.Infrastructure.Persistence.Migrations
                     b.ToTable("Airports");
                 });
 
+            modelBuilder.Entity("SmartFlightCompanion.WebServices.Infrastructure.Entities.ApiKey", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("KeyHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("KeyHash")
+                        .IsUnique();
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("ApiKeys");
+                });
+
             modelBuilder.Entity("SmartFlightCompanion.WebServices.Infrastructure.Entities.BoardingGuide", b =>
                 {
                     b.Property<Guid>("Id")

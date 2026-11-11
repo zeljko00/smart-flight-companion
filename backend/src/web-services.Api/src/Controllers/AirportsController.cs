@@ -18,6 +18,7 @@ public sealed class AirportsController : ControllerBase
         _airportService = airportService;
     }
 
+    [Authorize(Policy = "JwtOrApiKey")]
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<AirportDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<AirportDto>>> GetAll(
@@ -45,6 +46,7 @@ public sealed class AirportsController : ControllerBase
         return airport is null ? NotFound() : Ok(airport);
     }
 
+    [Authorize(Policy = "JwtOrApiKey")]
     [HttpGet("search")]
     [ProducesResponseType(typeof(IReadOnlyList<AirportDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<AirportDto>>> Search(
