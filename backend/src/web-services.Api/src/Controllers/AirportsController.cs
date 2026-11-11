@@ -28,6 +28,7 @@ public sealed class AirportsController : ControllerBase
         return Ok(airports);
     }
 
+    [Authorize(Policy = "AdminOnly")]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(AirportDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -64,6 +65,7 @@ public sealed class AirportsController : ControllerBase
         return Ok(airports);
     }
 
+    [Authorize(Policy = "AdminOnly")]
     [HttpPost]
     [ProducesResponseType(typeof(AirportDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

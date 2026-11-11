@@ -61,6 +61,7 @@ public sealed class FlightsController : ControllerBase
         return Ok(flights);
     }
 
+    [Authorize]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(FlightDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -77,6 +78,7 @@ public sealed class FlightsController : ControllerBase
         return flight is null ? NotFound() : Ok(flight);
     }
 
+    [Authorize(Policy = "AdminOnly")]
     [HttpPost]
     [ProducesResponseType(typeof(FlightDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -100,6 +102,7 @@ public sealed class FlightsController : ControllerBase
         }
     }
 
+    [Authorize(Policy = "AdminOnly")]
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(FlightDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -160,7 +163,8 @@ public sealed class FlightsController : ControllerBase
 
         return Ok(flights);
     }
-
+    
+    [Authorize]
     [HttpGet("{flightId:guid}/comments")]
     [ProducesResponseType(typeof(IReadOnlyList<CommentDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -177,6 +181,7 @@ public sealed class FlightsController : ControllerBase
         return Ok(comments);
     }
 
+    [Authorize]
     [HttpPost("{flightId:guid}/boarding-passes")]
     [ProducesResponseType(typeof(PaymentSessionDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -210,6 +215,7 @@ public sealed class FlightsController : ControllerBase
         return Created(string.Empty, session);
     }
 
+    [Authorize]
     [HttpGet("{flightId:guid}/boarding-guides")]
     [ProducesResponseType(typeof(IReadOnlyList<BoardingGuideDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -226,6 +232,7 @@ public sealed class FlightsController : ControllerBase
         return Ok(guides);
     }
 
+    [Authorize(Policy = "AdminOnly")]
     [HttpPost("{flightId:guid}/boarding-guides")]
     [ProducesResponseType(typeof(BoardingGuideDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -259,6 +266,7 @@ public sealed class FlightsController : ControllerBase
         return Created(string.Empty, guide);
     }
 
+    [Authorize(Policy = "AdminOnly")]
     [HttpPost("{flightId:guid}/boarding-guides/{guideId:guid}/media")]
     [ProducesResponseType(typeof(string), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

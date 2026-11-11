@@ -24,6 +24,7 @@ public sealed class UserController : ControllerBase
         _emailQueue = emailQueue;
     }
 
+    [Authorize(Policy = "AdminOnly")]
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<UserDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<UserDto>>> GetAll(CancellationToken cancellationToken)
@@ -32,6 +33,7 @@ public sealed class UserController : ControllerBase
         return Ok(users);
     }
 
+    [Authorize(Policy = "AdminOnly")]
     [HttpPut("{id}/authorize")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -47,6 +49,7 @@ public sealed class UserController : ControllerBase
         return Ok();
     }
 
+    [Authorize(Policy = "AdminOnly")]
     [HttpPut("{id}/reset")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -101,6 +104,7 @@ public sealed class UserController : ControllerBase
         return Ok();
     }
 
+    [Authorize(Policy = "AdminOnly")]
     [HttpPut("{id}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -123,22 +127,24 @@ public sealed class UserController : ControllerBase
         return Ok();
     }
 
-    [HttpGet("{id}/boarding-passes")]
+    [Authorize]
+    [HttpGet("me/boarding-passes")]
     [ProducesResponseType(typeof(IReadOnlyList<BoardingPassDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<IReadOnlyList<BoardingPassDto>>> GetBoardingPassesByUser(
-        [FromRoute] Guid id,
         CancellationToken cancellationToken)
     {
-        if (id == Guid.Empty)
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var id))
         {
-            return BadRequest("Invalid user ID.");
+            return Forbid("Invalid user.");
         }
 
         var boardingPasses = await _boardingPassService.GetByOwnerId(id, cancellationToken);
         return Ok(boardingPasses);
     }
 
+    [Authorize]
     [HttpGet("me/boarding-passes/{id:guid}/pdf")]
     [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

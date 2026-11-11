@@ -18,6 +18,7 @@ public sealed class CommentController : ControllerBase
         _CommentService = CommentService;
     }
 
+    [Authorize(Policy = "AdminOnly")]
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<CommentDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<CommentDto>>> GetAll(
@@ -27,6 +28,7 @@ public sealed class CommentController : ControllerBase
         return Ok(comments);
     }
 
+    [Authorize]
     [HttpPost]
     [ProducesResponseType(typeof(CommentDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -51,6 +53,7 @@ public sealed class CommentController : ControllerBase
     }
 
 
+    [Authorize(Policy = "AdminOnly")]
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

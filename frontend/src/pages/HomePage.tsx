@@ -473,7 +473,7 @@ export function HomePage() {
       setBoardingPassesErrorMessage(null)
 
       try {
-        const result = await fetchBoardingPassesByUserId(user.id)
+        const result = await fetchBoardingPassesByUserId()
         if (!isDisposed) {
           setBoardingPasses(result)
         }

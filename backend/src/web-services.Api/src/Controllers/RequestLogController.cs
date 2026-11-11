@@ -16,6 +16,7 @@ public sealed class RequestLogController : ControllerBase
         _requestLogService = requestLogService;
     }
 
+    [Authorize(Policy = "AdminOnly")]
     [HttpGet]
     [ProducesResponseType(typeof(PagedResultDto<RequestLogDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -45,6 +46,7 @@ public sealed class RequestLogController : ControllerBase
         return Ok(result);
     }
 
+    [Authorize(Policy = "AdminOnly")]
     [HttpGet("pdf")]
     [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
