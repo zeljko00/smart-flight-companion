@@ -1,4 +1,17 @@
 @PaymentGateway.Api_HostAddress = http://localhost:5268
+@PaymentGateway.ApiKey = dev-backend-api-key
 
 GET {{PaymentGateway.Api_HostAddress}}/api/payments
 Accept: application/json
+
+###
+POST {{PaymentGateway.Api_HostAddress}}/api/payments
+Content-Type: application/json
+X-Api-Key: {{PaymentGateway.ApiKey}}
+
+{
+	"amount": 120.50,
+	"callbackUrl": "http://localhost:5000/api/callback",
+	"successReturnPath": "/payments/success",
+	"failureReturnPath": "/payments/failure"
+}

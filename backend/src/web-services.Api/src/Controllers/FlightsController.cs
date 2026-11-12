@@ -62,7 +62,7 @@ public sealed class FlightsController : ControllerBase
         return Ok(flights);
     }
 
-    [Authorize(Policy = "VerifedUserOnly")]
+    [Authorize(Policy = "VerifiedUserOnly")]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(FlightDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -166,7 +166,7 @@ public sealed class FlightsController : ControllerBase
         return Ok(flights);
     }
     
-    [Authorize(Policy = "VerifedUserOnly")]
+    [Authorize(Policy = "VerifiedUserOnly")]
     [HttpGet("{flightId:guid}/comments")]
     [ProducesResponseType(typeof(IReadOnlyList<CommentDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -183,7 +183,7 @@ public sealed class FlightsController : ControllerBase
         return Ok(comments);
     }
 
-    [Authorize(Policy = "VerifedUserOnly")]
+    [Authorize(Policy = "VerifiedUserOnly")]
     [HttpPost("{flightId:guid}/boarding-passes")]
     [ProducesResponseType(typeof(PaymentSessionDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -218,7 +218,7 @@ public sealed class FlightsController : ControllerBase
         return Created(string.Empty, session);
     }
 
-    [Authorize(Policy = "VerifedUserOnly")]
+    [Authorize(Policy = "VerifiedUserOnly")]
     [HttpGet("{flightId:guid}/boarding-guides")]
     [ProducesResponseType(typeof(IReadOnlyList<BoardingGuideDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

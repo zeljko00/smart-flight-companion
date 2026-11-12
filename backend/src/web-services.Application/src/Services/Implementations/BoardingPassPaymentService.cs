@@ -14,7 +14,8 @@ public sealed class PaymentService : IPaymentService
     private const string Pending = "pending";
     private const string Succeeded = "succeeded";
     private const string Failed = "failed";
-    private const string CacheKeyPrefix = "boarding-pass-payment:";
+    private const string PaymentKeyPrefix = "boarding-pass-payment:";
+    private const string PaymentRequestKeyPrefix = "boarding-pass-request:";
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -25,6 +26,7 @@ public sealed class PaymentService : IPaymentService
     private readonly IFlightRepository _flightRepository;
     private readonly IUserRepository _userRepository;
     private readonly string _paymentCallbackUrl;
+    private readonly string? _paymentGatewayApiKey;
 
     public PaymentService(
         HttpClient httpClient,
@@ -44,6 +46,8 @@ public sealed class PaymentService : IPaymentService
         _paymentCallbackUrl = Environment.GetEnvironmentVariable("PaymentGateway__CallbackUrl")
             ?? configuration["PaymentGateway:CallbackUrl"]
             ?? "http://web-services/api/payments/callback";
+        _paymentGatewayApiKey = Environment.GetEnvironmentVariable("PaymentGateway__ApiKey")
+            ?? configuration["PaymentGateway:ApiKey"];
     }
 
     public async Task<PaymentSessionDto?> RequestPaymentSessionAsync(
@@ -71,6 +75,21 @@ public sealed class PaymentService : IPaymentService
             return null;
         }
 
+        var pendingRequestKey = ToPendingRequestKey(flightId, ownerId, seat);
+        var existingPaymentId = await LoadPendingPaymentRequestAsync(pendingRequestKey, cancellationToken);
+        if (!string.IsNullOrWhiteSpace(existingPaymentId))
+        {
+            var existingPayment = await LoadSessionAsync(existingPaymentId, cancellationToken);
+            if (existingPayment is not null &&
+                string.Equals(existingPayment.Status, Pending, StringComparison.OrdinalIgnoreCase) &&
+                existingPayment.Amount == amount.Value)
+            {
+                return new PaymentSessionDto(existingPayment.PaymentId, existingPayment.CheckoutUrl);
+            }
+
+            await RemovePendingPaymentRequestAsync(pendingRequestKey, cancellationToken);
+        }
+
         int seatsTaken = await _boardingPassRepository.GetCountByFlightIdAsync(flightId, cancellationToken);
         if (seatsTaken >= flight.SeatCapacity)
         {
@@ -89,7 +108,17 @@ public sealed class PaymentService : IPaymentService
 
         try
         {
-            using var response = await _httpClient.PostAsJsonAsync("payments", request, cancellationToken);
+            using var requestMessage = new HttpRequestMessage(HttpMethod.Post, "payments")
+            {
+                Content = JsonContent.Create(request)
+            };
+
+            if (!string.IsNullOrWhiteSpace(_paymentGatewayApiKey))
+            {
+                requestMessage.Headers.Add("X-Api-Key", _paymentGatewayApiKey.Trim());
+            }
+
+            using var response = await _httpClient.SendAsync(requestMessage, cancellationToken);
             if (!response.IsSuccessStatusCode)
             {
                 return null;
@@ -107,12 +136,14 @@ public sealed class PaymentService : IPaymentService
                                         OwnerId: ownerId,
                                         Seat: seat,
                                         Amount: amount.Value,
+                                        CheckoutUrl: payload.CheckoutUrl,
                                         Status: Pending,
                                         BoardingPassId: null,
                                         FailureReason: null,
                                         ReturnPath: returnPath);
 
             await SaveSessionAsync(pendingPayment, TimeSpan.FromMinutes(30), cancellationToken);
+            await SavePendingPaymentRequestAsync(pendingRequestKey, payload.PaymentId, TimeSpan.FromMinutes(30), cancellationToken);
 
             return new PaymentSessionDto(payload.PaymentId, payload.CheckoutUrl);
         }
@@ -137,6 +168,18 @@ public sealed class PaymentService : IPaymentService
             return ToStateDto(cached);
         }
 
+        if (callback.Amount != cached.Amount)
+        {
+            var amountMismatch = cached with
+            {
+                Status = Failed,
+                FailureReason = "Payment amount mismatch.",
+            };
+            await SaveSessionAsync(amountMismatch, TimeSpan.FromHours(24), cancellationToken);
+            await RemovePendingPaymentRequestAsync(ToPendingRequestKey(cached.FlightId, cached.OwnerId, cached.Seat), cancellationToken);
+            return ToStateDto(amountMismatch);
+        }
+
         if (string.Equals(callback.Status, Succeeded, StringComparison.OrdinalIgnoreCase))
         {
             var boardingPass = await _boardingPassService.Create(cached.FlightId, cached.OwnerId, cached.Seat, cancellationToken);
@@ -148,6 +191,7 @@ public sealed class PaymentService : IPaymentService
                     FailureReason = "Payment succeeded but boarding pass issuance failed due to availability or validation.",
                 };
                 await SaveSessionAsync(failedState, TimeSpan.FromHours(24), cancellationToken);
+                await RemovePendingPaymentRequestAsync(ToPendingRequestKey(cached.FlightId, cached.OwnerId, cached.Seat), cancellationToken);
                 return ToStateDto(failedState);
             }
 
@@ -158,6 +202,7 @@ public sealed class PaymentService : IPaymentService
                 FailureReason = null,
             };
             await SaveSessionAsync(succeededState, TimeSpan.FromHours(24), cancellationToken);
+            await RemovePendingPaymentRequestAsync(ToPendingRequestKey(cached.FlightId, cached.OwnerId, cached.Seat), cancellationToken);
             return ToStateDto(succeededState);
         }
 
@@ -169,7 +214,27 @@ public sealed class PaymentService : IPaymentService
                 : callback.FailureReason,
         };
         await SaveSessionAsync(failed, TimeSpan.FromHours(24), cancellationToken);
+        await RemovePendingPaymentRequestAsync(ToPendingRequestKey(cached.FlightId, cached.OwnerId, cached.Seat), cancellationToken);
         return ToStateDto(failed);
+    }
+
+    private async Task<string?> LoadPendingPaymentRequestAsync(string requestKey, CancellationToken cancellationToken)
+    {
+        return await _distributedCache.GetStringAsync(requestKey, cancellationToken);
+    }
+
+    private async Task SavePendingPaymentRequestAsync(string requestKey, string paymentId, TimeSpan ttl, CancellationToken cancellationToken)
+    {
+        await _distributedCache.SetStringAsync(
+            requestKey,
+            paymentId,
+            new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = ttl },
+            cancellationToken);
+    }
+
+    private async Task RemovePendingPaymentRequestAsync(string requestKey, CancellationToken cancellationToken)
+    {
+        await _distributedCache.RemoveAsync(requestKey, cancellationToken);
     }
 
     private async Task<BoardingPassPayment?> LoadSessionAsync(string sessionId, CancellationToken cancellationToken)
@@ -216,7 +281,10 @@ public sealed class PaymentService : IPaymentService
         };
     }
 
-    private static string ToCacheKey(string sessionId) => $"{CacheKeyPrefix}{sessionId}";
+    private static string ToCacheKey(string sessionId) => $"{PaymentKeyPrefix}{sessionId}";
+
+    private static string ToPendingRequestKey(Guid flightId, Guid ownerId, Seat seat)
+        => $"{PaymentRequestKeyPrefix}{ownerId:N}:{flightId:N}:{(int)seat}";
 
     private static BoardingPassPaymentStateDto ToStateDto(BoardingPassPayment state)
     {
@@ -254,6 +322,7 @@ public sealed class PaymentService : IPaymentService
         Guid OwnerId,
         Seat Seat,
         decimal Amount,
+        string CheckoutUrl,
         string Status,
         Guid? BoardingPassId,
         string? FailureReason,

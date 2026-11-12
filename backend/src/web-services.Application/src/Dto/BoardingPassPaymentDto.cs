@@ -22,7 +22,10 @@ public sealed record PaymentResultDto(
     string PaymentId,
     [Required]
     string Status,
-    string? FailureReason
+    [Required]
+    decimal Amount,
+    string? FailureReason,
+    string? Signature
 );
 
 public sealed record BoardingPassPaymentStateDto(
