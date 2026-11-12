@@ -1,9 +1,9 @@
 BEGIN TRANSACTION;
 
 INSERT OR IGNORE INTO ApiKeys
-    (Id, Name, ValueSha256, Active)
+    (Id, Name, Value)
 VALUES
-    ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'smart-flight-companion', '9AF7B8B9C86C97B1A5827F018A21A579BF9B5B97ECBE5E4ACA2EFCC716CCD446', 1);
+    ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', 'smart-flight-companion', '9AF7B8B9C86C97B1A5827F018A21A579BF9B5B97ECBE5E4ACA2EFCC716CCD446');
 
 INSERT OR IGNORE INTO CreditCards
     (Id, CardNumber, CardHolderName, ExpirationDate, CVV, Balance, Currency, Active)

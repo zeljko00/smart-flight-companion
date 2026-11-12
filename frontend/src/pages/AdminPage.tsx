@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Ban, KeyRound, Loader2, UserCheck } from 'lucide-react'
 import { ApiError } from '../services/apiClient'
-import type { UserDto } from '../services/authService'
+import { authService, type UserDto } from '../services/authService'
 import { clearAuthSession } from '../services/authSession'
 import { usersService } from '../services/usersService'
 import { AuthHeader } from '../components/AuthHeader'
@@ -15,7 +15,7 @@ import { RequestLogsPanel } from '../components/RequestLogsPanel'
 import { UserInfo } from '../components/UserInfo'
 import '../style/AdminPage.css'
 
-type AdminTab = 'users' | 'airports' | 'flights' | 'comments' | 'requestLogs' | 'operations' | 'settings'
+type AdminTab = 'users' | 'airports' | 'flights' | 'comments' | 'requestLogs' | 'operations'
 type UserAction = 'authorize' | 'block' | null
 type AdminLocationState = {
   adminUser?: UserDto
@@ -47,6 +47,7 @@ export function AdminPage() {
   const [isMutatingId, setIsMutatingId] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [noticeMessage, setNoticeMessage] = useState<string | null>(null)
+  const [activeUsersCount, setActiveUsersCount] = useState<number | null>(null)
 
   useEffect(() => {
     let isDisposed = false
@@ -71,10 +72,29 @@ export function AdminPage() {
       }
     }
 
+    const loadActiveUsersCount = async () => {
+      try {
+        const result = await usersService.getActiveUsersCount()
+        if (!isDisposed) {
+          setActiveUsersCount(result)
+        }
+      } catch {
+        if (!isDisposed) {
+          setActiveUsersCount(null)
+        }
+      }
+    }
+
     void loadUsers()
+    void loadActiveUsersCount()
+
+    const intervalId = window.setInterval(() => {
+      void loadActiveUsersCount()
+    }, 30000)
 
     return () => {
       isDisposed = true
+      window.clearInterval(intervalId)
     }
   }, [t])
 
@@ -208,8 +228,12 @@ export function AdminPage() {
   }
 
   const handleLogout = () => {
-    clearAuthSession()
-    navigate('/', { replace: true })
+    void authService.logout()
+      .catch(() => undefined)
+      .finally(() => {
+        clearAuthSession()
+        navigate('/', { replace: true })
+      })
   }
 
   const handleOpenFlight = (flightId: string, flightsView: FlightsViewState) => {
@@ -246,7 +270,7 @@ export function AdminPage() {
               </article>
               <article className="admin-page__metric-card">
                 <p>{t('admin.tabs.active')}</p>
-                <strong>{activeUsers.length}</strong>
+                <strong>{activeUsersCount ?? '-'}</strong>
               </article>
               <article className="admin-page__metric-card">
                 <p>{t('admin.tabs.guests')}</p>
@@ -302,14 +326,6 @@ export function AdminPage() {
             >
               <span>{t('admin.tabs.apiKeys')}</span>
             </button>
-            <button
-              type="button"
-              className={`admin-tabs__tab ${activeTab === 'settings' ? 'admin-tabs__tab--active' : ''}`}
-              onClick={() => setActiveTab('settings')}
-            >
-              <span>{t('admin.tabs.settings')}</span>
-              <small>{t('admin.tabSoon')}</small>
-            </button>
           </nav>
 
           {activeTab === 'users' && isLoading ? <p className="admin-page__status">{t('admin.loading')}</p> : null}
@@ -361,10 +377,6 @@ export function AdminPage() {
           {activeTab === 'requestLogs' ? <RequestLogsPanel /> : null}
 
           {activeTab === 'operations' ? <ApiKeysPanel /> : null}
-
-          {activeTab === 'settings' ? (
-            <p className="admin-page__status">{t('admin.comingSoon')}</p>
-          ) : null}
         </article>
       </section>
     </main>

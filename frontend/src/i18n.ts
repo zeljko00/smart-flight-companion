@@ -146,7 +146,6 @@ const resources = {
           users: 'Users',
           operations: 'Operations',
           apiKeys: 'API keys',
-          settings: 'Settings',
           blocked: 'Blocked users',
           guests: 'Requests',
           active: 'Active users',
@@ -210,6 +209,7 @@ const resources = {
             ipAddress: 'IP address',
             method: 'Method',
             path: 'Path',
+            userId: 'User ID',
             result: 'Result',
           },
           pagination: {
@@ -735,7 +735,6 @@ const resources = {
           users: 'Korisnici',
           operations: 'Operacije',
           apiKeys: 'API kljucevi',
-          settings: 'Podesavanja',
           blocked: 'Blokirani korisnici',
           guests: 'Zahtjevi',
           active: 'Aktivni korisnici',
@@ -799,6 +798,7 @@ const resources = {
             ipAddress: 'IP adresa',
             method: 'Metoda',
             path: 'Putanja',
+            userId: 'ID korisnika',
             result: 'Rezultat',
           },
           pagination: {

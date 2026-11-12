@@ -11,4 +11,6 @@ public interface IUserService
     Task<bool> Authorize(Guid id, CancellationToken cancellationToken = default);
     Task<bool> ResetPassword(Guid id, string newPassword, CancellationToken cancellationToken = default);
     string GenerateRandomPassword();
+    Task<bool> Logout(Guid id, CancellationToken cancellationToken = default);
+    Task<int> GetActiveUsersCount(CancellationToken cancellationToken = default);
 }

@@ -286,6 +286,7 @@ export function RequestLogsPanel() {
                 <th>{t('admin.requestLogs.columns.ipAddress')}</th>
                 <th>{t('admin.requestLogs.columns.method')}</th>
                 <th>{t('admin.requestLogs.columns.path')}</th>
+                <th>{t('admin.requestLogs.columns.userId')}</th>
                 <th>{t('admin.requestLogs.columns.result')}</th>
               </tr>
             </thead>
@@ -300,6 +301,7 @@ export function RequestLogsPanel() {
                     </span>
                   </td>
                   <td className="request-logs__cell-path">{entry.path}</td>
+                  <td className="request-logs__cell-userid">{entry.userId ?? '-'}</td>
                   <td>
                     <span className={`request-logs__status ${getStatusClassName(entry.statusCode)}`}>
                       {entry.statusCode ?? t('admin.requestLogs.pending')}

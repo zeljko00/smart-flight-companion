@@ -7,6 +7,11 @@ export const usersService = {
       method: 'GET',
     })
   },
+  getActiveUsersCount() {
+    return apiRequest<number>('/users/active', {
+      method: 'GET',
+    })
+  },
   authorize(id: string) {
     return apiRequest<void>(`/users/${id}/authorize`, {
       method: 'PUT',

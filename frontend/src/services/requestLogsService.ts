@@ -5,6 +5,7 @@ type ApiRequestLog = {
   ipAddress?: string
   httpMethod?: string
   path?: string
+  userId?: string | null
   receivedAt?: string
   statusCode?: number | null
 }
@@ -22,6 +23,7 @@ export type RequestLogEntry = {
   ipAddress: string
   httpMethod: string
   path: string
+  userId: string | null
   receivedAt: string
   statusCode: number | null
 }
@@ -52,6 +54,7 @@ function toEntry(item: ApiRequestLog): RequestLogEntry {
     ipAddress: item.ipAddress ?? '',
     httpMethod: item.httpMethod ?? '',
     path: item.path ?? '',
+    userId: item.userId ?? null,
     receivedAt: item.receivedAt ?? '',
     statusCode: typeof item.statusCode === 'number' ? item.statusCode : null,
   }

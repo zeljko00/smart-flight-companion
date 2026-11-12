@@ -81,7 +81,9 @@ public class AppDbContext : DbContext
             entity.Property(requestLog => requestLog.IpAddress).HasMaxLength(RequestLog.MaxIpAddressLength);
             entity.Property(requestLog => requestLog.HttpMethod).HasMaxLength(RequestLog.MaxMethodLength);
             entity.Property(requestLog => requestLog.Path).HasMaxLength(RequestLog.MaxPathLength);
+            entity.Property(requestLog => requestLog.UserId).IsRequired(false);
             entity.HasIndex(requestLog => requestLog.ReceivedAt);
+            entity.HasIndex(requestLog => requestLog.UserId);
         });
 
         modelBuilder.Entity<Media>(entity =>

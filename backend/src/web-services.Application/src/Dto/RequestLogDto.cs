@@ -7,6 +7,7 @@ public sealed record RequestLogDto(
     string IpAddress,
     string HttpMethod,
     string Path,
+    Guid? UserId,
     DateTimeOffset ReceivedAt,
     int? StatusCode)
 {
@@ -17,6 +18,7 @@ public sealed record RequestLogDto(
             requestLog.IpAddress,
             requestLog.HttpMethod,
             requestLog.Path,
+            requestLog.UserId,
             requestLog.ReceivedAt,
             requestLog.StatusCode);
     }

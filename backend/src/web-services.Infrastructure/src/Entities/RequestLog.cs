@@ -16,6 +16,7 @@ public class RequestLog
     public required string HttpMethod { get; set; }
     [Required]
     public required string Path { get; set; }
+    public Guid? UserId { get; set; }
     public DateTimeOffset ReceivedAt { get; private init; } = DateTimeOffset.UtcNow;
     public int? StatusCode { get; set; }
 }

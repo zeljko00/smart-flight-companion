@@ -11,12 +11,14 @@ public sealed class RequestLogRepository : Repository<RequestLog>, IRequestLogRe
     {
     }
 
-    public async Task<int> SetStatusCodeAsync(Guid id, int statusCode, CancellationToken cancellationToken = default)
+    public async Task<int> SetStatusCodeAsync(Guid id, int statusCode, Guid? userId = null, CancellationToken cancellationToken = default)
     {
         return await Context.RequestLogs
             .Where(requestLog => requestLog.Id == id)
             .ExecuteUpdateAsync(
-                setters => setters.SetProperty(requestLog => requestLog.StatusCode, statusCode),
+                setters => setters
+                    .SetProperty(requestLog => requestLog.StatusCode, statusCode)
+                    .SetProperty(requestLog => requestLog.UserId, userId),
                 cancellationToken);
     }
 

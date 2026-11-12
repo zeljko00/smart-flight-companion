@@ -36,22 +36,23 @@ public sealed class RequestLogService : IRequestLogService
             hasNextPage);
     }
 
-    public async Task<Guid> RecordRequest(string ipAddress, string method, string path, CancellationToken cancellationToken = default)
+    public async Task<Guid> RecordRequest(string ipAddress, string method, string path, Guid? userId = null, CancellationToken cancellationToken = default)
     {
         var requestLog = new RequestLog
         {
             IpAddress = Truncate(ipAddress, RequestLog.MaxIpAddressLength),
             HttpMethod = Truncate(method, RequestLog.MaxMethodLength),
             Path = Truncate(path, RequestLog.MaxPathLength),
+            UserId = userId,
         };
 
         var created = await _requestLogRepository.CreateAsync(requestLog, cancellationToken);
         return created.Id;
     }
 
-    public async Task RecordResult(Guid requestLogId, int statusCode, CancellationToken cancellationToken = default)
+    public async Task RecordResult(Guid requestLogId, int statusCode, Guid? userId = null, CancellationToken cancellationToken = default)
     {
-        await _requestLogRepository.SetStatusCodeAsync(requestLogId, statusCode, cancellationToken);
+        await _requestLogRepository.SetStatusCodeAsync(requestLogId, statusCode, userId, cancellationToken);
     }
 
     public async Task<byte[]> GetPdfByTimeWindow(DateTimeOffset? from, DateTimeOffset? to, CancellationToken cancellationToken = default)
