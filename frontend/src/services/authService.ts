@@ -46,6 +46,13 @@ export const authService = {
 
     return response.user
   },
+
+  async logout() {
+    await apiRequest<void>('/users/me/logout', {
+      method: 'PUT',
+    })
+  },
+
   async register(payload: RegisterRequest) {
     const response = await apiRequest<AuthenticationResultDto>('/auth/register', {
       method: 'POST',

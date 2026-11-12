@@ -16,7 +16,7 @@ import { MapContainer, Marker, Polyline, Popup, TileLayer } from 'react-leaflet'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate, useParams } from 'react-router-dom'
 import { ApiError } from '../services/apiClient'
-import type { UserDto } from '../services/authService'
+import { authService, type UserDto } from '../services/authService'
 import {
   createComment,
   fetchCommentsByFlight,
@@ -381,8 +381,12 @@ export function FlightDetailsPage() {
   }
 
   const handleLogout = () => {
-    clearAuthSession()
-    navigate('/', { replace: true })
+    void authService.logout()
+      .catch(() => undefined)
+      .finally(() => {
+        clearAuthSession()
+        navigate('/', { replace: true })
+      })
   }
 
   const handleCommentSubmit = async (event: FormEvent<HTMLFormElement>) => {

@@ -318,9 +318,14 @@ namespace SmartFlightCompanion.WebServices.Infrastructure.Persistence.Migrations
                     b.Property<int?>("StatusCode")
                         .HasColumnType("integer");
 
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ReceivedAt");
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("RequestLogs");
                 });

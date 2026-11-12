@@ -91,7 +91,29 @@ public sealed class UserService : IUserService
             var allChars = upper + lower + digits + special;
             passwordChars.Add(allChars[random.Next(allChars.Length)]);
         }
-        
+
         return new string(passwordChars.OrderBy(x => random.Next()).ToArray());
+    }
+
+    public async Task<bool> Logout(Guid id, CancellationToken cancellationToken = default)
+    {
+        var user = await _userRepository.GetByIdAsync(id, cancellationToken);
+        if (user is null)
+        {
+            return false;
+        }
+
+        user.RefreshToken = null;
+        user.RefreshTokenExpiresAt = DateTimeOffset.UtcNow;
+
+        await _userRepository.UpdateAsync(user, cancellationToken);
+
+        return true;
+    }
+
+    public async Task<int> GetActiveUsersCount(CancellationToken cancellationToken = default)
+    {
+        var users =  await _userRepository.GetAsync(cancellationToken);
+        return users.Count(u => u.RefreshToken != null && u.RefreshTokenExpiresAt > DateTimeOffset.UtcNow);
     }
 }

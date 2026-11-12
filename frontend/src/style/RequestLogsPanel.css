@@ -185,6 +185,13 @@
   font-size: 0.8rem;
 }
 
+.request-logs__cell-userid {
+  min-width: 12rem;
+  white-space: nowrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+}
+
 .request-logs__method {
   display: inline-flex;
   align-items: center;

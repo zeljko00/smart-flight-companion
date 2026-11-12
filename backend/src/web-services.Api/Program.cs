@@ -47,7 +47,7 @@ builder.Services.AddScoped<IBoardingPassService, BoardingPassService>();
 builder.Services.AddHttpClient<IPaymentService, PaymentService>(client =>
 {
     var baseUrl = Environment.GetEnvironmentVariable("PaymentGateway__InternalBaseUrl")
-        ?? builder.Configuration["PaymentGateway:InternalBaseUrl"];
+        ?? builder.Configuration["PaymentGateway:InternalBaseUrl"] ?? "unknown";
     client.BaseAddress = new Uri(baseUrl);
     client.Timeout = TimeSpan.FromSeconds(15);
 });

@@ -166,4 +166,31 @@ public sealed class UserController : ControllerBase
 
         return File(pdfBytes, "application/pdf", $"boarding-pass-{id}.pdf");
     }
+
+    [Authorize(Policy = "VerifiedUserOnly")]
+    [HttpPut("me/logout")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult> Logout(
+        CancellationToken cancellationToken)
+    {
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var id))
+        {
+            return Forbid("Invalid user.");
+        }
+
+        bool result = await _userService.Logout(id, cancellationToken);
+        return result ? Ok() : NotFound("User not found.");
+    }
+
+    [Authorize(Policy = "AdminOnly")]
+    [HttpGet("active")]
+    [ProducesResponseType(typeof(int), StatusCodes.Status200OK)]
+    public async Task<ActionResult<int>> GetActiveUsersCount(
+        CancellationToken cancellationToken)
+    {
+        var count = await _userService.GetActiveUsersCount(cancellationToken);
+        return Ok(count);
+    }
 }

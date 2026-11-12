@@ -1,4 +1,5 @@
 using SmartFlightCompanion.WebServices.Application.Services;
+using System.Security.Claims;
 
 namespace SmartFlightCompanion.WebServices.Api.Middleware;
 
@@ -27,7 +28,7 @@ public sealed class RequestLoggingMiddleware
         {
             if (requestLogId is { } id)
             {
-                await TryRecordResult(requestLogService, id, statusCode);
+                await TryRecordResult(requestLogService, id, statusCode, ResolveAuthenticatedUserId(context.User));
             }
         }
     }
@@ -41,6 +42,7 @@ public sealed class RequestLoggingMiddleware
                 ipAddress,
                 context.Request.Method,
                 context.Request.Path.Value + context.Request.QueryString.Value,
+                null,
                 context.RequestAborted);
         }
         catch (Exception exception)
@@ -50,16 +52,24 @@ public sealed class RequestLoggingMiddleware
         }
     }
 
-    private async Task TryRecordResult(IRequestLogService requestLogService, Guid requestLogId, int statusCode)
+    private async Task TryRecordResult(IRequestLogService requestLogService, Guid requestLogId, int statusCode, Guid? userId)
     {
         try
         {
             // Not tied to RequestAborted so the result is stored even if the client disconnected.
-            await requestLogService.RecordResult(requestLogId, statusCode);
+            await requestLogService.RecordResult(requestLogId, statusCode, userId);
         }
         catch (Exception exception)
         {
             _logger.LogError(exception, "Failed to store result of request {RequestLogId}.", requestLogId);
         }
+    }
+
+    private static Guid? ResolveAuthenticatedUserId(ClaimsPrincipal principal)
+    {
+        var userIdValue = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        return Guid.TryParse(userIdValue, out var userId)
+            ? userId
+            : null;
     }
 }

@@ -14,7 +14,7 @@ import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { AuthHeader } from '../components/AuthHeader'
 import { UserInfo } from '../components/UserInfo'
-import type { UserDto } from '../services/authService'
+import { authService, type UserDto } from '../services/authService'
 import {
   fetchAllFlights,
   type FlightSearchFilters,
@@ -631,8 +631,12 @@ export function HomePage() {
   }, [pendingSubscribedFlightIds, subscribedFlightIds, t, user?.id])
 
   const handleLogout = () => {
-    clearAuthSession()
-    navigate('/', { replace: true })
+    void authService.logout()
+      .catch(() => undefined)
+      .finally(() => {
+        clearAuthSession()
+        navigate('/', { replace: true })
+      })
   }
 
   const handleOpenFlightDetails = (flightId: string) => {
