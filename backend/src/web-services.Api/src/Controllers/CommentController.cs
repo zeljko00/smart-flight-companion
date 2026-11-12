@@ -28,7 +28,7 @@ public sealed class CommentController : ControllerBase
         return Ok(comments);
     }
 
-    [Authorize(Policy = "VerifedUserOnly")]
+    [Authorize(Policy = "VerifiedUserOnly")]
     [HttpPost]
     [ProducesResponseType(typeof(CommentDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

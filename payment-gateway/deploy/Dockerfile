@@ -1,5 +1,9 @@
 FROM mcr.microsoft.com/dotnet/sdk:10.0
 
+RUN apt-get update \
+     && apt-get install -y --no-install-recommends sqlite3 \
+     && rm -rf /var/lib/apt/lists/*
+
 # Install EF CLI tool globally in the image
 RUN dotnet tool install --global dotnet-ef --version 10.*
 

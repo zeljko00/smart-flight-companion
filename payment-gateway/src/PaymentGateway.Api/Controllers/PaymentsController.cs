@@ -3,7 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using PaymentGateway.Api.Data;
 using PaymentGateway.Api.Models;
 using System.Collections.Concurrent;
+using System.Globalization;
 using System.Net.Http.Json;
+using System.Security.Cryptography;
+using System.Text;
 
 namespace PaymentGateway.Api.Controllers;
 
@@ -15,12 +18,29 @@ public sealed class PaymentsController(
     IConfiguration configuration) : ControllerBase
 {
     private static readonly ConcurrentDictionary<string, PaymentSession> Sessions = new(StringComparer.Ordinal);
+    private readonly string? _callbackSecret = Environment.GetEnvironmentVariable("PaymentGateway__CallbackSecret")
+        ?? configuration["PaymentGateway:CallbackSecret"];
 
     [HttpPost]
     [ProducesResponseType(typeof(PaymentSessionResponse), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public ActionResult<PaymentSessionResponse> CreateSession([FromBody] PaymentSessionRequest request)
     {
+        if (!Request.Headers.TryGetValue("X-Api-Key", out var apiKeyHeaderValue) ||
+            string.IsNullOrWhiteSpace(apiKeyHeaderValue))
+        {
+            return Unauthorized("Missing API key.");
+        }
+
+        var apiKeyValue = apiKeyHeaderValue.ToString().Trim();
+        var apiKeyHash = ComputeSha256(apiKeyValue);
+        var isApiKeyValid = dbContext.ApiKeys.Any(k =>k.Value == apiKeyValue);
+        if (!isApiKeyValid)
+        {
+            return Unauthorized("Invalid API key.");
+        }
+
         if (request.Amount <= 0 ||
             string.IsNullOrWhiteSpace(request.CallbackUrl) ||
             !IsValidReturnPath(request.SuccessReturnPath) ||
@@ -45,6 +65,7 @@ public sealed class PaymentsController(
             CallbackUrl = request.CallbackUrl,
             SuccessReturnPath = request.SuccessReturnPath,
             FailureReturnPath = request.FailureReturnPath,
+            CheckoutToken = GenerateCheckoutToken(),
         };
 
         Sessions[paymentSession.paymentId.ToString()] = paymentSession;
@@ -111,6 +132,7 @@ public sealed class PaymentsController(
                             <p>Session <strong>__SESSION__</strong></p>
                             <p class="amount">Total cost: __AMOUNT__ __CURRENCY__</p>
                             <form method="post" action="__COMPLETE_ACTION__" class="grid">
+                        <input type="hidden" name="checkoutToken" value="__CHECKOUT_TOKEN__" />
                         <input name="cardNumber" placeholder='Card number' autocomplete="cc-number" required />
                         <input name="cardHolderName" placeholder='Card holder name' autocomplete="cc-name" required />
                         <div class="row">
@@ -129,6 +151,7 @@ public sealed class PaymentsController(
             .Replace("__SESSION__", System.Net.WebUtility.HtmlEncode(payment.Id.ToString()), StringComparison.Ordinal)
             .Replace("__SESSION_URL__", Uri.EscapeDataString(payment.Id.ToString()), StringComparison.Ordinal)
             .Replace("__COMPLETE_ACTION__", System.Net.WebUtility.HtmlEncode(completeAction), StringComparison.Ordinal)
+            .Replace("__CHECKOUT_TOKEN__", System.Net.WebUtility.HtmlEncode(session.CheckoutToken), StringComparison.Ordinal)
             .Replace("__AMOUNT__", payment.Amount.ToString("0.00"), StringComparison.Ordinal)
             .Replace("__CURRENCY__", System.Net.WebUtility.HtmlEncode(payment.Currency), StringComparison.Ordinal);
 
@@ -137,6 +160,7 @@ public sealed class PaymentsController(
 
     [HttpPost("{paymentId}/complete")]
     [ProducesResponseType(StatusCodes.Status302Found)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult> CompleteCheckout(
         [FromRoute] string paymentId,
@@ -146,6 +170,11 @@ public sealed class PaymentsController(
         if (!Sessions.TryGetValue(paymentId, out var session))
         {
             return NotFound("Checkout session not found.");
+        }
+
+        if (!SecureEquals(request.CheckoutToken, session.CheckoutToken))
+        {
+            return BadRequest("Invalid checkout form token.");
         }
 
         var payment = await dbContext.Payments.FirstOrDefaultAsync(p => p.Id == session.paymentId, cancellationToken);
@@ -232,7 +261,16 @@ public sealed class PaymentsController(
         var callbackPayload = new PaymentCallbackRequest(
             PaymentId: payment.Id.ToString(),
             Status: isSuccess ? "succeeded" : "failed",
-            FailureReason: isSuccess ? null : failureReason);
+            Amount: payment.Amount,
+            FailureReason: isSuccess ? null : failureReason,
+            Signature: null);
+
+        if (!string.IsNullOrWhiteSpace(_callbackSecret))
+        {
+            var payloadToSign = BuildSignaturePayload(callbackPayload);
+            var signature = ComputeSignature(payloadToSign, _callbackSecret);
+            callbackPayload = callbackPayload with { Signature = signature };
+        }
 
         try
         {
@@ -293,12 +331,15 @@ public sealed class PaymentsController(
         string? CardNumber,
         string? CardHolderName,
         string? Expiration,
-        string? Cvv);
+        string? Cvv,
+        string? CheckoutToken);
 
     public sealed record PaymentCallbackRequest(
         string PaymentId,
         string Status,
-        string? FailureReason);
+        decimal Amount,
+        string? FailureReason,
+        string? Signature);
 
     private sealed record PaymentStateResponse(
         string SessionId,
@@ -312,5 +353,45 @@ public sealed class PaymentsController(
         public required string CallbackUrl { get; init; }
         public required string SuccessReturnPath { get; init; }
         public required string FailureReturnPath { get; init; }
+        public required string CheckoutToken { get; init; }
+    }
+
+    private static string BuildSignaturePayload(PaymentCallbackRequest request)
+    {
+        return string.Join("|", [
+            request.PaymentId,
+            request.Status,
+            request.Amount.ToString("0.00", CultureInfo.InvariantCulture),
+        ]);
+    }
+
+    private static string ComputeSignature(string payload, string secret)
+    {
+        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
+        var hash = hmac.ComputeHash(Encoding.UTF8.GetBytes(payload));
+        return Convert.ToHexString(hash);
+    }
+
+    private static string ComputeSha256(string value)
+    {
+        var hash = SHA256.HashData(Encoding.UTF8.GetBytes(value));
+        return Convert.ToHexString(hash);
+    }
+
+    private static string GenerateCheckoutToken()
+    {
+        return Convert.ToHexString(RandomNumberGenerator.GetBytes(32));
+    }
+
+    private static bool SecureEquals(string? left, string? right)
+    {
+        if (string.IsNullOrEmpty(left) || string.IsNullOrEmpty(right))
+        {
+            return false;
+        }
+
+        var leftBytes = Encoding.UTF8.GetBytes(left);
+        var rightBytes = Encoding.UTF8.GetBytes(right);
+        return CryptographicOperations.FixedTimeEquals(leftBytes, rightBytes);
     }
 }
