@@ -10,6 +10,11 @@ services:
     networks:
       - sfc-data-network
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$APP_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
 
   cache:
     image: redis:7-alpine
@@ -54,10 +59,65 @@ services:
       - sfc-internal-network
       - sfc-data-network
     depends_on:
-      - database
-      - cache
-      - storage
+      database:
+        condition: service_healthy
+      cache:
+        condition: service_started
+      storage:
+        condition: service_started
     restart: unless-stopped
+
+  database-migrate:
+    build:
+      context: ../backend
+      dockerfile: ../backend/deploy/Dockerfile
+    container_name: database-migrate
+    env_file:
+      - ../backend/config/.env
+    volumes:
+      - ../backend:/app
+      - nuget-cache:/root/.nuget/packages
+      - api-obj:/app/src/web-services.Api/obj
+      - api-bin:/app/src/web-services.Api/bin
+      - services-obj:/app/src/web-services.Application/obj
+      - services-bin:/app/src/web-services.Application/bin
+      - repository-obj:/app/src/web-services.Infrastructure/obj
+      - repository-bin:/app/src/web-services.Infrastructure/bin
+    networks:
+      - sfc-data-network
+    depends_on:
+      database:
+        condition: service_healthy
+    command:
+      - bash
+      - -lc
+      - dotnet ef database update --project src/web-services.Infrastructure/web-services.Infrastructure.csproj --startup-project src/web-services.Api/web-services.Api.csproj
+    restart: "no"
+    profiles:
+      - migrate
+      - init
+
+  database-init:
+    image: postgres:16-alpine
+    container_name: database-init
+    env_file:
+      - ../database/config/.env
+    volumes:
+      - ../database/scripts/:/scripts:ro
+    networks:
+      - sfc-data-network
+    depends_on:
+      database:
+        condition: service_healthy
+      backend-migrate:
+        condition: service_completed_successfully
+    command:
+      - sh
+      - -lc
+      - PGPASSWORD="$$POSTGRES_PASSWORD" psql -h database -U "$$POSTGRES_USER" -d "$$APP_DB" -v ON_ERROR_STOP=1 -f /scripts/01_init_database.sql
+    restart: "no"
+    profiles:
+      - init
 
   payment-service:
     build:
