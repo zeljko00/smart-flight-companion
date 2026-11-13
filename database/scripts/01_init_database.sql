@@ -57,6 +57,30 @@ SELECT format('GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA publ
 SELECT format('ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO %I', :'app_username')
 \gexec
 
+INSERT INTO "Users" (
+    "Id",
+    "Username",
+    "PasswordHash",
+    "Email",
+    "FirstName",
+    "LastName",
+    "Role",
+    "IsActive",
+    "CreatedAt"
+)
+VALUES (
+    gen_random_uuid(),
+    'admin',
+    '2BB80D537B1DA3E38BD30361AA855686BDE0EACD7162FEF6A25FE97BF527A25B',
+    'admin@smartflight.local',
+    'System',
+    'Administrator',
+    'Admin',
+    TRUE,
+    NOW()
+)
+ON CONFLICT ("Username") DO NOTHING;
+
 WITH airport_seed (iata, name, city, country, address, latitude, longitude, description) AS (
     VALUES
         ('JFK', 'John F. Kennedy International Airport', 'New York', 'USA', 'Queens, NY 11430', 40.6413, -73.7781, 'Major international hub serving New York City.'),
