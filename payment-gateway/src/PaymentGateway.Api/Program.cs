@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
+using System.IO;
 
 using PaymentGateway.Api.Data;
 
@@ -41,6 +42,19 @@ using (var scope = app.Services.CreateScope())
 {
     var dbContext = scope.ServiceProvider.GetRequiredService<PaymentGatewayDbContext>();
     dbContext.Database.EnsureCreated();
+
+    var initScriptPath = Environment.GetEnvironmentVariable("PaymentGateway__InitSqlPath")
+        ?? "/app/scripts/01_init_database.sql";
+
+    if (File.Exists(initScriptPath))
+    {
+        var initScript = File.ReadAllText(initScriptPath);
+
+        if (!string.IsNullOrWhiteSpace(initScript))
+        {
+            dbContext.Database.ExecuteSqlRaw(initScript);
+        }
+    }
 }
 
 app.UseHttpsRedirection();
