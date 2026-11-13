@@ -117,10 +117,10 @@ builder.Services
                     return;
                 }
 
-                var userRepository = context.HttpContext.RequestServices.GetRequiredService<IUserRepository>();
-                var user = await userRepository.GetByIdAsync(userId, context.HttpContext.RequestAborted);
+                var userService = context.HttpContext.RequestServices.GetRequiredService<IUserService>();
+                var active = await userService.IsUserActive(userId, context.HttpContext.RequestAborted);
 
-                if (user is null || !user.IsActive)
+                if (!active)
                 {
                     context.Fail("User is no longer active.");
                 }

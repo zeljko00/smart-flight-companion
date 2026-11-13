@@ -1,6 +1,11 @@
 import { apiRequest } from './apiClient'
 import type { UserDto } from './authService'
 
+export type UserActivityDto = {
+  at: string
+  activeUsersCount: number | null
+}
+
 export const usersService = {
   getAll() {
     return apiRequest<UserDto[]>('/users', {
@@ -9,6 +14,13 @@ export const usersService = {
   },
   getActiveUsersCount() {
     return apiRequest<number>('/users/active', {
+      method: 'GET',
+    })
+  },
+  getUserActivity(from: Date) {
+    const query = new URLSearchParams({ from: from.toISOString() })
+
+    return apiRequest<UserActivityDto[]>(`/users/activity?${query.toString()}`, {
       method: 'GET',
     })
   },

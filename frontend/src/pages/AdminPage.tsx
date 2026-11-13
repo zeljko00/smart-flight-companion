@@ -2,10 +2,21 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Ban, KeyRound, Loader2, UserCheck } from 'lucide-react'
+import {
+  CategoryScale,
+  Chart as ChartJS,
+  Filler,
+  LineElement,
+  LinearScale,
+  PointElement,
+  Tooltip,
+  type ChartOptions,
+} from 'chart.js'
+import { Line } from 'react-chartjs-2'
 import { ApiError } from '../services/apiClient'
 import { authService, type UserDto } from '../services/authService'
 import { clearAuthSession } from '../services/authSession'
-import { usersService } from '../services/usersService'
+import { usersService, type UserActivityDto } from '../services/usersService'
 import { AuthHeader } from '../components/AuthHeader'
 import { AirportsPanel } from '../components/AirportsPanel'
 import { ApiKeysPanel } from '../components/ApiKeysPanel'
@@ -22,6 +33,15 @@ type AdminLocationState = {
   activeTab?: AdminTab
   flightsView?: FlightsViewState
 }
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Tooltip,
+  Filler,
+)
 
 function formatDate(value: string): string {
   const date = new Date(value)
@@ -48,6 +68,9 @@ export function AdminPage() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [noticeMessage, setNoticeMessage] = useState<string | null>(null)
   const [activeUsersCount, setActiveUsersCount] = useState<number | null>(null)
+  const [activitySeries, setActivitySeries] = useState<UserActivityDto[]>([])
+  const [isActivityLoading, setIsActivityLoading] = useState(true)
+  const [activityLoadError, setActivityLoadError] = useState<string | null>(null)
 
   useEffect(() => {
     let isDisposed = false
@@ -85,11 +108,35 @@ export function AdminPage() {
       }
     }
 
+    const loadActivitySeries = async () => {
+      try {
+        if (!isDisposed) {
+          setIsActivityLoading(true)
+          setActivityLoadError(null)
+        }
+
+        const result = await usersService.getUserActivity(new Date())
+        if (!isDisposed) {
+          setActivitySeries(result)
+        }
+      } catch {
+        if (!isDisposed) {
+          setActivityLoadError(t('admin.activity.loadError'))
+        }
+      } finally {
+        if (!isDisposed) {
+          setIsActivityLoading(false)
+        }
+      }
+    }
+
     void loadUsers()
     void loadActiveUsersCount()
+    void loadActivitySeries()
 
     const intervalId = window.setInterval(() => {
       void loadActiveUsersCount()
+      void loadActivitySeries()
     }, 30000)
 
     return () => {
@@ -112,6 +159,70 @@ export function AdminPage() {
     () => users.filter((user) => user.role.toLowerCase() !== 'admin' && user.role.toLowerCase() !== 'guest' && user.isActive),
     [users],
   )
+
+  const activityChartData = useMemo(() => {
+    const series = [...activitySeries].reverse()
+    const hourFormatter = new Intl.DateTimeFormat(i18n.language, {
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+
+    return {
+      labels: series.map((item) => hourFormatter.format(new Date(item.at))),
+      datasets: [
+        {
+          label: t('admin.activity.datasetLabel'),
+          data: series.map((item) => item.activeUsersCount ?? 0),
+          borderColor: 'rgb(12, 132, 201)',
+          backgroundColor: 'rgba(12, 132, 201, 0.14)',
+          borderWidth: 2,
+          fill: true,
+          tension: 0.35,
+          pointRadius: 2,
+          pointHoverRadius: 4,
+        },
+      ],
+    }
+  }, [activitySeries, i18n.language, t])
+
+  const activityChartOptions = useMemo<ChartOptions<'line'>>(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: {
+      mode: 'index',
+      intersect: false,
+    },
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        callbacks: {
+          label: (context) => `${t('admin.activity.datasetLabel')}: ${context.parsed.y}`,
+        },
+      },
+    },
+    scales: {
+      x: {
+        grid: {
+          color: 'rgba(148, 163, 184, 0.15)',
+        },
+        ticks: {
+          maxTicksLimit: 8,
+        },
+      },
+      y: {
+        beginAtZero: true,
+        suggestedMin: 0,
+        ticks: {
+          precision: 0,
+        },
+        grid: {
+          color: 'rgba(148, 163, 184, 0.15)',
+        },
+      },
+    },
+  }), [t])
 
   const renderUserList = (items: UserDto[], action: UserAction) => {
     if (items.length === 0) {
@@ -338,6 +449,29 @@ export function AdminPage() {
 
           {activeTab === 'users' && !isLoading && !errorMessage && noticeMessage ? (
             <p className="admin-page__status admin-page__status--success">{noticeMessage}</p>
+          ) : null}
+
+          {activeTab === 'users' ? (
+            <section className="admin-activity" aria-label={t('admin.activity.aria')}>
+              <div className="admin-activity__header">
+                <h3>{t('admin.activity.title')}</h3>
+                <p>{t('admin.activity.subtitle')}</p>
+              </div>
+
+              {isActivityLoading ? <p className="admin-page__status">{t('admin.activity.loading')}</p> : null}
+
+              {!isActivityLoading && activityLoadError ? (
+                <p className="admin-page__status admin-page__status--error" role="alert">
+                  {activityLoadError}
+                </p>
+              ) : null}
+
+              {!isActivityLoading && !activityLoadError ? (
+                <div className="admin-activity__chart-wrap">
+                  <Line data={activityChartData} options={activityChartOptions} />
+                </div>
+              ) : null}
+            </section>
           ) : null}
 
           {!isLoading && !errorMessage && activeTab === 'users' ? (

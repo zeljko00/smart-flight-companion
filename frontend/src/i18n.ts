@@ -130,6 +130,14 @@ const resources = {
         metrics: {
           total: 'Total users',
         },
+        activity: {
+          aria: 'User activity chart',
+          title: 'User activity in the last 24 hours',
+          subtitle: 'Distinct active users per hour based on request logs.',
+          datasetLabel: 'Active users',
+          loading: 'Loading activity chart...',
+          loadError: 'Could not load activity chart right now.',
+        },
         authorize: 'Authorize',
         authorizing: 'Authorizing...',
         resetPassword: 'Reset password',
@@ -718,6 +726,14 @@ const resources = {
         joined: 'Registrovan',
         metrics: {
           total: 'Ukupno korisnika',
+        },
+        activity: {
+          aria: 'Grafikon aktivnosti korisnika',
+          title: 'Aktivnost korisnika u poslednja 24 sata',
+          subtitle: 'Broj razlicitih aktivnih korisnika po satu na osnovu request logova.',
+          datasetLabel: 'Aktivni korisnici',
+          loading: 'Ucitavanje grafikona aktivnosti...',
+          loadError: 'Trenutno nije moguce ucitati grafikon aktivnosti.',
         },
         authorize: 'Autorizuj',
         authorizing: 'Autorizacija...',

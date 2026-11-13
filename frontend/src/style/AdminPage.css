@@ -333,6 +333,41 @@
   background: color-mix(in srgb, var(--color-success) 10%, transparent);
 }
 
+.admin-activity {
+  border: 1px solid color-mix(in srgb, var(--border-default) 72%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--bg-elevated) 93%, transparent);
+  padding: 0.8rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.admin-activity__header {
+  display: grid;
+  gap: 0.18rem;
+}
+
+.admin-activity__header h3,
+.admin-activity__header p {
+  margin: 0;
+}
+
+.admin-activity__header h3 {
+  font-family: var(--font-display);
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.admin-activity__header p {
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
+.admin-activity__chart-wrap {
+  position: relative;
+  height: 230px;
+}
+
 .admin-users {
   margin: 0;
   padding: 0;

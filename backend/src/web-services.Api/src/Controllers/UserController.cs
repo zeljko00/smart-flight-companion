@@ -193,4 +193,15 @@ public sealed class UserController : ControllerBase
         var count = await _userService.GetActiveUsersCount(cancellationToken);
         return Ok(count);
     }
+
+    [Authorize(Policy = "AdminOnly")]
+    [HttpGet("activity")]
+    [ProducesResponseType(typeof(IReadOnlyList<UserActivityDto>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<IReadOnlyList<UserActivityDto>>> GetUserActivityInLast24Hours(
+        [FromQuery] DateTimeOffset from,
+        CancellationToken cancellationToken)
+    {
+        var activity = await _userService.GetUserActivityInPrevious24Hours(from, cancellationToken);
+        return Ok(activity);
+    }
 }
