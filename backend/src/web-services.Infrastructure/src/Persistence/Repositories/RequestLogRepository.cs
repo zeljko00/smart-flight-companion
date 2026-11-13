@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using SmartFlightCompanion.WebServices.Infrastructure.Entities;
 using SmartFlightCompanion.WebServices.Infrastructure.Persistence.Abstractions;
 
@@ -45,13 +46,26 @@ public sealed class RequestLogRepository : Repository<RequestLog>, IRequestLogRe
     public async Task<IReadOnlyList<RequestLog>> GetByTimeWindowAsync(
         DateTimeOffset? from,
         DateTimeOffset? to,
-        int limit,
+        int? limit,
         CancellationToken cancellationToken = default)
     {
-        return await ApplyTimeWindow(Context.RequestLogs.AsNoTracking(), from, to)
-            .OrderBy(requestLog => requestLog.ReceivedAt)
-            .Take(limit)
-            .ToListAsync(cancellationToken);
+        if(limit is null)
+        {
+            return await ApplyTimeWindow(Context.RequestLogs.AsNoTracking(), from, to)
+                .OrderBy(requestLog => requestLog.ReceivedAt)
+                .ToListAsync(cancellationToken);
+        }
+        else if (limit.HasValue && limit.Value <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(limit), "Limit must be greater than zero.");
+        }
+        else
+        {
+            return await ApplyTimeWindow(Context.RequestLogs.AsNoTracking(), from, to)
+                .OrderBy(requestLog => requestLog.ReceivedAt)
+                .Take(limit.Value)
+                .ToListAsync(cancellationToken);
+        }
     }
 
     public async Task<int> CountByTimeWindowAsync(

@@ -13,4 +13,6 @@ public interface IUserService
     string GenerateRandomPassword();
     Task<bool> Logout(Guid id, CancellationToken cancellationToken = default);
     Task<int> GetActiveUsersCount(CancellationToken cancellationToken = default);
+    Task<bool> IsUserActive(Guid id, CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<UserActivityDto>> GetUserActivityInPrevious24Hours(DateTimeOffset from, CancellationToken cancellationToken = default);
 }

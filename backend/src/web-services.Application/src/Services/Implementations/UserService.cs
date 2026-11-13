@@ -4,16 +4,19 @@ using SmartFlightCompanion.WebServices.Infrastructure.Persistence.Abstractions;
 using System;
 using System.Text;
 using System.Security.Cryptography;
+using System.Collections;
 
 namespace SmartFlightCompanion.WebServices.Application.Services;
 
 public sealed class UserService : IUserService
 {
     private readonly IUserRepository _userRepository;
+    private readonly IRequestLogRepository _requestLogRepository;
 
-    public UserService(IUserRepository userRepository)
+    public UserService(IUserRepository userRepository, IRequestLogRepository requestLogRepository)
     {
         _userRepository = userRepository;
+        _requestLogRepository = requestLogRepository;
     }
 
     private static string Hash(string value)
@@ -115,5 +118,34 @@ public sealed class UserService : IUserService
     {
         var users =  await _userRepository.GetAsync(cancellationToken);
         return users.Count(u => u.RefreshToken != null && u.RefreshTokenExpiresAt > DateTimeOffset.UtcNow);
+    }
+
+    public async Task<bool> IsUserActive(Guid id, CancellationToken cancellationToken = default)
+    {
+        var user = await _userRepository.GetByIdAsync(id, cancellationToken);
+        return user != null && user.IsActive == true;
+    }
+
+    public async Task<IReadOnlyList<UserActivityDto>> GetUserActivityInPrevious24Hours(DateTimeOffset from, CancellationToken cancellationToken = default)
+    {
+        var userActivity = new List<UserActivityDto>();
+
+        for (int i = 0; i < 24; i++)
+        {
+            var end = from.AddHours(-i);
+            var start = end.AddHours(-1);
+            var logs = await _requestLogRepository.GetByTimeWindowAsync(start, end, null, cancellationToken);
+
+            var activeUsersCount = logs
+                .Where(log => log.UserId != null)
+                .GroupBy(log => log.UserId)
+                .Count();
+
+            userActivity.Add(new UserActivityDto(
+                end,
+                activeUsersCount));
+        }
+
+        return userActivity;
     }
 }

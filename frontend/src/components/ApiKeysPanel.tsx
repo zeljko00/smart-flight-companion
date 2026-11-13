@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react'
+import { useState, type FormEvent } from 'react'
 import { CheckCircle2, Copy, KeyRound, Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { ApiError } from '../services/apiClient'
