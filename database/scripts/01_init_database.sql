@@ -183,3 +183,11 @@ SELECT
     ROUND((80 + fp.duration_hours * 35 + (fp.n % 7) * 12)::numeric * 3.60, 2) AS first_class_price
 FROM flight_pairs fp
 ON CONFLICT ("FlightNumber") DO NOTHING;
+
+INSERT INTO "ApiKeys" ("Id", "Name", "KeyHash")
+VALUES (
+    gen_random_uuid(),
+    'welcome-page-upcoming-flights',
+    '3AEB41F55C8B05448AEA15B17A1EC8F7A96C2517384B097A781E21DB7D755941'
+)
+ON CONFLICT ("Name") DO NOTHING
