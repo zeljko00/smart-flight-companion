@@ -190,6 +190,17 @@ public sealed class BoardingPassService : IBoardingPassService
         return GenerateBoardingPassPdf(boardingPass, qrCodePng);
     }
 
+    public async Task<BoardingPassDto?> GetById(Guid id, CancellationToken cancellationToken = default)
+    {
+        var boardingPass = await _BoardingPassRepository.GetByIdAsync(id, cancellationToken);
+        if (boardingPass is null)
+        {
+            return null;
+        }
+
+        return BoardingPassDto.FromEntity(boardingPass);
+    }
+
     private string BuildSignedQrPayload(BoardingPass boardingPass)
     {
         var payload = BuildQrPayload(boardingPass);

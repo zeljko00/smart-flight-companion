@@ -158,6 +158,19 @@ public sealed class UserController : ControllerBase
             return BadRequest("Invalid boarding pass ID.");
         }
 
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (string.IsNullOrEmpty(userId) || !Guid.TryParse(userId, out var userGuid))
+        {
+            return Forbid("Invalid user.");
+        }
+
+        var boardingPass = await _boardingPassService.GetById(id, cancellationToken);
+
+        if(boardingPass is not null && boardingPass.UserId != userGuid)
+        {
+            return Unauthorized("You are not authorized to access this boarding pass.");
+        }
+
         var pdfBytes = await _boardingPassService.GetPdfById(id, cancellationToken);
         if (pdfBytes is null)
         {
