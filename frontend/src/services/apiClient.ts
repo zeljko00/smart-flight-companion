@@ -172,6 +172,8 @@ async function sendRequest(
     headers.set('Authorization', `Bearer ${accessToken}`)
   }
 
+  console.log(accessToken)
+
   const response = await fetch(buildUrl(path), {
     ...options,
     credentials: options.credentials ?? 'include',

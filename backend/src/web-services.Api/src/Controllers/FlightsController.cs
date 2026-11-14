@@ -62,7 +62,7 @@ public sealed class FlightsController : ControllerBase
         return Ok(flights);
     }
 
-    [Authorize(Policy = "VerifiedUserOnly")]
+    [Authorize(Policy = "JwtOrApiKey")]
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(FlightDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

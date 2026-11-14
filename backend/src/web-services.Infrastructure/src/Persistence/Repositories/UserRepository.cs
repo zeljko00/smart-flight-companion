@@ -16,7 +16,6 @@ public sealed class UserRepository : Repository<User>, IUserRepository
         var normalizedUsername = Normalize(username);
 
         return Context.Users
-            .AsNoTracking()
             .FirstOrDefaultAsync(user => user.Username.ToUpper() == normalizedUsername, cancellationToken);
     }
 

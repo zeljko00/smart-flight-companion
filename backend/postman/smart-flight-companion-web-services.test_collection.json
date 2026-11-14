@@ -1,0 +1,774 @@
+{
+  "info": {
+    "_postman_id": "d3f3850f-a4d9-4493-8c76-f95cf8f42f4c",
+    "name": "Smart Flight Companion - Web Services API Requests",
+    "description": "This Postman collection contains REST web service requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://localhost/api"
+    },
+    {
+      "key": "adminUsername",
+      "value": "admin"
+    },
+    {
+      "key": "adminPassword",
+      "value": "secret"
+    },
+    {
+      "key": "userUsername",
+      "value": "postman-user"
+    },
+    {
+      "key": "userPassword",
+      "value": "secret"
+    },
+    {
+      "key": "userEmail",
+      "value": "zeljkotripic13@gmail.com"
+    },
+    {
+      "key": "userFirstName",
+      "value": "Postman"
+    },
+    {
+      "key": "userLastName",
+      "value": "Tester"
+    },
+    {
+      "key": "adminAccessToken",
+      "value": ""
+    },
+    {
+      "key": "userAccessToken",
+      "value": ""
+    },
+    {
+      "key": "wrongUserAccessToken",
+      "value": "_"
+    },
+    {
+      "key": "apiKey",
+      "value": "sfc_2AFD117D1DE491BDCFAE4455AF6C6D53728DC00C7449CC99B31C12813225915B"
+    },
+     {
+      "key": "wrongApiKey",
+      "value": "sfc____2AFD117D1DE491BDCFAE4455AF6C6D53728DC00C7449CC99B31C12813225915B"
+    },
+    {
+      "key": "flightId",
+      "value": ""
+    },
+    {
+      "key": "airportId",
+      "value": ""
+    },
+    {
+      "key": "guideId",
+      "value": ""
+    },
+    {
+      "key": "commentId",
+      "value": ""
+    },
+    {
+      "key": "boardingPassId",
+      "value": ""
+    },
+    {
+      "key": "regularUserId",
+      "value": ""
+    },
+    {
+      "key": "newFlightNumber",
+      "value": "F-1001"
+    },
+    {
+      "key": "newAirportIata",
+      "value": "PMA"
+    },
+    {
+      "key": "paymentCallbackSecret",
+      "value": "secret"
+    },
+    {
+      "key": "paymentId",
+      "value": "pm-payment-{{$timestamp}}"
+    },
+    {
+      "key": "paymentAmount",
+      "value": "100.00"
+    },
+    {
+      "key": "paymentStatus",
+      "value": "Succeeded"
+    },
+    {
+      "key": "paymentSignature",
+      "value": ""
+    },
+    {
+      "key": "refreshToken",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Registration, Login & Authorization",
+      "item": [
+        {
+          "name": "Register Test User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userUsername}}\",\n  \"password\": \"{{userPassword}}\",\n  \"email\": \"{{userEmail}}\",\n  \"firstName\": \"{{userFirstName}}\",\n  \"lastName\": \"{{userLastName}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{userUsername}}\",\n  \"password\": \"{{userPassword}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Login Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"{{adminUsername}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Refresh Access Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Cookie",
+                "value": "sfc_refresh_token={{refreshToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/refresh"
+          }
+        },
+        {
+          "name": "Authorize User (Admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/users/{{regularUserId}}/authorize"
+          }
+        },
+        {
+          "name": "Create API Key (Admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/api-keys",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"postman-key-{{$timestamp}}\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "02 - Authorization Scenarios",
+      "item": [
+        {
+          "name": "No auth on protected endpoint (Api key or JWT)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/flights"
+          }
+        },
+        {
+          "name": "API key on JWT protected endpoint",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/news"
+          }
+        },
+        {
+          "name": "Wrong API key on API key protected endpoint",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{wrongApiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/flights"
+          }
+        },
+        {
+          "name": "User JWT on admin endpoint",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/users"
+          }
+        },
+       {
+          "name": "Wrong JWT on admin endpoint",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{wrongUserAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/users"
+          }
+        }
+      ]
+    },
+    {
+      "name": "03 - Airports",
+      "item": [
+        {
+          "name": "Get all airports",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/airports"
+          }
+        },
+        {
+          "name": "Search airports",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/airports/search?query=York"
+          }
+        },
+        {
+          "name": "Get airport by id (admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/airports/{{airportId}}"
+          }
+        },
+        {
+          "name": "Create airport (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/airports",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Airport {{$timestamp}}\",\n  \"iata\": \"{{newAirportIata}}\",\n  \"city\": \"Belgrade\",\n  \"country\": \"Serbia\",\n  \"latitude\": 44.8184,\n  \"longitude\": 20.3091,\n  \"description\": \"Airport created by Postman test collection\"\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "04 - Flights",
+      "item": [
+        {
+          "name": "Get all flights",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/flights?page=1&pageSize=10"
+          }
+        },
+        {
+          "name": "Search flights",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/flights/search?flightNumber=SF"
+          }
+        },
+        {
+          "name": "Get flight by id",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": "{{baseUrl}}/flights/{{flightId}}"
+          }
+        },
+        {
+          "name": "Create flight (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/flights",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"flightNumber\": \"{{newFlightNumber}}\",\n  \"departureAirportIata\": \"JFK\",\n  \"arrivalAirportIata\": \"LAX\",\n  \"status\": \"Scheduled\",\n  \"terminal\": 2,\n  \"gate\": \"A5\",\n  \"airline\": \"Postman Air\",\n  \"aircraft\": \"Airbus A320\",\n  \"seatCapacity\": 180,\n  \"scheduledDepartureTime\": \"2026-12-01T10:00:00Z\",\n  \"scheduledArrivalTime\": \"2026-12-01T14:00:00Z\",\n  \"departureTime\": \"2026-12-01T10:00:00Z\",\n  \"arrivalTime\": \"2026-12-01T14:00:00Z\",\n  \"economyPrice\": 120.5,\n  \"premiumEconomyPrice\": 180.5,\n  \"businessPrice\": 320.5,\n  \"firstClassPrice\": 500.5\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json && json.id) {",
+                  "  pm.collectionVariables.set('flightId', json.id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update flight (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/flights/{{flightId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"flightNumber\": \"{{newFlightNumber}}\",\n  \"departureAirportIata\": \"JFK\",\n  \"arrivalAirportIata\": \"LAX\",\n  \"status\": \"Delayed\",\n  \"terminal\": 3,\n  \"gate\": \"A9\",\n  \"airline\": \"Postman Air\",\n  \"aircraft\": \"Airbus A320\",\n  \"seatCapacity\": 180,\n  \"scheduledDepartureTime\": \"2026-12-01T10:00:00Z\",\n  \"scheduledArrivalTime\": \"2026-12-01T14:00:00Z\",\n  \"departureTime\": \"2026-12-01T10:30:00Z\",\n  \"arrivalTime\": \"2026-12-01T14:30:00Z\",\n  \"economyPrice\": 130.0,\n  \"premiumEconomyPrice\": 190.0,\n  \"businessPrice\": 330.0,\n  \"firstClassPrice\": 510.0\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const flightId = (pm.collectionVariables.get('flightId') || '').trim();",
+                  "const guidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;",
+                  "if (!guidPattern.test(flightId)) {",
+                  "  throw new Error('Set collection variable flightId to a valid GUID before running this request.');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get comments by flight",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/flights/{{flightId}}/comments"
+          }
+        },
+        {
+          "name": "Create boarding pass payment session",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/flights/{{flightId}}/boarding-passes",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"seat\": 0,\n  \"returnPath\": \"/payment/success\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Get boarding guides by flight",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/flights/{{flightId}}/boarding-guides"
+          }
+        },
+        {
+          "name": "Create boarding guide (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/flights/{{flightId}}/boarding-guides",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"flightId\": \"{{flightId}}\",\n  \"description\": \"Test boarding guide\",\n  \"opensAt\": \"2026-12-01T08:00:00Z\",\n  \"closesAt\": \"2026-12-01T09:30:00Z\",\n  \"imageUrls\": [],\n  \"videoUrls\": []\n}"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "05 - Comments",
+      "item": [
+        {
+          "name": "Get all comments (admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/comments"
+          }
+        },
+        {
+          "name": "Create comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/comments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"flightId\": \"{{flightId}}\",\n  \"content\": \"Postman test comment {{$timestamp}}\"\n}"
+            }
+          }
+        },
+        {
+          "name": "Delete comment (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/comments/{{commentId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "06 - Users",
+      "item": [
+        {
+          "name": "Get my boarding passes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/users/me/boarding-passes"
+          }
+        },
+        {
+          "name": "Get my boarding pass PDF",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/users/me/boarding-passes/{{boardingPassId}}/pdf"
+          }
+        },
+        {
+          "name": "Logout current user",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/users/me/logout"
+          }
+        },
+        {
+          "name": "Get active users count (admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/users/active"
+          }
+        },
+        {
+          "name": "Get users activity (admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/users/activity?from=2026-01-01T00:00:00Z"
+          }
+        },
+        {
+          "name": "Reset user password (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/users/{{regularUserId}}/reset?language=srb"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const regularUserId = (pm.collectionVariables.get('regularUserId') || '').trim();",
+                  "if (!regularUserId) {",
+                  "  throw new Error('Set collection variable regularUserId before running this request.');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Block user (admin)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/users/{{regularUserId}}"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const regularUserId = (pm.collectionVariables.get('regularUserId') || '').trim();",
+                  "if (!regularUserId) {",
+                  "  throw new Error('Set collection variable regularUserId before running this request.');",
+                  "}"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "07 - News & Weather",
+      "item": [
+        {
+          "name": "Get latest news",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/news?count=5"
+          }
+        },
+        {
+          "name": "Get weather destination forecast",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/weather/destination?lat=44.8184&lng=20.3091"
+          }
+        }
+      ]
+    },
+    {
+      "name": "08 - Request Logs",
+      "item": [
+        {
+          "name": "Get paged logs (admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/logs?page=1&pageSize=20"
+          }
+        },
+        {
+          "name": "Get logs PDF (admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/logs/pdf"
+          }
+        }
+      ]
+    }
+  ]
+}

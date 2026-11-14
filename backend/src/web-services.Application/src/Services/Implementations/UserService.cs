@@ -32,7 +32,7 @@ public sealed class UserService : IUserService
 
     public async Task<UserDto?> Register(UserRegisterRequestDto request, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(request.Password) || string.IsNullOrEmpty(request.Username))
+        if (string.IsNullOrWhiteSpace(request.Password) || string.IsNullOrWhiteSpace(request.Username))
         {
             return null;
         }
