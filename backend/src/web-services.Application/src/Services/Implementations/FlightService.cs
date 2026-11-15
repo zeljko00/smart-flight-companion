@@ -11,6 +11,7 @@ public sealed class FlightService : IFlightService
     private readonly IBoardingPassService _boardingPassService;
     private readonly INotificationService _notificationService;
     private readonly IScheduledNotificationService _scheduledNotificationService;
+    private readonly IFlightSearchQueryMapper _flightSearchQueryMapper;
 
 
     public FlightService(
@@ -18,13 +19,15 @@ public sealed class FlightService : IFlightService
         IAirportRepository airportRepository,
         IBoardingPassService boardingPassService,
         INotificationService notificationService,
-        IScheduledNotificationService scheduledNotificationService)
+        IScheduledNotificationService scheduledNotificationService,
+        IFlightSearchQueryMapper flightSearchQueryMapper)
     {
         _flightRepository = flightRepository;
         _airportRepository = airportRepository;
         _boardingPassService = boardingPassService;
         _notificationService = notificationService;
         _scheduledNotificationService = scheduledNotificationService;
+        _flightSearchQueryMapper = flightSearchQueryMapper;
     }
 
     private async Task ScheduleFlightNotificationsAsync(Flight flight, CancellationToken cancellationToken)
@@ -104,7 +107,8 @@ public sealed class FlightService : IFlightService
         string? status,
         string? airline,
         decimal? maxPrice,
-        DateTimeOffset? departureTime,
+        DateTimeOffset? departureStart,
+        DateTimeOffset? departureEnd,
         int? page,
         int? pageSize,
         CancellationToken cancellationToken = default)
@@ -116,7 +120,8 @@ public sealed class FlightService : IFlightService
             status,
             airline,
             maxPrice,
-            departureTime,
+            departureStart,
+            departureEnd,
             page,
             pageSize,
             cancellationToken);
@@ -144,6 +149,54 @@ public sealed class FlightService : IFlightService
             effectivePageSize,
             flights.TotalCount,
             hasNextPage);
+    }
+
+    public async Task<NLFlightSearchResultDto> SearchByNaturalLanguage(
+        string query,
+        int? page,
+        int? pageSize,
+        CancellationToken cancellationToken = default)
+    {
+        var filters = await _flightSearchQueryMapper.MapToFiltersAsync(query, cancellationToken);
+
+        if (!filters.IsLlmApplied || !HasAnyMappedFilter(filters))
+        {
+            return new NLFlightSearchResultDto(
+                query,
+                filters,
+                new PagedResultDto<FlightDto>(
+                    Array.Empty<FlightDto>(),
+                    page ?? 1,
+                    pageSize ?? 1,
+                    0,
+                    false));
+        }
+
+        var flights = await Search(
+            filters.FlightNumber,
+            filters.Departure,
+            filters.Destination,
+            null, // Status is not extracted from LLM
+            filters.Airline,
+            filters.MaxPrice,
+            filters.DepartureTimeStart,
+            filters.DepartureTimeEnd,
+            page,
+            pageSize,
+            cancellationToken);
+
+        return new NLFlightSearchResultDto(query, filters, flights);
+    }
+
+    private static bool HasAnyMappedFilter(FlightSearchFiltersDto filters)
+    {
+        return !string.IsNullOrWhiteSpace(filters.FlightNumber)
+            || !string.IsNullOrWhiteSpace(filters.Departure)
+            || !string.IsNullOrWhiteSpace(filters.Destination)
+            || !string.IsNullOrWhiteSpace(filters.Airline)
+            || filters.MaxPrice.HasValue
+            || filters.DepartureTimeStart.HasValue
+            || filters.DepartureTimeEnd.HasValue;
     }
 
     public async Task<FlightDto> Create(FlightRequestDto request, CancellationToken cancellationToken = default)

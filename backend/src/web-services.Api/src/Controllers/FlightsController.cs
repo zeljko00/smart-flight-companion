@@ -161,9 +161,66 @@ public sealed class FlightsController : ControllerBase
             pageSize = null;
         }
 
-        var flights = await _flightService.Search(request.FlightNumber, request.Departure, request.Destination, request.Status, request.Airline, request.MaxPrice, request.DepartureTime, page, pageSize, cancellationToken);
+        DateTimeOffset? departureStart = null;
+        DateTimeOffset? departureEnd = null;
+
+        if (request.DepartureTime.HasValue)
+        {
+            var departureDayStart = request.DepartureTime.Value.ToUniversalTime().Date;
+            departureStart = departureDayStart;
+            departureEnd = departureDayStart.AddDays(1).AddSeconds(-1); // End of the day (23:59:59)
+        }
+
+        var flights = await _flightService.Search(
+            request.FlightNumber,
+            request.Departure,
+            request.Destination,
+            request.Status,
+            request.Airline,
+            request.MaxPrice,
+            departureStart,
+            departureEnd,
+            page,
+            pageSize,
+            cancellationToken);
 
         return Ok(flights);
+    }
+
+    [Authorize(Policy = "JwtOrApiKey")]
+    [HttpPost("search/natural-language")]
+    [ProducesResponseType(typeof(NLFlightSearchResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<NLFlightSearchResultDto>> SearchNaturalLanguage(
+        [FromBody] NaturalLanguageFlightSearchRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(request.Query))
+        {
+            return BadRequest("Query is required.");
+        }
+
+        if (request.Page.HasValue && request.Page.Value < 1)
+        {
+            return BadRequest("Page must be greater than or equal to 1.");
+        }
+
+        if (request.PageSize.HasValue && request.PageSize.Value < 1)
+        {
+            return BadRequest("Page size must be greater than or equal to 1.");
+        }
+
+        var page = request.Page;
+        var pageSize = request.PageSize;
+
+        if (!page.HasValue || !pageSize.HasValue)
+        {
+            page = null;
+            pageSize = null;
+        }
+
+        var result = await _flightService.SearchByNaturalLanguage(request.Query, page, pageSize, cancellationToken);
+        return Ok(result);
     }
     
     [Authorize(Policy = "VerifiedUserOnly")]
