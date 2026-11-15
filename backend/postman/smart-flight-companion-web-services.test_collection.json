@@ -379,6 +379,23 @@
           }
         },
         {
+          "name": "Search flights in natural language",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"Find flights to New York tomorrow morning.\"\n}"
+            },
+            "url": "{{baseUrl}}/flights/search/natural-language"
+          }
+        },
+        {
           "name": "Get flight by id",
           "request": {
             "method": "GET",
