@@ -13,7 +13,8 @@ public interface IFlightRepository : IRepository<Flight>
         string? status,
         string? airline,
         decimal? maxPrice,
-        DateTimeOffset? departureTime,
+        DateTimeOffset? departureStart,
+        DateTimeOffset? departureEnd,
         int? page,
         int? pageSize,
         CancellationToken cancellationToken = default);

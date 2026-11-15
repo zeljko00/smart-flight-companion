@@ -41,6 +41,15 @@ builder.Services.AddStackExchangeRedisCache(options =>
 });
 builder.Services.AddScoped<IAirportService, AirportService>();
 builder.Services.AddScoped<IFlightService, FlightService>();
+builder.Services.AddHttpClient<IFlightSearchQueryMapper, FlightSearchQueryMapper>(client =>
+{
+    var llm = builder.Configuration.GetSection("Llm");
+    var baseUrl = Environment.GetEnvironmentVariable("Llm__BaseUrl")
+        ?? llm["BaseUrl"]
+        ?? "https://generativelanguage.googleapis.com/v1/";
+    client.BaseAddress = new Uri(baseUrl);
+    client.Timeout = TimeSpan.FromSeconds(180);
+});
 builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IBoardingPassService, BoardingPassService>();

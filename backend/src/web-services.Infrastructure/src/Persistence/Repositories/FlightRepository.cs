@@ -6,6 +6,7 @@ namespace SmartFlightCompanion.WebServices.Infrastructure.Persistence.Repositori
 
 public sealed class FlightRepository : Repository<Flight>, IFlightRepository
 {
+
     public FlightRepository(AppDbContext context)
         : base(context)
     {
@@ -78,7 +79,8 @@ public sealed class FlightRepository : Repository<Flight>, IFlightRepository
         string? status,
         string? airline,
         decimal? maxPrice,
-        DateTimeOffset? departureTime,
+        DateTimeOffset? departureStart,
+        DateTimeOffset? departureEnd,
         int? page,
         int? pageSize,
         CancellationToken cancellationToken = default)
@@ -104,7 +106,9 @@ public sealed class FlightRepository : Repository<Flight>, IFlightRepository
                 flight.DepartureAirport.Name.ToUpper().Contains(normalizedDeparture) ||
                 flight.DepartureAirport.IATA.ToUpper().Contains(normalizedDeparture) ||
                 flight.DepartureAirport.City.ToUpper().Contains(normalizedDeparture) ||
-                flight.DepartureAirport.Country.ToUpper().Contains(normalizedDeparture));
+                flight.DepartureAirport.Country.ToUpper().Contains(normalizedDeparture) ||
+                flight.DepartureAirport.Address.ToUpper().Contains(normalizedDeparture) 
+                );
         }
 
         if (normalizedDestination is not null)
@@ -113,7 +117,8 @@ public sealed class FlightRepository : Repository<Flight>, IFlightRepository
                 flight.ArrivalAirport.Name.ToUpper().Contains(normalizedDestination) ||
                 flight.ArrivalAirport.IATA.ToUpper().Contains(normalizedDestination) ||
                 flight.ArrivalAirport.City.ToUpper().Contains(normalizedDestination) ||
-                flight.ArrivalAirport.Country.ToUpper().Contains(normalizedDestination));
+                flight.ArrivalAirport.Country.ToUpper().Contains(normalizedDestination) ||
+                flight.ArrivalAirport.Address.ToUpper().Contains(normalizedDestination));
         }
 
         if (normalizedStatus is not null)
@@ -136,10 +141,16 @@ public sealed class FlightRepository : Repository<Flight>, IFlightRepository
                 (flight.FirstClassPrice.HasValue && flight.FirstClassPrice.Value <= price));
         }
 
-        if (departureTime is not null)
+        if (departureStart is not null)
         {
-            var time = departureTime.Value;
-            query = query.Where(flight => time.Date ==  flight.ScheduledDepartureTime.Date);
+            query = query.Where(flight =>
+            flight.ScheduledDepartureTime >= departureStart.Value);
+        }
+
+        if (departureEnd is not null)
+        {
+            query = query.Where(flight =>
+            flight.ScheduledDepartureTime <= departureEnd.Value);
         }
 
         var totalCount = await query.CountAsync(cancellationToken);

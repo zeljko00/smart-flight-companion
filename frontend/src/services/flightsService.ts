@@ -146,12 +146,37 @@ type ApiPagedResponse<TItem> = {
   hasNextPage: boolean
 }
 
+type ApiNaturalLanguageSearchFilters = {
+  flightNumber?: string | null
+  departure?: string | null
+  destination?: string | null
+  airline?: string | null
+  maxPrice?: number | null
+  departureTimeStart?: string | null
+  departureTimeEnd?: string | null
+  isLlmApplied?: boolean
+  mappingNote?: string | null
+}
+
+type ApiNaturalLanguageSearchResponse = {
+  query: string
+  filters: ApiNaturalLanguageSearchFilters
+  flights: ApiPagedResponse<ApiFlight>
+}
+
 export type FlightTablePage = {
   items: FlightTableRow[]
   page: number
   pageSize: number
   totalCount: number
   hasNextPage: boolean
+}
+
+export type NaturalLanguageFlightSearchResult = {
+  query: string
+  isLlmApplied: boolean
+  mappingNote: string | null
+  page: FlightTablePage
 }
 
 function parseDate(value?: string): Date | null {
@@ -267,6 +292,40 @@ function formatDuration(departureAt: Date, arrivalAt: Date): string {
   return `${hours}h ${minutes}min`
 }
 
+function toFlightTableRows(flights: ApiFlight[]): FlightTableRow[] {
+  return flights
+    .map((flight) => {
+      const departureAt = parseDate(flight.departureTime) ?? parseDate(flight.scheduledDepartureTime)
+
+      return {
+        id: flight.id,
+        flightNumber: flight.flightNumber || flight.fligtNumber || 'Unknown #',
+        airline: flight.airline || 'Unknown airline',
+        fromLabel: airportLabel(flight.departureAirport),
+        toLabel: airportLabel(flight.arrivalAirport),
+        departureLabel: departureAt ? formatDeparture(departureAt) : 'TBD',
+        statusLabel: flight.status || 'Scheduled',
+        lowestPriceLabel: getLowestPriceLabel(flight),
+        departureAt,
+      }
+    })
+    .sort((a, b) => {
+      if (!a.departureAt && !b.departureAt) {
+        return a.flightNumber.localeCompare(b.flightNumber)
+      }
+
+      if (!a.departureAt) {
+        return 1
+      }
+
+      if (!b.departureAt) {
+        return -1
+      }
+
+      return a.departureAt.getTime() - b.departureAt.getTime()
+    })
+}
+
 export async function fetchUpcomingFlights(limit = 12, apiKey?: string): Promise<UpcomingFlight[]> {
   const normalizedApiKey = apiKey?.trim()
 
@@ -350,38 +409,7 @@ export async function fetchAllFlights(
     : '/flights/search'
 
   const response = await apiRequest<ApiPagedResponse<ApiFlight>>(searchPath)
-
-  const items = response.items
-    .map((flight) => {
-      const departureAt = parseDate(flight.departureTime) ?? parseDate(flight.scheduledDepartureTime)
-
-      return {
-        id: flight.id,
-        flightNumber: flight.flightNumber || flight.fligtNumber || 'Unknown #',
-        airline: flight.airline || 'Unknown airline',
-        fromLabel: airportLabel(flight.departureAirport),
-        toLabel: airportLabel(flight.arrivalAirport),
-        departureLabel: departureAt ? formatDeparture(departureAt) : 'TBD',
-        statusLabel: flight.status || 'Scheduled',
-        lowestPriceLabel: getLowestPriceLabel(flight),
-        departureAt,
-      }
-    })
-    .sort((a, b) => {
-      if (!a.departureAt && !b.departureAt) {
-        return a.flightNumber.localeCompare(b.flightNumber)
-      }
-
-      if (!a.departureAt) {
-        return 1
-      }
-
-      if (!b.departureAt) {
-        return -1
-      }
-
-      return a.departureAt.getTime() - b.departureAt.getTime()
-    })
+  const items = toFlightTableRows(response.items)
 
   return {
     items,
@@ -389,6 +417,42 @@ export async function fetchAllFlights(
     pageSize: response.pageSize,
     totalCount: response.totalCount,
     hasNextPage: response.hasNextPage,
+  }
+}
+
+export async function fetchFlightsByNaturalLanguage(
+  query: string,
+  pagination: FlightPaginationParams = {},
+): Promise<NaturalLanguageFlightSearchResult> {
+  const page =
+    typeof pagination.page === 'number' && Number.isFinite(pagination.page) && pagination.page >= 1
+      ? Math.floor(pagination.page)
+      : 1
+  const pageSize =
+    typeof pagination.pageSize === 'number' && Number.isFinite(pagination.pageSize) && pagination.pageSize >= 1
+      ? Math.floor(pagination.pageSize)
+      : 20
+
+  const response = await apiRequest<ApiNaturalLanguageSearchResponse>('/flights/search/natural-language', {
+    method: 'POST',
+    body: {
+      query,
+      page,
+      pageSize,
+    },
+  })
+
+  return {
+    query: response.query,
+    isLlmApplied: response.filters.isLlmApplied === true,
+    mappingNote: response.filters.mappingNote ?? null,
+    page: {
+      items: toFlightTableRows(response.flights.items),
+      page: response.flights.page,
+      pageSize: response.flights.pageSize,
+      totalCount: response.flights.totalCount,
+      hasNextPage: response.flights.hasNextPage,
+    },
   }
 }
 

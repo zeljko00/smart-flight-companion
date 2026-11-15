@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 import { createPortal } from 'react-dom'
-import { Download, Funnel } from 'lucide-react'
+import { Download, Funnel, Sparkles } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { AuthHeader } from '../components/AuthHeader'
@@ -17,7 +17,9 @@ import { UserInfo } from '../components/UserInfo'
 import { authService, type UserDto } from '../services/authService'
 import {
   fetchAllFlights,
+  fetchFlightsByNaturalLanguage,
   type FlightSearchFilters,
+  type FlightTablePage,
   type FlightTableRow,
 } from '../services/flightsService'
 import {
@@ -40,6 +42,8 @@ import '../style/HomePage.css'
 type HomeLocationState = {
   user?: UserDto
   homeFilters?: {
+    semanticQuery: string
+    searchMode: 'filters' | 'semantic'
     airline: string
     start: string
     destination: string
@@ -294,6 +298,7 @@ export function HomePage() {
 
   const [flights, setFlights] = useState<FlightTableRow[]>([])
   const [isFilterPanelOpen, setIsFilterPanelOpen] = useState(preservedFilters?.isFilterPanelOpen ?? false)
+  const [semanticQuery, setSemanticQuery] = useState(preservedFilters?.semanticQuery ?? '')
   const [airlineFilter, setAirlineFilter] = useState(preservedFilters?.airline ?? '')
   const [startFilter, setStartFilter] = useState(preservedFilters?.start ?? '')
   const [destinationFilter, setDestinationFilter] = useState(preservedFilters?.destination ?? '')
@@ -308,6 +313,10 @@ export function HomePage() {
   const [hasInitializedFlights, setHasInitializedFlights] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [searchMode, setSearchMode] = useState<'filters' | 'semantic'>(() => {
+    const hasSemanticQuery = Boolean(preservedFilters?.semanticQuery?.trim())
+    return preservedFilters?.searchMode === 'semantic' && hasSemanticQuery ? 'semantic' : 'filters'
+  })
   const [boardingPasses, setBoardingPasses] = useState<UserBoardingPass[]>([])
   const [isBoardingPassesLoading, setIsBoardingPassesLoading] = useState(false)
   const [boardingPassesErrorMessage, setBoardingPassesErrorMessage] = useState<string | null>(null)
@@ -334,6 +343,18 @@ export function HomePage() {
     )
   }, [boardingPasses, pendingSubscribedFlightIds])
 
+  const applyFlightPage = useCallback((result: FlightTablePage) => {
+    setFlights(result.items)
+    setCurrentPage(result.page)
+    setPageSize(result.pageSize)
+    setTotalFlights(result.totalCount)
+    setHasNextPage(result.hasNextPage)
+    savePaginationState({
+      page: result.page,
+      pageSize: result.pageSize,
+    })
+  }, [])
+
   const loadFlights = useCallback(
     async (filters: FlightSearchFilters = {}, page = 1, size = pageSize) => {
       setIsLoading(true)
@@ -341,15 +362,7 @@ export function HomePage() {
 
       try {
         const result = await fetchAllFlights(filters, { page, pageSize: size })
-        setFlights(result.items)
-        setCurrentPage(result.page)
-        setPageSize(result.pageSize)
-        setTotalFlights(result.totalCount)
-        setHasNextPage(result.hasNextPage)
-        savePaginationState({
-          page: result.page,
-          pageSize: result.pageSize,
-        })
+        applyFlightPage(result)
       } catch {
         setErrorMessage(t('home.loadError'))
         setHasNextPage(false)
@@ -357,7 +370,33 @@ export function HomePage() {
         setIsLoading(false)
       }
     },
-    [pageSize, t],
+    [applyFlightPage, pageSize, t],
+  )
+
+  const loadSemanticFlights = useCallback(
+    async (query: string, page = 1, size = pageSize) => {
+      const normalizedQuery = query.trim()
+
+      if (!normalizedQuery) {
+        setSearchMode('filters')
+        return
+      }
+
+      setIsLoading(true)
+      setErrorMessage(null)
+
+      try {
+        const result = await fetchFlightsByNaturalLanguage(normalizedQuery, { page, pageSize: size })
+        applyFlightPage(result.page)
+        setSearchMode('semantic')
+      } catch {
+        setErrorMessage(t('home.loadError'))
+        setHasNextPage(false)
+      } finally {
+        setIsLoading(false)
+      }
+    },
+    [applyFlightPage, pageSize, t],
   )
 
   const buildCurrentFilters = useCallback((): FlightSearchFilters => {
@@ -377,12 +416,23 @@ export function HomePage() {
     }
   }, [airlineFilter, departureTimeFilter, destinationFilter, maxPriceFilter, startFilter, statusFilter])
 
+  const resetStandardFilters = useCallback(() => {
+    const nowValue = toLocalDateInputValue(new Date())
+    setAirlineFilter('')
+    setStartFilter('')
+    setDestinationFilter('')
+    setDepartureTimeFilter('')
+    setMinDepartureTime(nowValue)
+    setMaxPriceFilter('')
+    setStatusFilter('')
+  }, [])
+
   useEffect(() => {
     const refreshMinTime = () => {
       const nowValue = toLocalDateInputValue(new Date())
       setMinDepartureTime(nowValue)
       setDepartureTimeFilter((currentValue) => {
-        if (!currentValue || currentValue < nowValue) {
+        if (currentValue && currentValue < nowValue) {
           return nowValue
         }
 
@@ -410,6 +460,25 @@ export function HomePage() {
       setErrorMessage(null)
 
       try {
+        const normalizedSemanticQuery = preservedFilters?.semanticQuery?.trim() ?? ''
+        const shouldUseSemanticSearch = preservedFilters?.searchMode === 'semantic' && normalizedSemanticQuery.length > 0
+
+        if (shouldUseSemanticSearch) {
+          const semanticResult = await fetchFlightsByNaturalLanguage(normalizedSemanticQuery, {
+            page: initialPage,
+            pageSize: initialPageSize,
+          })
+
+          if (!isDisposed) {
+            applyFlightPage(semanticResult.page)
+            setSearchMode('semantic')
+
+            setHasInitializedFlights(true)
+          }
+
+          return
+        }
+
         const maxPriceRaw = preservedFilters?.maxPrice?.trim()
         const maxPriceParsed = maxPriceRaw ? Number(maxPriceRaw) : undefined
         const maxPrice =
@@ -429,15 +498,8 @@ export function HomePage() {
           { page: initialPage, pageSize: initialPageSize },
         )
         if (!isDisposed) {
-          setFlights(result.items)
-          setCurrentPage(result.page)
-          setPageSize(result.pageSize)
-          setTotalFlights(result.totalCount)
-          setHasNextPage(result.hasNextPage)
-          savePaginationState({
-            page: result.page,
-            pageSize: result.pageSize,
-          })
+          applyFlightPage(result)
+          setSearchMode('filters')
           setHasInitializedFlights(true)
         }
       } catch {
@@ -456,7 +518,7 @@ export function HomePage() {
     return () => {
       isDisposed = true
     }
-  }, [hasInitializedFlights, initialDepartureFilter, initialPage, initialPageSize, preservedFilters, t])
+  }, [applyFlightPage, hasInitializedFlights, initialDepartureFilter, initialPage, initialPageSize, preservedFilters, t])
 
   useEffect(() => {
     if (!user?.id) {
@@ -644,6 +706,8 @@ export function HomePage() {
       state: {
         user,
         homeFilters: {
+          semanticQuery,
+          searchMode,
           airline: airlineFilter,
           start: startFilter,
           destination: destinationFilter,
@@ -660,6 +724,16 @@ export function HomePage() {
 
   const handleFilterSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+
+    const normalizedSemanticQuery = semanticQuery.trim()
+    if (normalizedSemanticQuery) {
+      resetStandardFilters()
+      await loadSemanticFlights(normalizedSemanticQuery, 1, pageSize)
+      return
+    }
+
+    setSemanticQuery('')
+    setSearchMode('filters')
 
     const departureTime = parseLocalDateInput(departureTimeFilter)
 
@@ -680,6 +754,7 @@ export function HomePage() {
 
   const handleFilterReset = async () => {
     const nowValue = toLocalDateInputValue(new Date())
+    setSemanticQuery('')
     setAirlineFilter('')
     setStartFilter('')
     setDestinationFilter('')
@@ -687,11 +762,17 @@ export function HomePage() {
     setMinDepartureTime(nowValue)
     setMaxPriceFilter('')
     setStatusFilter('')
+    setSearchMode('filters')
     await loadFlights({ departureTime: parseLocalDateInput(nowValue) }, 1, pageSize)
   }
 
   const handlePreviousPage = async () => {
     if (currentPage <= 1 || isLoading) {
+      return
+    }
+
+    if (searchMode === 'semantic' && semanticQuery.trim()) {
+      await loadSemanticFlights(semanticQuery, currentPage - 1, pageSize)
       return
     }
 
@@ -703,12 +784,22 @@ export function HomePage() {
       return
     }
 
+    if (searchMode === 'semantic' && semanticQuery.trim()) {
+      await loadSemanticFlights(semanticQuery, currentPage + 1, pageSize)
+      return
+    }
+
     await loadFlights(buildCurrentFilters(), currentPage + 1, pageSize)
   }
 
   const handlePageSizeChange = async (value: string) => {
     const parsed = Number(value)
     if (!Number.isInteger(parsed) || parsed < 1) {
+      return
+    }
+
+    if (searchMode === 'semantic' && semanticQuery.trim()) {
+      await loadSemanticFlights(semanticQuery, 1, parsed)
       return
     }
 
@@ -922,6 +1013,20 @@ export function HomePage() {
               hidden={!isFilterPanelOpen}
             >
               <form className="home-page__filters" onSubmit={handleFilterSubmit}>
+            <label className="home-page__filter-field home-page__filter-field--semantic">
+              <span>{t('home.filters.aiPrompt')}</span>
+              <div className="home-page__ai-input-wrap">
+                <Sparkles size={16} aria-hidden="true" />
+                <input
+                  type="text"
+                  value={semanticQuery}
+                  onChange={(event) => setSemanticQuery(event.target.value)}
+                  placeholder={t('home.filters.aiPromptPlaceholder')}
+                />
+              </div>
+              <small>{t('home.filters.aiPromptHint')}</small>
+            </label>
+
             <label className="home-page__filter-field">
               <span>{t('home.filters.airline')}</span>
               <input

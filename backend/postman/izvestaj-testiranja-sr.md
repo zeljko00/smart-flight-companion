@@ -24,6 +24,7 @@
 ## 04 - Flights
 - "Get all flights": Testiramo listanje letova preko API kljuca. Potreban je apiKey iz "Create API Key (Admin)".
 - "Search flights": Testiramo pretragu letova po broju leta. Potreban je apiKey iz "Create API Key (Admin)".
+- "Search flights in natural language": Testiramo semanticku pretragu letova upotrebnom eksternog AI servisa. Potreban je apiKey iz "Create API Key (Admin)".
 - "Get flight by id": Testiramo dohvatanje leta po ID-u. Potrebni su apiKey i flightId (iz odgovora "Create flight (admin)").
 - "Create flight (admin)": Testiramo kreiranje novog leta od strane administratora. Potrebni su adminAccessToken iz "Login Admin". Neophodno je da newFlightNumber ima jedinstvenu vrijednost.
 - "Update flight (admin)": Testiramo izmjenu postojeceg leta. Potrebni su adminAccessToken ("Login Admin"), flightId ("Create flight (admin)") i newFlightNumber.
