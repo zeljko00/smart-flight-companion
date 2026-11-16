@@ -6,6 +6,8 @@ using System.Text.Json.Serialization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using SmartFlightCompanion.WebServices.Application.Dto;
+using SmartFlightCompanion.WebServices.Infrastructure.Entities;
+using SmartFlightCompanion.WebServices.Infrastructure.Persistence.Abstractions;
 
 namespace SmartFlightCompanion.WebServices.Application.Services;
 
@@ -22,6 +24,7 @@ public sealed class FlightSearchQueryMapper : IFlightSearchQueryMapper
 
     private readonly HttpClient _httpClient;
     private readonly ILogger<FlightSearchQueryMapper> _logger;
+    private readonly IAIExchangeRepository _aiExchangeRepository;
     private readonly string? _apiKey;
     private readonly string _model;
     private readonly TimeSpan _requestTimeout;
@@ -29,9 +32,11 @@ public sealed class FlightSearchQueryMapper : IFlightSearchQueryMapper
     public FlightSearchQueryMapper(
         HttpClient httpClient,
         IConfiguration configuration,
+        IAIExchangeRepository aiExchangeRepository,
         ILogger<FlightSearchQueryMapper> logger)
     {
         _httpClient = httpClient;
+        _aiExchangeRepository = aiExchangeRepository;
         _logger = logger;
         _apiKey = Environment.GetEnvironmentVariable("Llm__ApiKey")
             ?? configuration["Llm:ApiKey"];
@@ -56,16 +61,16 @@ public sealed class FlightSearchQueryMapper : IFlightSearchQueryMapper
         _requestTimeout = TimeSpan.FromSeconds(requestTimeoutSeconds);
     }
 
-    public async Task<FlightSearchFiltersDto> MapToFiltersAsync(string userQuery, CancellationToken cancellationToken = default)
+    public async Task<FlightSearchFiltersDto> MapToFiltersAsync(string userQuery, Guid? userId, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(userQuery))
         {
-            return EmptyFilters("Query is empty.");
+            return await EmptyFiltersAndLogAsync(userQuery, userId, "Query is empty.", cancellationToken);
         }
 
         if (string.IsNullOrWhiteSpace(_apiKey))
         {
-            return EmptyFilters("LLM API key is not configured.");
+            return await EmptyFiltersAndLogAsync(userQuery, userId, "LLM API key is not configured.", cancellationToken);
         }
 
         try
@@ -100,7 +105,7 @@ public sealed class FlightSearchQueryMapper : IFlightSearchQueryMapper
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning("Flight search LLM returned non-success status code {StatusCode}.", response.StatusCode);
-                return EmptyFilters("LLM request failed.");
+                return await EmptyFiltersAndLogAsync(userQuery, userId, $"LLM request failed with status code {(int)response.StatusCode}.", cancellationToken);
             }
 
             var payload = await response.Content.ReadFromJsonAsync<GeminiGenerateContentResponse>(JsonOptions, timeoutCts.Token);
@@ -113,7 +118,7 @@ public sealed class FlightSearchQueryMapper : IFlightSearchQueryMapper
 
             if (string.IsNullOrWhiteSpace(content))
             {
-                return EmptyFilters("LLM returned empty content.");
+                return await EmptyFiltersAndLogAsync(userQuery, userId, "LLM returned empty content.", cancellationToken);
             }
 
             var jsonContent = UnwrapJsonEnvelope(content);
@@ -121,13 +126,13 @@ public sealed class FlightSearchQueryMapper : IFlightSearchQueryMapper
 
             if (parsed is null)
             {
-                return EmptyFilters("LLM response could not be parsed.");
+                return await EmptyFiltersAndLogAsync(userQuery, userId, "LLM response could not be parsed.", cancellationToken);
             }
 
             var llmDepartureStart = ParseDateAndTime(parsed.DepartureDateAndTimeStart);
             var llmDepartureEnd = ParseDateAndTime(parsed.DepartureDateAndTimeEnd);
 
-            return new FlightSearchFiltersDto(
+            var mappedFilters = new FlightSearchFiltersDto(
                 Normalize(parsed.FlightNumber),
                 Normalize(parsed.Departure),
                 Normalize(parsed.Destination),
@@ -137,6 +142,9 @@ public sealed class FlightSearchQueryMapper : IFlightSearchQueryMapper
                 llmDepartureEnd,
                 true,
                 null);
+
+            await PersistExchangeAsync(userQuery, userId, jsonContent, cancellationToken);
+            return mappedFilters;
         }
         catch (OperationCanceledException exception) when (!cancellationToken.IsCancellationRequested)
         {
@@ -144,12 +152,38 @@ public sealed class FlightSearchQueryMapper : IFlightSearchQueryMapper
                 exception,
                 "Flight search LLM request timed out after {TimeoutSeconds} seconds.",
                 _requestTimeout.TotalSeconds);
-            return EmptyFilters("LLM request timed out.");
+            return await EmptyFiltersAndLogAsync(userQuery, userId, "LLM request timed out.", cancellationToken);
         }
         catch (Exception exception)
         {
             _logger.LogWarning(exception, "Failed to map flight search query with LLM.");
-            return EmptyFilters("LLM mapping failed.");
+            return await EmptyFiltersAndLogAsync(userQuery, userId, "LLM mapping failed.", cancellationToken);
+        }
+    }
+
+    private async Task<FlightSearchFiltersDto> EmptyFiltersAndLogAsync(string userQuery, Guid? userId, string note, CancellationToken cancellationToken)
+    {
+        await PersistExchangeAsync(userQuery, userId, note, cancellationToken);
+        return EmptyFilters(note);
+    }
+
+    private async Task PersistExchangeAsync(string request, Guid? userId, string response, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _aiExchangeRepository.CreateAsync(
+                new AIExchange
+                {
+                    Request = request,
+                    Response = response,
+                    UserId = userId,
+                    FlightId = null
+                },
+                cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            _logger.LogWarning(exception, "Failed to persist AI exchange log.");
         }
     }
 

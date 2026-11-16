@@ -10,10 +10,12 @@ namespace SmartFlightCompanion.WebServices.Api.Controllers;
 public sealed class RequestLogController : ControllerBase
 {
     private readonly IRequestLogService _requestLogService;
+    private readonly IAIExchangeService _aiExchangeService;
 
-    public RequestLogController(IRequestLogService requestLogService)
+    public RequestLogController(IRequestLogService requestLogService, IAIExchangeService aiExchangeService)
     {
         _requestLogService = requestLogService;
+        _aiExchangeService = aiExchangeService;
     }
 
     [Authorize(Policy = "AdminOnly")]
@@ -43,6 +45,29 @@ public sealed class RequestLogController : ControllerBase
         }
 
         var result = await _requestLogService.GetPaged(page, pageSize, from, to, cancellationToken);
+        return Ok(result);
+    }
+
+    [Authorize(Policy = "AdminOnly")]
+    [HttpGet("ai")]
+    [ProducesResponseType(typeof(PagedResultDto<AIExchangeDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<PagedResultDto<AIExchangeDto>>> GetPagedAIExchanges(
+        CancellationToken cancellationToken,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
+    {
+        if (page < 1)
+        {
+            return BadRequest("Page must be greater than or equal to 1.");
+        }
+
+        if (pageSize < 1)
+        {
+            return BadRequest("Page size must be greater than or equal to 1.");
+        }
+
+        var result = await _aiExchangeService.GetPaged(page, pageSize, cancellationToken);
         return Ok(result);
     }
 

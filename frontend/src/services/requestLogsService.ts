@@ -18,6 +18,23 @@ type ApiRequestLogPage = {
   hasNextPage?: boolean
 }
 
+type ApiAiLog = {
+  id?: string
+  request?: string
+  response?: string
+  userId?: string | null
+  flightId?: string | null
+  timestamp?: string
+}
+
+type ApiAiLogPage = {
+  items?: ApiAiLog[]
+  page?: number
+  pageSize?: number
+  totalCount?: number
+  hasNextPage?: boolean
+}
+
 export type RequestLogEntry = {
   id: string
   ipAddress: string
@@ -30,6 +47,23 @@ export type RequestLogEntry = {
 
 export type RequestLogPage = {
   items: RequestLogEntry[]
+  page: number
+  pageSize: number
+  totalCount: number
+  hasNextPage: boolean
+}
+
+export type AiLogEntry = {
+  id: string
+  request: string
+  response: string
+  userId: string | null
+  flightId: string | null
+  timestamp: string
+}
+
+export type AiLogPage = {
+  items: AiLogEntry[]
   page: number
   pageSize: number
   totalCount: number
@@ -60,6 +94,17 @@ function toEntry(item: ApiRequestLog): RequestLogEntry {
   }
 }
 
+function toAiEntry(item: ApiAiLog): AiLogEntry {
+  return {
+    id: item.id ?? crypto.randomUUID(),
+    request: item.request ?? '',
+    response: item.response ?? '',
+    userId: item.userId ?? null,
+    flightId: item.flightId ?? null,
+    timestamp: item.timestamp ?? '',
+  }
+}
+
 function buildWindowParams(from?: Date, to?: Date): URLSearchParams {
   const params = new URLSearchParams()
 
@@ -87,6 +132,25 @@ export const requestLogsService = {
 
     return {
       items: (response.items ?? []).map(toEntry),
+      page: response.page ?? query.page,
+      pageSize: response.pageSize ?? query.pageSize,
+      totalCount: response.totalCount ?? 0,
+      hasNextPage: response.hasNextPage ?? false,
+    }
+  },
+
+  async getAiPaged(query: Pick<RequestLogQuery, 'page' | 'pageSize'>, signal?: AbortSignal): Promise<AiLogPage> {
+    const params = new URLSearchParams()
+    params.set('page', String(query.page))
+    params.set('pageSize', String(query.pageSize))
+
+    const response = await apiRequest<ApiAiLogPage>(`/logs/ai?${params.toString()}`, {
+      method: 'GET',
+      signal,
+    })
+
+    return {
+      items: (response.items ?? []).map(toAiEntry),
       page: response.page ?? query.page,
       pageSize: response.pageSize ?? query.pageSize,
       totalCount: response.totalCount ?? 0,

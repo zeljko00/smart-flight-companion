@@ -15,6 +15,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+    profiles:
+      - run
+      - dev
+      - migrate
+      - init
 
   cache:
     image: redis:7-alpine
@@ -24,6 +29,9 @@ services:
     networks:
       - sfc-data-network
     restart: unless-stopped
+    profiles:
+      - run
+      - dev
 
   storage:
     image: chainguard/minio:latest
@@ -38,6 +46,9 @@ services:
     networks:
       - sfc-internal-network
     restart: unless-stopped
+    profiles:
+      - run
+      - dev
 
   backend:
     build:
@@ -66,6 +77,9 @@ services:
       storage:
         condition: service_started
     restart: unless-stopped
+    profiles:
+      - run
+      - dev
 
   database-migrate:
     build:
@@ -77,12 +91,6 @@ services:
     volumes:
       - ../backend:/app
       - nuget-cache:/root/.nuget/packages
-      - api-obj:/app/src/web-services.Api/obj
-      - api-bin:/app/src/web-services.Api/bin
-      - services-obj:/app/src/web-services.Application/obj
-      - services-bin:/app/src/web-services.Application/bin
-      - repository-obj:/app/src/web-services.Infrastructure/obj
-      - repository-bin:/app/src/web-services.Infrastructure/bin
     networks:
       - sfc-data-network
     depends_on:
@@ -109,7 +117,7 @@ services:
     depends_on:
       database:
         condition: service_healthy
-      backend-migrate:
+      database-migrate:
         condition: service_completed_successfully
     command:
       - sh
@@ -139,6 +147,9 @@ services:
     networks:
       - sfc-internal-network
     restart: unless-stopped
+    profiles:
+      - run
+      - dev
 
   frontend:
     build:
@@ -153,6 +164,9 @@ services:
     depends_on:
       - backend
     restart: unless-stopped
+    profiles:
+      - run
+      - dev
 
   proxy:
     container_name: proxy
@@ -168,7 +182,19 @@ services:
       - ../proxy/secrets/proxy.key:/etc/nginx/certs/proxy.key:ro
     networks:
       - sfc-internal-network
+    depends_on:
+      backend:
+        condition: service_started
+      payment-service:
+        condition: service_started
+      frontend:
+        condition: service_started
+      storage:
+        condition: service_started
     restart: unless-stopped
+    profiles:
+      - run
+      - dev
 
   database-client:
     image: dpage/pgadmin4:latest

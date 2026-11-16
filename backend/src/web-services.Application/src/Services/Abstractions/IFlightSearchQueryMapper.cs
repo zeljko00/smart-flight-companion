@@ -4,5 +4,5 @@ namespace SmartFlightCompanion.WebServices.Application.Services;
 
 public interface IFlightSearchQueryMapper
 {
-    Task<FlightSearchFiltersDto> MapToFiltersAsync(string userQuery, CancellationToken cancellationToken = default);
+    Task<FlightSearchFiltersDto> MapToFiltersAsync(string userQuery, Guid? userId, CancellationToken cancellationToken = default);
 }
