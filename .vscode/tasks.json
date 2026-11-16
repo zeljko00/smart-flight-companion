@@ -2,6 +2,30 @@
   "version": "2.0.0",
   "tasks": [
     {
+      "label": "Bring up runtime environment",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "compose",
+        "-f",
+        "deploy/docker-compose.yml",
+        "--profile",
+        "run",
+        "up",
+        "--remove-orphans",
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      }
+    },
+    {
       "label": "Bring up development environment",
       "type": "shell",
       "command": "docker",
@@ -26,7 +50,7 @@
       }
     },
     {
-      "label": "Bring up development environment - with DB migrations",
+      "label": "Run DB migrations only",
       "type": "shell",
       "command": "docker",
       "args": [
@@ -34,11 +58,56 @@
         "-f",
         "deploy/docker-compose.yml",
         "--profile",
-        "dev",
-        "--profile",
         "migrate",
         "up",
         "--remove-orphans",
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": false,
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      }
+    },
+    {
+      "label": "Run DB init",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "compose",
+        "-f",
+        "deploy/docker-compose.yml",
+        "--profile",
+        "init",
+        "up",
+        "--remove-orphans",
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": false,
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      }
+    },
+        {
+      "label": "Stop runtime environment",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+          "compose",
+          "-f",
+          "deploy/docker-compose.yml",
+          "--profile",
+          "run",
+          "down",
       ],
       "options": {
         "cwd": "${workspaceFolder}"
@@ -75,15 +144,13 @@
       }
     },
      {
-      "label": "Stop development environment - with DB migrations",
+      "label": "Stop DB migrations",
       "type": "shell",
       "command": "docker",
       "args": [
           "compose",
           "-f",
           "deploy/docker-compose.yml",
-          "--profile",
-          "dev",
           "--profile",
           "migrate",
           "down",
@@ -99,8 +166,31 @@
         "clear": true
       }
     },
+       {
+      "label": "Stop DB initialization",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+          "compose",
+          "-f",
+          "deploy/docker-compose.yml",
+          "--profile",
+          "init",
+          "down",
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      }
+    },
     {
-      "label": "Clean up development environment",
+      "label": "Clean up runtime environment",
       "type": "shell",
       "command": "bash",
       "args": [

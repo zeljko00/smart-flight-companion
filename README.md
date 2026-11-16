@@ -16,21 +16,23 @@ docker compose -f deploy/docker-compose.yml build
 
 ### 2.2. Podizanje okruzenja
 
-#### 2.2.1. Prvo podizanje okruzenja
+#### 2.2.1. Inicijalizacija okruzenja
 
-Potrebno je ispostovati proceduru prilikom prvog pokretanja kako bi svi servisi/baze bili ispravno inicijalizovani.
+Prije pokretanja okruzenja, neophodno je inicijalizovati bazu podataka kako bi svi servisi bili funkcionalni.
 
 ```bash
 docker compose -f deploy/docker-compose.yml --profile init up --remove-orphans
 ```
-#### 2.2.2. Drugo i svako naredno podizanje okruzenja
+
+#### 2.2.2. Podizanje okruzenja
 
 ```bash
-docker compose -f deploy/docker-compose.yml up --remove-orphans
+docker compose -f deploy/docker-compose.yml --profile run up --remove-orphans
 ```
-#### 2.2.3 Podizanje razvojnog okruzenja
 
-Razvojno okruzenje sadrzi dodatne alate/servise koji olaksavaju razvoj sistema.
+#### 2.2.3. Podizanje razvojnog okruzenja
+
+Razvojno okruzenje sadrzi razvojne alate (`dev` profil).
 
 ```bash
 docker compose -f deploy/docker-compose.yml --profile dev up --remove-orphans
@@ -44,13 +46,12 @@ docker compose -f deploy/docker-compose.yml --profile dev up --remove-orphans
 ### 2.4. Zaustavljanje okruzenja:
 
 ```bash
-docker compose -f deploy/docker-compose.yml down
+docker compose -f deploy/docker-compose.yml --profile run down
 ```
 
 ## 3. Inicijalizacija baza podataka
 
-Baze podataka su inicijalizovane prilikom prvog pokretanja okruzenja.
-Inicijalno podizanje okruzenja pokrece dodatne kontejnere koji izvrsavaju migracije i dodaju inicijalne podatke u bazu.
+Za kreiranje seme i inicijalno punjenje baze koristiti `init` profil, kao sto je opisano u 2.2.1.
 
 ## 4. Mail server (SMTP) konfiguracija
 
