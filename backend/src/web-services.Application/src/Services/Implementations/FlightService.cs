@@ -153,11 +153,12 @@ public sealed class FlightService : IFlightService
 
     public async Task<NLFlightSearchResultDto> SearchByNaturalLanguage(
         string query,
+        Guid? userId,
         int? page,
         int? pageSize,
         CancellationToken cancellationToken = default)
     {
-        var filters = await _flightSearchQueryMapper.MapToFiltersAsync(query, cancellationToken);
+        var filters = await _flightSearchQueryMapper.MapToFiltersAsync(query, userId, cancellationToken);
 
         if (!filters.IsLlmApplied || !HasAnyMappedFilter(filters))
         {

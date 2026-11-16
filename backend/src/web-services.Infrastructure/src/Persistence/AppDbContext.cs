@@ -18,6 +18,7 @@ public class AppDbContext : DbContext
     public DbSet<Comment> Comments => Set<Comment>();
     public DbSet<Media> Media => Set<Media>();
     public DbSet<RequestLog> RequestLogs => Set<RequestLog>();
+    public DbSet<AIExchange> AIExchanges => Set<AIExchange>();
     public DbSet<ScheduledNotification> ScheduledNotifications => Set<ScheduledNotification>();
     public DbSet<ApiKey> ApiKeys => Set<ApiKey>();
 
@@ -84,6 +85,16 @@ public class AppDbContext : DbContext
             entity.Property(requestLog => requestLog.UserId).IsRequired(false);
             entity.HasIndex(requestLog => requestLog.ReceivedAt);
             entity.HasIndex(requestLog => requestLog.UserId);
+        });
+
+        modelBuilder.Entity<AIExchange>(entity =>
+        {
+            entity.Property(aiExchange => aiExchange.Request).IsRequired();
+            entity.Property(aiExchange => aiExchange.Response).IsRequired();
+            entity.Property(aiExchange => aiExchange.UserId).IsRequired(false);
+            entity.Property(aiExchange => aiExchange.FlightId).IsRequired(false);
+            entity.HasIndex(aiExchange => aiExchange.Timestamp);
+            entity.HasIndex(aiExchange => aiExchange.UserId);
         });
 
         modelBuilder.Entity<Media>(entity =>

@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { ApiError } from '../services/apiClient'
 import {
   requestLogsService,
+  type AiLogPage,
   type RequestLogPage,
 } from '../services/requestLogsService'
 import '../style/RequestLogsPanel.css'
@@ -59,6 +60,79 @@ function getStatusClassName(statusCode: number | null): string {
   return 'request-logs__status--success'
 }
 
+function removeNullFields(value: unknown): unknown {
+  if (value === null || value === undefined) {
+    return undefined
+  }
+
+  if (Array.isArray(value)) {
+    const filtered = value
+      .map((item) => removeNullFields(item))
+      .filter((item) => item !== undefined)
+
+    return filtered.length > 0 ? filtered : undefined
+  }
+
+  if (typeof value === 'object') {
+    const entries = Object.entries(value as Record<string, unknown>)
+      .map(([key, item]) => [key, removeNullFields(item)] as const)
+      .filter(([, item]) => item !== undefined)
+
+    return entries.length > 0 ? Object.fromEntries(entries) : undefined
+  }
+
+  return value
+}
+
+type AiResponseLine = {
+  key: string
+  value: string
+}
+
+function flattenResponseAttributes(value: unknown, prefix = ''): AiResponseLine[] {
+  if (value === null || value === undefined) {
+    return []
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((item, index) => flattenResponseAttributes(item, `${prefix}[${index}]`))
+  }
+
+  if (typeof value === 'object') {
+    return Object.entries(value as Record<string, unknown>).flatMap(([key, item]) => {
+      const nextPrefix = prefix ? `${prefix}.${key}` : key
+      return flattenResponseAttributes(item, nextPrefix)
+    })
+  }
+
+  if (typeof value === 'string') {
+    return [{ key: prefix || 'value', value }]
+  }
+
+  return [{ key: prefix || 'value', value: String(value) }]
+}
+
+function formatAiResponse(value: string): AiResponseLine[] {
+  const trimmed = value.trim()
+  if (trimmed.length === 0) {
+    return [{ key: '-', value: '-' }]
+  }
+
+  try {
+    const parsed = JSON.parse(trimmed) as unknown
+    const filtered = removeNullFields(parsed)
+
+    if (filtered === undefined) {
+      return [{ key: '-', value: '-' }]
+    }
+
+    const lines = flattenResponseAttributes(filtered)
+    return lines.length > 0 ? lines : [{ key: '-', value: '-' }]
+  } catch {
+    return [{ key: 'raw', value }]
+  }
+}
+
 export function RequestLogsPanel() {
   const { t, i18n } = useTranslation()
   const [fromValue, setFromValue] = useState('')
@@ -71,6 +145,12 @@ export function RequestLogsPanel() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [isDownloading, setIsDownloading] = useState(false)
   const [downloadErrorMessage, setDownloadErrorMessage] = useState<string | null>(null)
+  const [aiPage, setAiPage] = useState(1)
+  const [aiPageSize, setAiPageSize] = useState(DEFAULT_PAGE_SIZE)
+  const [aiReloadToken, setAiReloadToken] = useState(0)
+  const [aiResult, setAiResult] = useState<AiLogPage | null>(null)
+  const [isAiLoading, setIsAiLoading] = useState(true)
+  const [aiErrorMessage, setAiErrorMessage] = useState<string | null>(null)
 
   const fromMs = useMemo(() => parseDateTimeInput(fromValue)?.getTime(), [fromValue])
   const toMs = useMemo(() => parseDateTimeInput(toValue, true)?.getTime(), [toValue])
@@ -117,6 +197,41 @@ export function RequestLogsPanel() {
     }
   }, [fromMs, isRangeInvalid, page, pageSize, reloadToken, t, toMs])
 
+  useEffect(() => {
+    const controller = new AbortController()
+
+    void (async () => {
+      setIsAiLoading(true)
+      setAiErrorMessage(null)
+
+      try {
+        const response = await requestLogsService.getAiPaged(
+          {
+            page: aiPage,
+            pageSize: aiPageSize,
+          },
+          controller.signal,
+        )
+
+        if (!controller.signal.aborted) {
+          setAiResult(response)
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          setAiErrorMessage(error instanceof ApiError ? error.message : t('admin.requestLogs.ai.loadError'))
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsAiLoading(false)
+        }
+      }
+    })()
+
+    return () => {
+      controller.abort()
+    }
+  }, [aiPage, aiPageSize, aiReloadToken, t])
+
   const formatTimestamp = (value: string) => {
     const parsed = new Date(value)
     if (Number.isNaN(parsed.getTime())) {
@@ -148,6 +263,11 @@ export function RequestLogsPanel() {
   const handlePageSizeChange = (value: string) => {
     setPageSize(Number(value))
     setPage(1)
+  }
+
+  const handleAiPageSizeChange = (value: string) => {
+    setAiPageSize(Number(value))
+    setAiPage(1)
   }
 
   const handleDownloadPdf = async () => {
@@ -183,6 +303,9 @@ export function RequestLogsPanel() {
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize))
   const items = result?.items ?? []
   const hasFilters = fromValue !== '' || toValue !== ''
+  const aiTotalCount = aiResult?.totalCount ?? 0
+  const aiTotalPages = Math.max(1, Math.ceil(aiTotalCount / aiPageSize))
+  const aiItems = aiResult?.items ?? []
 
   return (
     <section className="request-logs" aria-label={t('admin.requestLogs.aria')}>
@@ -360,6 +483,119 @@ export function RequestLogsPanel() {
           </label>
         </div>
       ) : null}
+
+      <div className="request-logs__ai-block" aria-label={t('admin.requestLogs.ai.aria')}>
+        <div className="request-logs__ai-header">
+          <h3 className="request-logs__ai-title">{t('admin.requestLogs.ai.title')}</h3>
+          <button
+            type="button"
+            className="request-logs__button request-logs__button--secondary"
+            onClick={() => setAiReloadToken((current) => current + 1)}
+            disabled={isAiLoading}
+          >
+            <RefreshCw size={14} aria-hidden="true" />
+            <span>{t('admin.requestLogs.refresh')}</span>
+          </button>
+        </div>
+
+        {isAiLoading && !aiResult ? (
+          <p className="request-logs__message">{t('admin.requestLogs.ai.loading')}</p>
+        ) : null}
+
+        {aiErrorMessage ? (
+          <p className="request-logs__message request-logs__message--error" role="alert">
+            {aiErrorMessage}
+          </p>
+        ) : null}
+
+        {!aiErrorMessage && aiResult && aiItems.length === 0 && !isAiLoading ? (
+          <p className="request-logs__message">{t('admin.requestLogs.ai.empty')}</p>
+        ) : null}
+
+        {!aiErrorMessage && aiItems.length > 0 ? (
+          <div
+            className={`request-logs__table-wrap ${isAiLoading ? 'request-logs__table-wrap--loading' : ''}`}
+            aria-busy={isAiLoading}
+          >
+            <table className="request-logs__table" aria-label={t('admin.requestLogs.ai.tableAria')}>
+              <thead>
+                <tr>
+                  <th>{t('admin.requestLogs.ai.columns.timestamp')}</th>
+                  <th className="request-logs__ai-column-request">{t('admin.requestLogs.ai.columns.request')}</th>
+                  <th className="request-logs__ai-column-response">{t('admin.requestLogs.ai.columns.response')}</th>
+                  <th>{t('admin.requestLogs.ai.columns.userFlight')}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {aiItems.map((entry) => (
+                  <tr key={entry.id}>
+                    <td className="request-logs__cell-time">{formatTimestamp(entry.timestamp)}</td>
+                    <td className="request-logs__cell-path request-logs__cell-ai-request">{entry.request || '-'}</td>
+                    <td className="request-logs__cell-path request-logs__cell-ai-response">
+                      <div className="request-logs__json-list">
+                        {formatAiResponse(entry.response).map((line, index) => (
+                          <div key={`${entry.id}-resp-${line.key}-${index}`} className="request-logs__json-row">
+                            <span className="request-logs__json-key">{line.key}</span>
+                            <span className="request-logs__json-value">{line.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="request-logs__cell-userid">{`${entry.userId ?? '-'} / ${entry.flightId ?? '-'}`}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+
+        {!aiErrorMessage ? (
+          <div className="request-logs__pagination" aria-label={t('admin.requestLogs.ai.pagination.aria')}>
+            <button
+              type="button"
+              className="request-logs__button request-logs__button--secondary"
+              onClick={() => setAiPage((current) => Math.max(1, current - 1))}
+              disabled={isAiLoading || aiPage <= 1}
+            >
+              <ChevronLeft size={14} aria-hidden="true" />
+              <span>{t('admin.requestLogs.pagination.previous')}</span>
+            </button>
+
+            <span className="request-logs__pagination-label" aria-live="polite">
+              {t('admin.requestLogs.ai.pagination.page', { page: aiPage, total: aiTotalPages })}
+            </span>
+
+            <button
+              type="button"
+              className="request-logs__button request-logs__button--secondary"
+              onClick={() => setAiPage((current) => current + 1)}
+              disabled={isAiLoading || !aiResult?.hasNextPage}
+            >
+              <span>{t('admin.requestLogs.pagination.next')}</span>
+              <ChevronRight size={14} aria-hidden="true" />
+            </button>
+
+            <span className="request-logs__total">
+              {t('admin.requestLogs.ai.pagination.total', { count: aiTotalCount })}
+            </span>
+
+            <label className="request-logs__page-size">
+              <span>{t('admin.requestLogs.pagination.pageSize')}</span>
+              <select
+                value={aiPageSize}
+                onChange={(event) => handleAiPageSizeChange(event.target.value)}
+                disabled={isAiLoading}
+              >
+                {PAGE_SIZE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        ) : null}
+      </div>
     </section>
   )
 }

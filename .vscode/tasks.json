@@ -26,6 +26,32 @@
       }
     },
     {
+      "label": "Bring up development environment - with DB migrations",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+        "compose",
+        "-f",
+        "deploy/docker-compose.yml",
+        "--profile",
+        "dev",
+        "--profile",
+        "migrate",
+        "up",
+        "--remove-orphans",
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      }
+    },
+    {
       "label": "Stop development environment",
       "type": "shell",
       "command": "docker",
@@ -48,7 +74,32 @@
         "clear": true
       }
     },
-        {
+     {
+      "label": "Stop development environment - with DB migrations",
+      "type": "shell",
+      "command": "docker",
+      "args": [
+          "compose",
+          "-f",
+          "deploy/docker-compose.yml",
+          "--profile",
+          "dev",
+          "--profile",
+          "migrate",
+          "down",
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "isBackground": true,
+      "group": "build",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared",
+        "clear": true
+      }
+    },
+    {
       "label": "Clean up development environment",
       "type": "shell",
       "command": "bash",

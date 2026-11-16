@@ -219,7 +219,14 @@ public sealed class FlightsController : ControllerBase
             pageSize = null;
         }
 
-        var result = await _flightService.SearchByNaturalLanguage(request.Query, page, pageSize, cancellationToken);
+        Guid? userId = null;
+        var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (Guid.TryParse(userIdValue, out var parsedUserId))
+        {
+            userId = parsedUserId;
+        }
+
+        var result = await _flightService.SearchByNaturalLanguage(request.Query, userId, page, pageSize, cancellationToken);
         return Ok(result);
     }
     

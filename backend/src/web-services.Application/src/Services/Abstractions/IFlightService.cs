@@ -10,6 +10,7 @@ public interface IFlightService
     
     Task<NLFlightSearchResultDto> SearchByNaturalLanguage(
         string query,
+        Guid? userId,
         int? page,
         int? pageSize,
         CancellationToken cancellationToken = default);
