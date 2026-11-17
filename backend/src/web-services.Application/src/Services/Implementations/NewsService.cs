@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Xml.Linq;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using SmartFlightCompanion.WebServices.Application.Dto;
 
 namespace SmartFlightCompanion.WebServices.Application.Services;
@@ -11,11 +12,13 @@ public sealed class NewsService : INewsService
     private const int MaxAllowedItems = 50;
 
     private readonly HttpClient _httpClient;
+    private readonly ILogger<NewsService> _logger;
     private readonly string _rssUrl;
 
-    public NewsService(HttpClient httpClient, IConfiguration configuration)
+    public NewsService(HttpClient httpClient, IConfiguration configuration, ILogger<NewsService> logger)
     {
         _httpClient = httpClient;
+        _logger = logger;
         _rssUrl = configuration["News:RssUrl"] ?? string.Empty;
     }
 
@@ -45,20 +48,24 @@ public sealed class NewsService : INewsService
             }
             return Array.Empty<NewsArticleDto>();
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException exception)
         {
+            _logger.LogWarning(exception, "Fetching news RSS feed failed for URL {RssUrl}.", _rssUrl);
             return [];
         }
-        catch (TaskCanceledException)
+        catch (TaskCanceledException exception)
         {
+            _logger.LogWarning(exception, "Fetching news RSS feed timed out for URL {RssUrl}.", _rssUrl);
             return [];
         }
-        catch (InvalidOperationException)
+        catch (InvalidOperationException exception)
         {
+            _logger.LogWarning(exception, "Parsing RSS XML failed for URL {RssUrl}.", _rssUrl);
             return [];
         }
-        catch (FormatException)
+        catch (FormatException exception)
         {
+            _logger.LogWarning(exception, "RSS feed contains invalid format for URL {RssUrl}.", _rssUrl);
             return [];
         }
     }
