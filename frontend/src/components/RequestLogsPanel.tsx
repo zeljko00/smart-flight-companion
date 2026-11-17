@@ -84,12 +84,7 @@ function removeNullFields(value: unknown): unknown {
   return value
 }
 
-type AiResponseLine = {
-  key: string
-  value: string
-}
-
-function flattenResponseAttributes(value: unknown, prefix = ''): AiResponseLine[] {
+function flattenResponseAttributes(value: unknown, prefix = ''): string[] {
   if (value === null || value === undefined) {
     return []
   }
@@ -106,16 +101,17 @@ function flattenResponseAttributes(value: unknown, prefix = ''): AiResponseLine[
   }
 
   if (typeof value === 'string') {
-    return [{ key: prefix || 'value', value }]
+    return [prefix ? `${prefix}: ${value}` : value]
   }
 
-  return [{ key: prefix || 'value', value: String(value) }]
+  const formattedValue = String(value)
+  return [prefix ? `${prefix}: ${formattedValue}` : formattedValue]
 }
 
-function formatAiResponse(value: string): AiResponseLine[] {
+function formatAiResponse(value: string): string[] {
   const trimmed = value.trim()
   if (trimmed.length === 0) {
-    return [{ key: '-', value: '-' }]
+    return ['-']
   }
 
   try {
@@ -123,13 +119,13 @@ function formatAiResponse(value: string): AiResponseLine[] {
     const filtered = removeNullFields(parsed)
 
     if (filtered === undefined) {
-      return [{ key: '-', value: '-' }]
+      return ['-']
     }
 
     const lines = flattenResponseAttributes(filtered)
-    return lines.length > 0 ? lines : [{ key: '-', value: '-' }]
+    return lines.length > 0 ? lines : ['-']
   } catch {
-    return [{ key: 'raw', value }]
+    return [value]
   }
 }
 
@@ -533,15 +529,35 @@ export function RequestLogsPanel() {
                     <td className="request-logs__cell-path request-logs__cell-ai-request">{entry.request || '-'}</td>
                     <td className="request-logs__cell-path request-logs__cell-ai-response">
                       <div className="request-logs__json-list">
-                        {formatAiResponse(entry.response).map((line, index) => (
-                          <div key={`${entry.id}-resp-${line.key}-${index}`} className="request-logs__json-row">
-                            <span className="request-logs__json-key">{line.key}</span>
-                            <span className="request-logs__json-value">{line.value}</span>
-                          </div>
-                        ))}
+                        {formatAiResponse(entry.response).map((line, index) => {
+                          const separatorIndex = line.indexOf(': ')
+                          const hasEmbeddedField = separatorIndex > 0
+
+                          return (
+                            <div key={`${entry.id}-resp-${index}`} className="request-logs__json-line">
+                              {hasEmbeddedField ? (
+                                <>
+                                  <strong>{line.slice(0, separatorIndex + 1)}</strong>{' '}
+                                  <span>{line.slice(separatorIndex + 2)}</span>
+                                </>
+                              ) : (
+                                line
+                              )}
+                            </div>
+                          )
+                        })}
                       </div>
                     </td>
-                    <td className="request-logs__cell-userid">{`${entry.userId ?? '-'} / ${entry.flightId ?? '-'}`}</td>
+                    <td className="request-logs__cell-userid request-logs__cell-userflight">
+                      <div className="request-logs__userflight-row">
+                        <span className="request-logs__userflight-label">{t('admin.requestLogs.ai.columns.userId')}</span>
+                        <span className="request-logs__userflight-value">{entry.userId ?? '-'}</span>
+                      </div>
+                      <div className="request-logs__userflight-row">
+                        <span className="request-logs__userflight-label">{t('admin.requestLogs.ai.columns.flightId')}</span>
+                        <span className="request-logs__userflight-value">{entry.flightId ?? '-'}</span>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

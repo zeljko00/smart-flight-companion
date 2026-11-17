@@ -92,6 +92,16 @@ export type FlightDetails = {
   businessPriceLabel: string
   firstClassPriceLabel: string
   durationLabel: string
+  aiExchanges: FlightAiExchange[]
+}
+
+export type FlightAiExchange = {
+  id: string
+  request: string
+  response: string
+  userId: string | null
+  flightId: string | null
+  timestamp: string
 }
 
 export type FlightSearchFilters = {
@@ -164,6 +174,20 @@ type ApiNaturalLanguageSearchResponse = {
   flights: ApiPagedResponse<ApiFlight>
 }
 
+type ApiAIExchange = {
+  id?: string
+  request?: string
+  response?: string
+  userId?: string | null
+  flightId?: string | null
+  timestamp?: string
+}
+
+type ApiFlightDetailsResponse = {
+  flight?: ApiFlight
+  aiExchanges?: ApiAIExchange[]
+}
+
 export type FlightTablePage = {
   items: FlightTableRow[]
   page: number
@@ -186,6 +210,126 @@ function parseDate(value?: string): Date | null {
 
   const parsed = new Date(value)
   return Number.isNaN(parsed.getTime()) ? null : parsed
+}
+
+const EXCLUDED_AI_FIELDS = new Set([
+  'flight_id',
+  'airline',
+  'flight_number',
+  'route',
+  'terminal_gate',
+  'scheduled_departure',
+  'status',
+])
+
+function unwrapCodeFence(value: string): string {
+  const trimmed = value.trim()
+  if (!trimmed.startsWith('```') || !trimmed.endsWith('```')) {
+    return trimmed
+  }
+
+  const firstNewLine = trimmed.indexOf('\n')
+  if (firstNewLine < 0) {
+    return trimmed
+  }
+
+  const withoutHeader = trimmed.slice(firstNewLine + 1)
+  const fenceIndex = withoutHeader.lastIndexOf('```')
+  if (fenceIndex < 0) {
+    return trimmed
+  }
+
+  return withoutHeader.slice(0, fenceIndex).trim()
+}
+
+function isEmptyAiValue(value: unknown): boolean {
+  if (value === null || value === undefined) {
+    return true
+  }
+
+  if (typeof value === 'string') {
+    return value.trim().length === 0
+  }
+
+  if (Array.isArray(value)) {
+    return value.length === 0
+  }
+
+  if (typeof value === 'object') {
+    return Object.keys(value as Record<string, unknown>).length === 0
+  }
+
+  return false
+}
+
+function toDisplayLabel(key: string): string {
+  return key
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase())
+}
+
+function flattenAiFields(value: unknown, path: string[] = []): Array<{ key: string; value: string }> {
+  if (value === null || value === undefined) {
+    return []
+  }
+
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    const rendered = String(value).trim()
+    if (!rendered) {
+      return []
+    }
+
+    const key = path.length > 0 ? path.join(' / ') : 'Response'
+    return [{ key, value: rendered }]
+  }
+
+  if (Array.isArray(value)) {
+    const rows: Array<{ key: string; value: string }> = []
+    value.forEach((item, index) => {
+      rows.push(...flattenAiFields(item, [...path, `${index + 1}`]))
+    })
+    return rows
+  }
+
+  if (typeof value === 'object') {
+    const rows: Array<{ key: string; value: string }> = []
+    const objectValue = value as Record<string, unknown>
+
+    for (const [rawKey, nestedValue] of Object.entries(objectValue)) {
+      if (EXCLUDED_AI_FIELDS.has(rawKey.toLowerCase())) {
+        continue
+      }
+
+      if (isEmptyAiValue(nestedValue)) {
+        continue
+      }
+
+      rows.push(...flattenAiFields(nestedValue, [...path, toDisplayLabel(rawKey)]))
+    }
+
+    return rows
+  }
+
+  return []
+}
+
+function formatAiChatResponse(raw: string): string {
+  const normalized = unwrapCodeFence(raw)
+  if (!normalized) {
+    return ''
+  }
+
+  try {
+    const parsed = JSON.parse(normalized) as unknown
+    const rows = flattenAiFields(parsed)
+    if (rows.length === 0) {
+      return ''
+    }
+
+    return rows.map((row) => `${row.key}: ${row.value}`).join('\n')
+  } catch {
+    return normalized
+  }
 }
 
 function airportLabel(airport?: ApiAirport): string {
@@ -457,7 +601,10 @@ export async function fetchFlightsByNaturalLanguage(
 }
 
 export async function fetchFlightById(id: string): Promise<FlightDetails> {
-  const flight = await apiRequest<ApiFlight>(`/flights/${encodeURIComponent(id)}`)
+  const response = await apiRequest<ApiFlightDetailsResponse>(`/flights/${encodeURIComponent(id)}`)
+  const details = response as ApiFlightDetailsResponse
+  const flight = details.flight as ApiFlight
+  const aiExchanges = Array.isArray(details.aiExchanges) ? details.aiExchanges : []
   const scheduledDepartureAt = parseDate(flight.scheduledDepartureTime)
   const scheduledArrivalAt = parseDate(flight.scheduledArrivalTime)
   const departureAt = parseDate(flight.departureTime)
@@ -511,13 +658,41 @@ export async function fetchFlightById(id: string): Promise<FlightDetails> {
     premiumEconomyPriceLabel: priceLabel(flight.premiumEconomyPrice),
     businessPriceLabel: priceLabel(flight.businessPrice),
     firstClassPriceLabel: priceLabel(flight.firstClassPrice),
+    aiExchanges: aiExchanges
+      .filter((exchange) => typeof exchange.id === 'string')
+      .map((exchange) => ({
+        id: exchange.id || '',
+        request: exchange.request || '',
+        response: formatAiChatResponse(exchange.response || ''),
+        userId: typeof exchange.userId === 'string' ? exchange.userId : null,
+        flightId: typeof exchange.flightId === 'string' ? exchange.flightId : null,
+        timestamp: exchange.timestamp || '',
+      })),
   }
 }
 
 export async function fetchFlightForEdit(id: string): Promise<FlightEditData> {
-  const flight = await apiRequest<ApiFlight>(`/flights/${encodeURIComponent(id)}`)
+  const response = await apiRequest<ApiFlightDetailsResponse>(`/flights/${encodeURIComponent(id)}`)
+  const details = response as ApiFlightDetailsResponse
+  const flight = details.flight as ApiFlight
 
   return toEditData(flight)
+}
+
+type ApiFlightAdviceResponse = {
+  advice?: string
+}
+
+export async function requestFlightAdvice(flightId: string, query: string): Promise<string> {
+  const response = await apiRequest<ApiFlightAdviceResponse>(
+    `/flights/${encodeURIComponent(flightId)}/advice`,
+    {
+      method: 'POST',
+      body: { query },
+    },
+  )
+
+  return typeof response.advice === 'string' ? formatAiChatResponse(response.advice) : ''
 }
 
 export async function createFlight(request: FlightRequest): Promise<FlightEditData> {

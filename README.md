@@ -98,3 +98,16 @@ Konfiguracija konekcije ka serveru:
 - server port: 5432
 - korisnicko ime: postgres
 - lozinka: secret
+
+## 8. AI modul
+
+AI modul, upotrebom eksternog LLM servisa, omogucava korisniku:
+- Pretragu letova prirodnim jezikom: `POST https://localhost/api/flights/search/natural-language`
+	- autentikacija: `X-API-Key` ili `Authorization: Bearer <token>`
+	- primjer body-ja:
+		- `{ "query": "Find flights to New York tomorrow morning." }`
+
+- AI chat/savjet za konkretan let: `POST https://localhost/api/flights/{flightId}/advice`
+	- autentikacija: `Authorization: Bearer <token>`, `VerifiedUserOnly`
+	- primjer body-ja:
+		- `{ "query": "Should I arrive earlier for this flight and what should I prepare?" }`

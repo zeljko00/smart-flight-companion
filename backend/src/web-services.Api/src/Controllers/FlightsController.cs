@@ -13,6 +13,8 @@ namespace SmartFlightCompanion.WebServices.Api.Controllers;
 public sealed class FlightsController : ControllerBase
 {
     private readonly IFlightService _flightService;
+    private readonly IAIService _aiService;
+    private readonly IAIExchangeService _aiExchangeService;
     private readonly ICommentService _commentService;
     private readonly IBoardingPassService _boardingPassService;
     private readonly IPaymentService _paymentService;
@@ -22,6 +24,8 @@ public sealed class FlightsController : ControllerBase
 
     public FlightsController(
         IFlightService flightService,
+        IAIService aiService,
+        IAIExchangeService aiExchangeService,
         ICommentService commentService,
         IBoardingPassService boardingPassService,
         IPaymentService paymentService,
@@ -29,6 +33,8 @@ public sealed class FlightsController : ControllerBase
         ILogger<FlightsController> logger)
     {
         _flightService = flightService;
+        _aiService = aiService;
+        _aiExchangeService = aiExchangeService;
         _commentService = commentService;
         _boardingPassService = boardingPassService;
         _paymentService = paymentService;
@@ -67,9 +73,9 @@ public sealed class FlightsController : ControllerBase
 
     [Authorize(Policy = "JwtOrApiKey")]
     [HttpGet("{id:guid}")]
-    [ProducesResponseType(typeof(FlightDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(FlightDetailsDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<FlightDto>> GetById(
+    public async Task<ActionResult<FlightDetailsDto>> GetById(
         Guid id,
         CancellationToken cancellationToken)
     {
@@ -79,7 +85,19 @@ public sealed class FlightsController : ControllerBase
         }
 
         var flight = await _flightService.GetById(id, cancellationToken);
-        return flight is null ? NotFound() : Ok(flight);
+        if (flight is null)
+        {
+            return NotFound();
+        }
+
+        IReadOnlyList<AIExchangeDto> aiExchanges = [];
+        var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (Guid.TryParse(userIdValue, out var userId))
+        {
+            aiExchanges = await _aiExchangeService.GetByFlightAndUserId(id, userId, cancellationToken);
+        }
+
+        return Ok(new FlightDetailsDto(flight, aiExchanges));
     }
 
     [Authorize(Policy = "AdminOnly")]
@@ -237,6 +255,48 @@ public sealed class FlightsController : ControllerBase
         return Ok(result);
     }
     
+    [Authorize(Policy = "VerifiedUserOnly")]
+    [HttpPost("{flightId:guid}/advice")]
+    [ProducesResponseType(typeof(FlightAdviceResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<FlightAdviceResponseDto>> GetFlightAdvice(
+        [FromRoute] Guid flightId,
+        [FromBody] FlightAdviceRequestDto request,
+        CancellationToken cancellationToken)
+    {
+        if (flightId == Guid.Empty)
+        {
+            return BadRequest("Invalid flight ID.");
+        }
+
+        if (string.IsNullOrWhiteSpace(request.Query))
+        {
+            return BadRequest("Query is required.");
+        }
+
+        var flight = await _flightService.GetById(flightId, cancellationToken);
+        if (flight is null)
+        {
+            return NotFound("Flight not found.");
+        }
+
+        Guid? userId = null;
+        var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (Guid.TryParse(userIdValue, out var parsedUserId))
+        {
+            userId = parsedUserId;
+        }
+
+        var advice = await _aiService.GetAdviceAsync(request.Query, userId, flightId, cancellationToken);
+        if (string.IsNullOrWhiteSpace(advice))
+        {
+            return BadRequest("Failed to generate flight advice.");
+        }
+
+        return Ok(new FlightAdviceResponseDto(advice));
+    }
+
     [Authorize(Policy = "VerifiedUserOnly")]
     [HttpGet("{flightId:guid}/comments")]
     [ProducesResponseType(typeof(IReadOnlyList<CommentDto>), StatusCodes.Status200OK)]

@@ -11,7 +11,7 @@ public sealed class FlightService : IFlightService
     private readonly IBoardingPassService _boardingPassService;
     private readonly INotificationService _notificationService;
     private readonly IScheduledNotificationService _scheduledNotificationService;
-    private readonly IFlightSearchQueryMapper _flightSearchQueryMapper;
+    private readonly IAIService _flightSearchQueryMapper;
 
 
     public FlightService(
@@ -20,7 +20,7 @@ public sealed class FlightService : IFlightService
         IBoardingPassService boardingPassService,
         INotificationService notificationService,
         IScheduledNotificationService scheduledNotificationService,
-        IFlightSearchQueryMapper flightSearchQueryMapper)
+        IAIService flightSearchQueryMapper)
     {
         _flightRepository = flightRepository;
         _airportRepository = airportRepository;

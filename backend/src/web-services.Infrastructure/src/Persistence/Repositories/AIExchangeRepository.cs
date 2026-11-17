@@ -24,4 +24,20 @@ public sealed class AIExchangeRepository : Repository<AIExchange>, IAIExchangeRe
 
         return new PagedResult<AIExchange>(items, totalCount);
     }
+
+    public async Task<IReadOnlyList<AIExchange>> GetByFlightIdAsync(
+        Guid flightId,
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var query = Context.AIExchanges
+            .AsNoTracking()
+            .Where(aiExchange => aiExchange.FlightId == flightId)
+            .Where(aiExchange => aiExchange.UserId == userId);
+
+        return await query
+            .OrderByDescending(aiExchange => aiExchange.Timestamp)
+            .ThenBy(aiExchange => aiExchange.Id)
+            .ToListAsync(cancellationToken);
+    }
 }
