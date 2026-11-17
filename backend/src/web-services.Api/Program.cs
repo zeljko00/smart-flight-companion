@@ -64,7 +64,7 @@ builder.Services.AddStackExchangeRedisCache(options =>
 builder.Services.AddScoped<IAirportService, AirportService>();
 builder.Services.AddScoped<IFlightService, FlightService>();
 builder.Services.AddScoped<IAIExchangeService, AIExchangeService>();
-builder.Services.AddHttpClient<IFlightSearchQueryMapper, FlightSearchQueryMapper>(client =>
+builder.Services.AddHttpClient<IAIService, AIService>(client =>
 {
     var llm = builder.Configuration.GetSection("Llm");
     var baseUrl = Environment.GetEnvironmentVariable("Llm__BaseUrl")

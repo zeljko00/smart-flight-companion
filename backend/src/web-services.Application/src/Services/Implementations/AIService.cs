@@ -11,7 +11,7 @@ using SmartFlightCompanion.WebServices.Infrastructure.Persistence.Abstractions;
 
 namespace SmartFlightCompanion.WebServices.Application.Services;
 
-public sealed class FlightSearchQueryMapper : IFlightSearchQueryMapper
+public sealed class AIService : IAIService
 {
     private const string DefaultModel = "gemini-3.8-flash";
     private const int DefaultRequestTimeoutSeconds = 180;
@@ -23,17 +23,17 @@ public sealed class FlightSearchQueryMapper : IFlightSearchQueryMapper
     };
 
     private readonly HttpClient _httpClient;
-    private readonly ILogger<FlightSearchQueryMapper> _logger;
+    private readonly ILogger<AIService> _logger;
     private readonly IAIExchangeRepository _aiExchangeRepository;
     private readonly string? _apiKey;
     private readonly string _model;
     private readonly TimeSpan _requestTimeout;
 
-    public FlightSearchQueryMapper(
+    public AIService(
         HttpClient httpClient,
         IConfiguration configuration,
         IAIExchangeRepository aiExchangeRepository,
-        ILogger<FlightSearchQueryMapper> logger)
+        ILogger<AIService> logger)
     {
         _httpClient = httpClient;
         _aiExchangeRepository = aiExchangeRepository;
