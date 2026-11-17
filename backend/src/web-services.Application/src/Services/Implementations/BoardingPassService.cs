@@ -9,6 +9,7 @@ using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.Extensions.Logging;
 
 namespace SmartFlightCompanion.WebServices.Application.Services;
 
@@ -18,6 +19,7 @@ public sealed class BoardingPassService : IBoardingPassService
     private readonly IUserRepository _userRepository;
     private readonly IFlightRepository _flightRepository;
     private readonly IEmailQueue _emailQueue;
+    private readonly ILogger<BoardingPassService> _logger;
     private readonly string? _rsaPrivateKeyPem;
     private readonly string? _rsaPublicKeyPem;
 
@@ -26,12 +28,14 @@ public sealed class BoardingPassService : IBoardingPassService
         IUserRepository userRepository,
         IFlightRepository flightRepository,
         IEmailQueue emailQueue,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ILogger<BoardingPassService> logger)
     {
         _BoardingPassRepository = BoardingPassRepository;
         _userRepository = userRepository;
         _flightRepository = flightRepository;
         _emailQueue = emailQueue;
+        _logger = logger;
 
         _rsaPrivateKeyPem = ResolvePemValue(
             pemPath: configuration["DigitalSignature:PrivateKeyPath"],
@@ -51,8 +55,9 @@ public sealed class BoardingPassService : IBoardingPassService
             using var signingRsa = RSA.Create();
             signingRsa.ImportFromPem(_rsaPrivateKeyPem);
         }
-        catch (CryptographicException)
+        catch (CryptographicException exception)
         {
+            _logger.LogCritical(exception, "Configured RSA private key format is invalid.");
             throw new InvalidOperationException("Invalid RSA private key format in DigitalSignature configuration.");
         }
 
@@ -63,8 +68,9 @@ public sealed class BoardingPassService : IBoardingPassService
                 using var verifyRsa = RSA.Create();
                 verifyRsa.ImportFromPem(_rsaPublicKeyPem);
             }
-            catch (CryptographicException)
+            catch (CryptographicException exception)
             {
+                _logger.LogCritical(exception, "Configured RSA public key format is invalid.");
                 throw new InvalidOperationException("Invalid RSA public key format in DigitalSignature configuration.");
             }
         }
@@ -97,12 +103,14 @@ public sealed class BoardingPassService : IBoardingPassService
         var user = await _userRepository.GetByIdAsync(ownerId, cancellationToken);
         if (flight is null || user is null)
         {
+            _logger.LogWarning("Boarding pass creation failed because flight {FlightId} or owner {OwnerId} was not found.", flightId, ownerId);
             return null;
         }
 
         int seatsTaken = await _BoardingPassRepository.GetCountByFlightIdAsync(flightId, cancellationToken);
         if (seatsTaken >= flight.SeatCapacity)
         {
+            _logger.LogWarning("Boarding pass creation failed because flight {FlightId} is fully booked.", flightId);
             return null;
         }
 
@@ -123,6 +131,7 @@ public sealed class BoardingPassService : IBoardingPassService
 
         if(price is null)
         {
+            _logger.LogWarning("Boarding pass creation failed because no ticket price is configured for seat {Seat} on flight {FlightId}.", seat, flightId);
             return null;
         }
 

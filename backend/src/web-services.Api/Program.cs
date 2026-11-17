@@ -17,8 +17,30 @@ using SmartFlightCompanion.WebServices.Infrastructure.Persistence.Abstractions;
 using System.Security.Claims;
 using SmartFlightCompanion.WebServices.Infrastructure;
 using System.Text;
+using Serilog;
+using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var backendLogPath = Environment.GetEnvironmentVariable("LogFilePath")
+    ?? "logs/web-services-api-.log";
+
+builder.Host.UseSerilog((context, services, loggerConfiguration) =>
+{
+    loggerConfiguration
+        .ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext()
+        .MinimumLevel.Information()
+        .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+        .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning)
+        .WriteTo.Console()
+        .WriteTo.File(
+            path: backendLogPath,
+            rollingInterval: RollingInterval.Day,
+            retainedFileCountLimit: 30,
+            shared: true);
+});
 
 // Add services to the container.
 
@@ -190,7 +212,19 @@ app.UseHangfireDashboard("/api/jobs");
 app.MapControllers();
 app.MapHub<SignalHub>("/api/notifications");
 
-app.Run();
+try
+{
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "web-services API terminated unexpectedly.");
+    throw;
+}
+finally
+{
+    Log.CloseAndFlush();
+}
 
 internal sealed class GlobalRoutePrefixConvention(string prefix) : IApplicationModelConvention
 {

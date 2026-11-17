@@ -12,10 +12,12 @@ namespace SmartFlightCompanion.WebServices.Api.Controllers;
 public sealed class AirportsController : ControllerBase
 {
     private readonly IAirportService _airportService;
+    private readonly ILogger<AirportsController> _logger;
 
-    public AirportsController(IAirportService airportService)
+    public AirportsController(IAirportService airportService, ILogger<AirportsController> logger)
     {
         _airportService = airportService;
+        _logger = logger;
     }
 
     [Authorize(Policy = "JwtOrApiKey")]
@@ -84,10 +86,12 @@ public sealed class AirportsController : ControllerBase
         }
         catch (DuplicateResourceException)
         {
+            _logger.LogWarning("Airport creation request conflicts with an existing IATA code.");
             return Conflict("An airport with this IATA code already exists.");
         }
         catch (AddressResolutionException exception)
         {
+            _logger.LogWarning(exception, "Airport creation failed because address resolution could not be completed.");
             return UnprocessableEntity(exception.Message);
         }
     }

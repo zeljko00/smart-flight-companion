@@ -15,7 +15,8 @@ namespace PaymentGateway.Api.Controllers;
 public sealed class PaymentsController(
     PaymentGatewayDbContext dbContext,
     IHttpClientFactory httpClientFactory,
-    IConfiguration configuration) : ControllerBase
+    IConfiguration configuration,
+    ILogger<PaymentsController> logger) : ControllerBase
 {
     private static readonly ConcurrentDictionary<string, PaymentSession> Sessions = new(StringComparer.Ordinal);
     private readonly string? _callbackSecret = Environment.GetEnvironmentVariable("PaymentGateway__CallbackSecret")
@@ -30,6 +31,7 @@ public sealed class PaymentsController(
         if (!Request.Headers.TryGetValue("X-Api-Key", out var apiKeyHeaderValue) ||
             string.IsNullOrWhiteSpace(apiKeyHeaderValue))
         {
+            logger.LogWarning("Payment session creation rejected due to missing API key.");
             return Unauthorized("Missing API key.");
         }
 
@@ -38,6 +40,7 @@ public sealed class PaymentsController(
         var isApiKeyValid = dbContext.ApiKeys.Any(k =>k.Value == apiKeyValue);
         if (!isApiKeyValid)
         {
+            logger.LogWarning("Payment session creation rejected due to invalid API key.");
             return Unauthorized("Invalid API key.");
         }
 
@@ -46,6 +49,7 @@ public sealed class PaymentsController(
             !IsValidReturnPath(request.SuccessReturnPath) ||
             !IsValidReturnPath(request.FailureReturnPath))
         {
+            logger.LogWarning("Payment session creation rejected due to invalid payload.");
             return BadRequest("Invalid session payload.");
         }
 
@@ -86,6 +90,7 @@ public sealed class PaymentsController(
     {
         if (!Sessions.TryGetValue(paymentId, out var session))
         {
+            logger.LogWarning("Checkout requested for unknown payment session {PaymentId}.", paymentId);
             return NotFound("Checkout session not found.");
         }
 
@@ -93,6 +98,7 @@ public sealed class PaymentsController(
 
         if(payment is null)
         {
+            logger.LogWarning("Checkout requested for missing payment entity {PaymentId}.", paymentId);
             return NotFound("Payment not found.");
         }
 
@@ -169,11 +175,13 @@ public sealed class PaymentsController(
     {
         if (!Sessions.TryGetValue(paymentId, out var session))
         {
+            logger.LogWarning("Checkout completion attempted for unknown payment session {PaymentId}.", paymentId);
             return NotFound("Checkout session not found.");
         }
 
         if (!SecureEquals(request.CheckoutToken, session.CheckoutToken))
         {
+            logger.LogWarning("Checkout completion rejected due to invalid checkout token for payment session {PaymentId}.", paymentId);
             return BadRequest("Invalid checkout form token.");
         }
 
@@ -181,11 +189,13 @@ public sealed class PaymentsController(
 
         if (payment is null)
         {
+            logger.LogWarning("Checkout completion attempted for missing payment entity {PaymentId}.", paymentId);
             return NotFound("Payment not found.");
         }
 
         if (payment.Status != PaymentStatus.Pending)
         {
+            logger.LogInformation("Checkout completion ignored for already settled payment {PaymentId} with status {Status}.", payment.Id, payment.Status);
             var settledPath = payment.Status == PaymentStatus.Completed
                 ? session.SuccessReturnPath
                 : session.FailureReturnPath;
@@ -203,6 +213,7 @@ public sealed class PaymentsController(
                 isSuccess = false;
                 failureReason = "Invalid expiration date.";
                 failureCode = "invalid_expiration";
+                logger.LogWarning("Payment {PaymentId} failed due to invalid card expiration input.", payment.Id);
             }
             else
             {
@@ -217,30 +228,35 @@ public sealed class PaymentsController(
                     isSuccess = false;
                     failureReason = "Card credentials are invalid.";
                     failureCode = "invalid_card";
+                    logger.LogWarning("Payment {PaymentId} failed due to invalid card credentials.", payment.Id);
                 }
                 else if(card.Active == false)
                 {
                     isSuccess = false;
                     failureReason = "Card is deactivated.";
                     failureCode = "card_deactivated";
+                    logger.LogWarning("Payment {PaymentId} failed because the card is deactivated.", payment.Id);
                 }
                 else if(card.ExpirationDate.Date < DateTime.UtcNow.Date)
                 {
                     isSuccess = false;
                     failureReason = "Card is expired.";
                     failureCode = "card_expired";
+                    logger.LogWarning("Payment {PaymentId} failed because the card is expired.", payment.Id);
                 }
                 else if (card.ExpirationDate.Date != expirationDate.Date)
                 {
                     isSuccess = false;
                     failureReason = "Card expiration date does not match.";
                     failureCode = "invalid_expiration";
+                    logger.LogWarning("Payment {PaymentId} failed because entered expiration does not match stored expiration.", payment.Id);
                 }
                 else if (card.Balance < payment.Amount)
                 {
                     isSuccess = false;
                     failureReason = "Insufficient funds.";
                     failureCode = "insufficient_funds";
+                    logger.LogWarning("Payment {PaymentId} failed due to insufficient funds.", payment.Id);
                 }
                 else
                 {
@@ -253,6 +269,7 @@ public sealed class PaymentsController(
         {
             failureReason = "Payment canceled by user.";
             failureCode = "canceled";
+            logger.LogInformation("Payment {PaymentId} was canceled by the user.", payment.Id);
         }
 
         payment.Status = isSuccess ? PaymentStatus.Completed : PaymentStatus.Failed;
@@ -288,11 +305,23 @@ public sealed class PaymentsController(
                         ? "Payment succeeded but boarding pass issuance failed."
                         : callbackState.FailureReason;
                     failureCode = "boarding_pass_issue_failed";
+                    logger.LogWarning("Payment {PaymentId} succeeded locally but callback response marked it failed: {FailureReason}", payment.Id, failureReason);
                 }
             }
         }
-        catch (Exception)
-        {}
+        catch (Exception exception)
+        {
+            logger.LogError(exception, "Failed to send payment callback for payment {PaymentId} to {CallbackUrl}.", payment.Id, session.CallbackUrl);
+        }
+
+        if (isSuccess)
+        {
+            logger.LogInformation("Payment {PaymentId} completed successfully.", payment.Id);
+        }
+        else
+        {
+            logger.LogWarning("Payment {PaymentId} completed with failure code {FailureCode}.", payment.Id, failureCode);
+        }
 
         var redirectPath = isSuccess
             ? session.SuccessReturnPath

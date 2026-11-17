@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Logging;
 using SmartFlightCompanion.WebServices.Application.Dto;
 
 namespace SmartFlightCompanion.WebServices.Application.Services;
@@ -13,11 +14,13 @@ public sealed class WeatherService : IWeatherService
     private static readonly TimeSpan ForecastCacheDuration = TimeSpan.FromHours(1);
     private readonly HttpClient _httpClient;
     private readonly IDistributedCache _cache;
+    private readonly ILogger<WeatherService> _logger;
 
-    public WeatherService(HttpClient httpClient, IDistributedCache cache)
+    public WeatherService(HttpClient httpClient, IDistributedCache cache, ILogger<WeatherService> logger)
     {
         _httpClient = httpClient;
         _cache = cache;
+        _logger = logger;
     }
 
     public async Task<IReadOnlyList<CityWeatherForecastDto>?> GetForecastByDestinationCoordinates(
@@ -95,8 +98,9 @@ public sealed class WeatherService : IWeatherService
             var cachedForecast = JsonSerializer.Deserialize<List<CityWeatherForecastDto>>(payload);
             return cachedForecast is { Count: > 0 } ? cachedForecast.AsReadOnly() : null;
         }
-        catch (JsonException)
+        catch (JsonException exception)
         {
+            _logger.LogWarning(exception, "Failed to deserialize cached weather forecast for key {CacheKey}.", cacheKey);
             return null;
         }
     }
@@ -116,9 +120,9 @@ public sealed class WeatherService : IWeatherService
 
             await _cache.SetStringAsync(cacheKey, payload, options, cancellationToken);
         }
-        catch (JsonException)
+        catch (JsonException exception)
         {
-            // Ignore cache serialization errors to avoid affecting live weather responses.
+            _logger.LogWarning(exception, "Failed to serialize weather forecast for cache key {CacheKey}.", cacheKey);
         }
     }
 
@@ -288,20 +292,24 @@ public sealed class WeatherService : IWeatherService
 
             return await response.Content.ReadFromJsonAsync<T>(cancellationToken);
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException exception)
         {
+            _logger.LogWarning(exception, "Weather provider HTTP request failed for URL {Url}.", url);
             return default;
         }
-        catch (TaskCanceledException)
+        catch (TaskCanceledException exception)
         {
+            _logger.LogWarning(exception, "Weather provider request timed out for URL {Url}.", url);
             return default;
         }
-        catch (NotSupportedException)
+        catch (NotSupportedException exception)
         {
+            _logger.LogWarning(exception, "Weather provider returned unsupported content type for URL {Url}.", url);
             return default;
         }
-        catch (JsonException)
+        catch (JsonException exception)
         {
+            _logger.LogWarning(exception, "Weather provider JSON parsing failed for URL {Url}.", url);
             return default;
         }
     }
@@ -321,20 +329,24 @@ public sealed class WeatherService : IWeatherService
 
             return await response.Content.ReadFromJsonAsync<TResponse>(cancellationToken);
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException exception)
         {
+            _logger.LogWarning(exception, "Weather provider HTTP POST failed for URL {Url}.", url);
             return default;
         }
-        catch (TaskCanceledException)
+        catch (TaskCanceledException exception)
         {
+            _logger.LogWarning(exception, "Weather provider POST request timed out for URL {Url}.", url);
             return default;
         }
-        catch (NotSupportedException)
+        catch (NotSupportedException exception)
         {
+            _logger.LogWarning(exception, "Weather provider returned unsupported POST response for URL {Url}.", url);
             return default;
         }
-        catch (JsonException)
+        catch (JsonException exception)
         {
+            _logger.LogWarning(exception, "Weather provider POST JSON parsing failed for URL {Url}.", url);
             return default;
         }
     }

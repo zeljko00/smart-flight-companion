@@ -1,0 +1,9 @@
+2026-11-17 13:00:16.606 +00:00 [INF] Now listening on: http://[::]:80
+2026-11-17 13:00:16.698 +00:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-11-17 13:00:16.700 +00:00 [INF] Hosting environment: Development
+2026-11-17 13:00:16.701 +00:00 [INF] Content root path: /app/src/PaymentGateway.Api
+2026-11-17 13:01:12.629 +00:00 [INF] Application is shutting down...
+2026-11-17 13:01:22.546 +00:00 [INF] Now listening on: http://[::]:80
+2026-11-17 13:01:22.626 +00:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-11-17 13:01:22.627 +00:00 [INF] Hosting environment: Development
+2026-11-17 13:01:22.627 +00:00 [INF] Content root path: /app/src/PaymentGateway.Api

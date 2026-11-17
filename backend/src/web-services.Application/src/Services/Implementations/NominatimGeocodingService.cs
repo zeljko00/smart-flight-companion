@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
 
 namespace SmartFlightCompanion.WebServices.Application.Services;
 
@@ -14,10 +15,12 @@ public sealed class NominatimGeocodingService : IGeocodingService
     private const int MaxAddressLength = 255;
 
     private readonly HttpClient _httpClient;
+    private readonly ILogger<NominatimGeocodingService> _logger;
 
-    public NominatimGeocodingService(HttpClient httpClient)
+    public NominatimGeocodingService(HttpClient httpClient, ILogger<NominatimGeocodingService> logger)
     {
         _httpClient = httpClient;
+        _logger = logger;
     }
 
     public async Task<string?> ReverseGeocode(double latitude, double longitude, CancellationToken cancellationToken = default)
@@ -45,21 +48,25 @@ public sealed class NominatimGeocodingService : IGeocodingService
 
             return address.Length > MaxAddressLength ? address[..MaxAddressLength] : address;
         }
-        catch (HttpRequestException)
+        catch (HttpRequestException exception)
         {
+            _logger.LogWarning(exception, "Reverse geocoding HTTP request failed for latitude {Latitude} and longitude {Longitude}.", latitude, longitude);
             return null;
         }
         catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
         {
             // HttpClient timeout, not a caller cancellation.
+            _logger.LogWarning("Reverse geocoding request timed out for latitude {Latitude} and longitude {Longitude}.", latitude, longitude);
             return null;
         }
-        catch (NotSupportedException)
+        catch (NotSupportedException exception)
         {
+            _logger.LogWarning(exception, "Reverse geocoding response content type is not supported.");
             return null;
         }
-        catch (JsonException)
+        catch (JsonException exception)
         {
+            _logger.LogWarning(exception, "Reverse geocoding response JSON could not be parsed.");
             return null;
         }
     }

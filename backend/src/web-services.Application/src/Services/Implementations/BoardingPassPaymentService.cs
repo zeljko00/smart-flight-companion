@@ -25,6 +25,7 @@ public sealed class PaymentService : IPaymentService
     private readonly IBoardingPassRepository _boardingPassRepository;
     private readonly IFlightRepository _flightRepository;
     private readonly IUserRepository _userRepository;
+    private readonly ILogger<PaymentService> _logger;
     private readonly string _paymentCallbackUrl;
     private readonly string? _paymentGatewayApiKey;
 
@@ -35,7 +36,8 @@ public sealed class PaymentService : IPaymentService
         IBoardingPassRepository boardingPassRepository,
         IFlightRepository flightRepository,
         IUserRepository userRepository,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ILogger<PaymentService> logger)
     {
         _httpClient = httpClient;
         _distributedCache = distributedCache;
@@ -43,6 +45,7 @@ public sealed class PaymentService : IPaymentService
         _boardingPassRepository = boardingPassRepository;
         _flightRepository = flightRepository;
         _userRepository = userRepository;
+        _logger = logger;
         _paymentCallbackUrl = Environment.GetEnvironmentVariable("PaymentGateway__CallbackUrl")
             ?? configuration["PaymentGateway:CallbackUrl"]
             ?? "http://web-services/api/payments/callback";
@@ -147,8 +150,14 @@ public sealed class PaymentService : IPaymentService
 
             return new PaymentSessionDto(payload.PaymentId, payload.CheckoutUrl);
         }
-        catch (Exception)
+        catch (Exception exception)
         {
+            _logger.LogError(
+                exception,
+                "Failed to request payment session from payment gateway for flight {FlightId}, owner {OwnerId}, seat {Seat}.",
+                flightId,
+                ownerId,
+                seat);
             return null;
         }
     }

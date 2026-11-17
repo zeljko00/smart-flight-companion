@@ -1,0 +1,45 @@
+2026-11-17 13:00:05.892 +00:00 [INF] Start installing Hangfire SQL objects...
+2026-11-17 13:00:06.201 +00:00 [INF] Hangfire SQL objects installed.
+2026-11-17 13:00:07.026 +00:00 [WRN] Storing keys in a directory '/root/.aspnet/DataProtection-Keys' that may not be persisted outside of the container. Protected data will be unavailable when container is destroyed. For more information go to https://aka.ms/aspnet/dataprotectionwarning
+2026-11-17 13:00:07.458 +00:00 [INF] Now listening on: http://[::]:80
+2026-11-17 13:00:07.480 +00:00 [INF] Starting Hangfire Server using job storage: 'PostgreSQL Server: Host: database, DB: smartflightcompanion_dev, Schema: hangfire'
+2026-11-17 13:00:07.483 +00:00 [INF] Using the following options for PostgreSQL job storage:
+2026-11-17 13:00:07.485 +00:00 [INF]     Queue poll interval: 00:00:15.
+2026-11-17 13:00:07.486 +00:00 [INF]     Invisibility timeout: 00:30:00.
+2026-11-17 13:00:07.488 +00:00 [INF]     Use sliding invisibility timeout: False.
+2026-11-17 13:00:07.489 +00:00 [INF] Using the following options for Hangfire Server:
+    Worker count: 20
+    Listening queues: 'default'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2026-11-17 13:00:07.542 +00:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-11-17 13:00:07.543 +00:00 [INF] Hosting environment: Development
+2026-11-17 13:00:07.544 +00:00 [INF] Content root path: /app/src/web-services.Api
+2026-11-17 13:00:07.947 +00:00 [INF] Server 00290cc5803c:1701:b56a3359 successfully announced in 391.2393 ms
+2026-11-17 13:00:07.975 +00:00 [INF] Server 00290cc5803c:1701:b56a3359 is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2026-11-17 13:00:08.676 +00:00 [INF] Server 00290cc5803c:1701:b56a3359 all the dispatchers started
+2026-11-17 13:01:47.143 +00:00 [INF] Server 00290cc5803c:1701:b56a3359 caught stopping signal...
+2026-11-17 13:01:47.146 +00:00 [INF] Application is shutting down...
+2026-11-17 13:01:47.155 +00:00 [INF] Server 00290cc5803c:1701:b56a3359 All dispatchers stopped
+2026-11-17 13:01:47.163 +00:00 [INF] Server 00290cc5803c:1701:b56a3359 successfully reported itself as stopped in 4.1658 ms
+2026-11-17 13:01:47.163 +00:00 [INF] Server 00290cc5803c:1701:b56a3359 has been stopped in total 18.0803 ms
+2026-11-17 13:02:00.973 +00:00 [INF] Start installing Hangfire SQL objects...
+2026-11-17 13:02:01.195 +00:00 [INF] Hangfire SQL objects installed.
+2026-11-17 13:02:01.507 +00:00 [WRN] Storing keys in a directory '/root/.aspnet/DataProtection-Keys' that may not be persisted outside of the container. Protected data will be unavailable when container is destroyed. For more information go to https://aka.ms/aspnet/dataprotectionwarning
+2026-11-17 13:02:01.820 +00:00 [INF] Now listening on: http://[::]:80
+2026-11-17 13:02:01.835 +00:00 [INF] Starting Hangfire Server using job storage: 'PostgreSQL Server: Host: database, DB: smartflightcompanion_dev, Schema: hangfire'
+2026-11-17 13:02:01.837 +00:00 [INF] Using the following options for PostgreSQL job storage:
+2026-11-17 13:02:01.839 +00:00 [INF]     Queue poll interval: 00:00:15.
+2026-11-17 13:02:01.839 +00:00 [INF]     Invisibility timeout: 00:30:00.
+2026-11-17 13:02:01.839 +00:00 [INF]     Use sliding invisibility timeout: False.
+2026-11-17 13:02:01.840 +00:00 [INF] Using the following options for Hangfire Server:
+    Worker count: 20
+    Listening queues: 'default'
+    Shutdown timeout: 00:00:15
+    Schedule polling interval: 00:00:15
+2026-11-17 13:02:01.868 +00:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-11-17 13:02:01.869 +00:00 [INF] Hosting environment: Development
+2026-11-17 13:02:01.869 +00:00 [INF] Content root path: /app/src/web-services.Api
+2026-11-17 13:02:02.186 +00:00 [INF] Server 00290cc5803c:1957:d223ba85 successfully announced in 312.0782 ms
+2026-11-17 13:02:02.195 +00:00 [INF] Server 00290cc5803c:1957:d223ba85 is starting the registered dispatchers: ServerWatchdog, ServerJobCancellationWatcher, ExpirationManager, CountersAggregator, Worker, DelayedJobScheduler, RecurringJobScheduler...
+2026-11-17 13:02:02.346 +00:00 [INF] Server 00290cc5803c:1957:d223ba85 all the dispatchers started

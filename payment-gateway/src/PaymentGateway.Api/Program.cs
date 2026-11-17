@@ -2,10 +2,32 @@ using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using System.IO;
+using Serilog;
+using Serilog.Events;
 
 using PaymentGateway.Api.Data;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var paymentGatewayLogPath = Environment.GetEnvironmentVariable("LogFilePath")
+    ?? "logs/payment-gateway-api-.log";
+
+builder.Host.UseSerilog((context, services, loggerConfiguration) =>
+{
+    loggerConfiguration
+        .ReadFrom.Configuration(context.Configuration)
+        .ReadFrom.Services(services)
+        .Enrich.FromLogContext()
+        .MinimumLevel.Information()
+        .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
+        .MinimumLevel.Override("Microsoft.EntityFrameworkCore.Database.Command", LogEventLevel.Warning)
+        .WriteTo.Console()
+        .WriteTo.File(
+            path: paymentGatewayLogPath,
+            rollingInterval: RollingInterval.Day,
+            retainedFileCountLimit: 30,
+            shared: true);
+});
 
 // Add services to the container.
 
@@ -63,7 +85,19 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();
+try
+{
+    app.Run();
+}
+catch (Exception ex)
+{
+    Log.Fatal(ex, "PaymentGateway API terminated unexpectedly.");
+    throw;
+}
+finally
+{
+    Log.CloseAndFlush();
+}
 
 internal sealed class GlobalRoutePrefixConvention(string prefix) : IApplicationModelConvention
 {

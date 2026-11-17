@@ -13,10 +13,12 @@ namespace SmartFlightCompanion.WebServices.Api.Controllers;
 public sealed class ApiKeysController : ControllerBase
 {
     private readonly IApiKeyService _apiKeyService;
+    private readonly ILogger<ApiKeysController> _logger;
 
-    public ApiKeysController(IApiKeyService apiKeyService)
+    public ApiKeysController(IApiKeyService apiKeyService, ILogger<ApiKeysController> logger)
     {
         _apiKeyService = apiKeyService;
+        _logger = logger;
     }
 
     [HttpPost]
@@ -39,6 +41,7 @@ public sealed class ApiKeysController : ControllerBase
         }
         catch (DuplicateResourceException)
         {
+            _logger.LogWarning("API key creation request conflicts with an existing key name.");
             return Conflict("An API key with this name already exists.");
         }
     }

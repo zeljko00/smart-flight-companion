@@ -16,6 +16,7 @@ public sealed class FlightsController : ControllerBase
     private readonly ICommentService _commentService;
     private readonly IBoardingPassService _boardingPassService;
     private readonly IPaymentService _paymentService;
+    private readonly ILogger<FlightsController> _logger;
 
     private readonly IBoardingGuideService _boardingGuideService;
 
@@ -24,13 +25,15 @@ public sealed class FlightsController : ControllerBase
         ICommentService commentService,
         IBoardingPassService boardingPassService,
         IPaymentService paymentService,
-        IBoardingGuideService boardingGuideService)
+        IBoardingGuideService boardingGuideService,
+        ILogger<FlightsController> logger)
     {
         _flightService = flightService;
         _commentService = commentService;
         _boardingPassService = boardingPassService;
         _paymentService = paymentService;
         _boardingGuideService = boardingGuideService;
+        _logger = logger;
     }
 
     [Authorize(Policy = "JwtOrApiKey")]
@@ -95,10 +98,12 @@ public sealed class FlightsController : ControllerBase
         }
         catch (FlightValidationException exception)
         {
+            _logger.LogWarning(exception, "Flight creation request failed validation.");
             return BadRequest(exception.Message);
         }
         catch (DuplicateResourceException)
         {
+            _logger.LogWarning("Flight creation request conflicts with an existing flight number.");
             return Conflict("A flight with this flight number already exists.");
         }
     }
@@ -126,10 +131,12 @@ public sealed class FlightsController : ControllerBase
         }
         catch (FlightValidationException exception)
         {
+            _logger.LogWarning(exception, "Flight update request failed validation for flight {FlightId}.", id);
             return BadRequest(exception.Message);
         }
         catch (DuplicateResourceException)
         {
+            _logger.LogWarning("Flight update request conflicts with an existing flight number for flight {FlightId}.", id);
             return Conflict("A flight with this flight number already exists.");
         }
     }
