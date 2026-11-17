@@ -1,0 +1,222 @@
+.flight-ai-assistant {
+  position: fixed;
+  right: clamp(0.8rem, 2.5vw, 1.6rem);
+  bottom: clamp(0.8rem, 2.5vw, 1.6rem);
+  z-index: 120;
+  width: min(28rem, calc(100vw - 1.6rem));
+  display: grid;
+  gap: 0.45rem;
+}
+
+.flight-ai-assistant__toggle {
+  border: 1px solid color-mix(in srgb, var(--color-primary) 42%, transparent);
+  border-radius: 0.9rem;
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--color-primary) 18%, var(--bg-surface)),
+    color-mix(in srgb, var(--bg-elevated) 96%, transparent)
+  );
+  color: var(--text-primary);
+  min-height: 2.35rem;
+  width: 100%;
+  padding: 0.4rem 0.68rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.45rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+}
+
+.flight-ai-assistant__toggle:hover {
+  border-color: color-mix(in srgb, var(--color-primary) 60%, transparent);
+}
+
+.flight-ai-assistant__toggle-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.flight-ai-assistant__panel {
+  border: 1px solid color-mix(in srgb, var(--border-default) 76%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--bg-surface) 95%, transparent);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--shadow-card);
+  padding: 0.62rem;
+  display: grid;
+  gap: 0.56rem;
+}
+
+.flight-ai-assistant__subtitle {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.74rem;
+}
+
+.flight-ai-assistant__empty {
+  margin: 0;
+  padding: 0.6rem;
+  border-radius: 0.72rem;
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--bg-elevated) 92%, transparent);
+  font-size: 0.8rem;
+}
+
+.flight-ai-assistant__chat-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.62rem;
+  max-height: min(54vh, 22rem);
+  overflow-y: auto;
+  padding-right: 0.2rem;
+}
+
+.flight-ai-assistant__chat-pair {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.flight-ai-assistant__chat-message {
+  border: 1px solid color-mix(in srgb, var(--border-default) 70%, transparent);
+  border-radius: 0.86rem;
+  padding: 0.52rem 0.64rem;
+  max-width: 90%;
+  box-shadow: var(--shadow-soft);
+}
+
+.flight-ai-assistant__chat-message p {
+  margin: 0;
+  color: var(--text-primary);
+  font-size: 0.81rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.flight-ai-assistant__chat-role {
+  margin-bottom: 0.18rem !important;
+  font-size: 0.66rem !important;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--text-secondary) !important;
+}
+
+.flight-ai-assistant__chat-message--user {
+  justify-self: start;
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--bg-surface) 97%, transparent),
+    color-mix(in srgb, var(--bg-elevated) 92%, transparent)
+  );
+}
+
+.flight-ai-assistant__chat-message--assistant {
+  justify-self: end;
+  border-color: color-mix(in srgb, var(--color-primary) 34%, transparent);
+  background: linear-gradient(
+    155deg,
+    color-mix(in srgb, var(--color-primary) 16%, var(--bg-surface)),
+    color-mix(in srgb, var(--color-primary) 9%, var(--bg-elevated))
+  );
+}
+
+.flight-ai-assistant__chat-time {
+  justify-self: center;
+  color: var(--text-secondary);
+  font-size: 0.68rem;
+}
+
+.flight-ai-assistant__form {
+  display: grid;
+  gap: 0.42rem;
+  padding-top: 0.36rem;
+  border-top: 1px solid color-mix(in srgb, var(--border-default) 56%, transparent);
+}
+
+.flight-ai-assistant__input-wrap {
+  display: grid;
+  gap: 0.24rem;
+}
+
+.flight-ai-assistant__input-wrap span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-secondary);
+}
+
+.flight-ai-assistant__input-wrap textarea {
+  width: 100%;
+  min-height: 5.6rem;
+  border-radius: 0.68rem;
+  border: 1px solid color-mix(in srgb, var(--border-default) 72%, transparent);
+  background: color-mix(in srgb, var(--auth-input-bg) 92%, transparent);
+  color: var(--text-primary);
+  padding: 0.6rem 0.62rem;
+  font-size: 0.84rem;
+  font-family: inherit;
+  resize: vertical;
+}
+
+.flight-ai-assistant__input-wrap textarea:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--color-primary) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 16%, transparent);
+}
+
+.flight-ai-assistant__input-wrap textarea:disabled {
+  cursor: not-allowed;
+  opacity: 0.76;
+}
+
+.flight-ai-assistant__submit {
+  min-height: 2.08rem;
+  width: fit-content;
+  border-radius: 0.7rem;
+  border: 1px solid transparent;
+  padding: 0 0.86rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  background: var(--color-primary);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.38rem;
+}
+
+.flight-ai-assistant__submit:hover:not(:disabled) {
+  background: var(--color-primary-hover);
+}
+
+.flight-ai-assistant__submit:disabled {
+  cursor: not-allowed;
+  opacity: 0.68;
+}
+
+.flight-ai-assistant__error {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--color-error);
+}
+
+@media (max-width: 620px) {
+  .flight-ai-assistant {
+    right: 0.6rem;
+    left: auto;
+    bottom: 0.6rem;
+    width: calc(100vw - 1.2rem);
+  }
+
+  .flight-ai-assistant__chat-message {
+    max-width: 96%;
+  }
+}

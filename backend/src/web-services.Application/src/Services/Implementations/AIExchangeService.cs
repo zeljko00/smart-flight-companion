@@ -24,4 +24,16 @@ public sealed class AIExchangeService : IAIExchangeService
             result.TotalCount,
             hasNextPage);
     }
+
+    public async Task<IReadOnlyList<AIExchangeDto>> GetByFlightAndUserId(
+        Guid flightId,
+        Guid userId,
+        CancellationToken cancellationToken = default)
+    {
+        var entities = await _aiExchangeRepository.GetByFlightIdAsync(flightId, userId, cancellationToken);
+        return entities
+            .Select(AIExchangeDto.FromEntity)
+            .ToList()
+            .AsReadOnly();
+    }
 }

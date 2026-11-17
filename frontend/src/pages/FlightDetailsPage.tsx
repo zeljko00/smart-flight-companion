@@ -31,12 +31,17 @@ import {
   fetchDestinationWeatherForecast,
   type CityWeatherForecast,
 } from '../services/weatherService'
-import { fetchFlightById, type FlightDetails } from '../services/flightsService'
+import {
+  fetchFlightById,
+  requestFlightAdvice,
+  type FlightDetails,
+} from '../services/flightsService'
 import {
   fetchBoardingGuidesByFlight,
   type BoardingGuide,
 } from '../services/boardingGuidesService'
 import { AuthHeader } from '../components/AuthHeader'
+import { FlightAiAssistantChat } from '../components/FlightAiAssistantChat'
 import { UserInfo } from '../components/UserInfo'
 import 'leaflet/dist/leaflet.css'
 import '../style/FlightDetailsPage.css'
@@ -435,6 +440,19 @@ export function FlightDetailsPage() {
     }).format(parsedDate)
   }
 
+  const formatAiExchangeDate = (value: string) => {
+    const parsedDate = new Date(value)
+
+    if (Number.isNaN(parsedDate.getTime())) {
+      return t('flightDetails.comments.justNow')
+    }
+
+    return new Intl.DateTimeFormat(i18n.language, {
+      dateStyle: 'medium',
+      timeStyle: 'short',
+    }).format(parsedDate)
+  }
+
   const formatPrice = (value: number) => {
     return new Intl.NumberFormat(i18n.language, {
       style: 'currency',
@@ -623,6 +641,37 @@ export function FlightDetailsPage() {
         ],
       ]
     : null
+
+  const handleAskAiAssistant = async (query: string) => {
+    if (!flightId || !flight) {
+      throw new Error('Missing flight context.')
+    }
+
+    const advice = await requestFlightAdvice(flightId, query)
+
+    setFlight((previous) => {
+      if (!previous) {
+        return previous
+      }
+
+      return {
+        ...previous,
+        aiExchanges: [
+          ...previous.aiExchanges,
+          {
+            id: `local-${Date.now()}`,
+            request: query,
+            response: advice,
+            userId: user?.id ?? null,
+            flightId: previous.id,
+            timestamp: new Date().toISOString(),
+          },
+        ],
+      }
+    })
+
+    return advice
+  }
 
   useEffect(() => {
     if (isAdminView || arrivalLatitude === null || arrivalLongitude === null) {
@@ -1150,6 +1199,14 @@ export function FlightDetailsPage() {
           </button>
         </article>
       </section>
+
+      {!isAdminView && user?.id && flight ? (
+        <FlightAiAssistantChat
+          exchanges={flight.aiExchanges}
+          formatTimestamp={formatAiExchangeDate}
+          onAsk={handleAskAiAssistant}
+        />
+      ) : null}
     </main>
   )
 }
