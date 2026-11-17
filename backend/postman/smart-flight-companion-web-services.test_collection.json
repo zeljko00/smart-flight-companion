@@ -396,6 +396,27 @@
           }
         },
         {
+          "name": "Get flight advice",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"query\": \"Should I arrive earlier for this flight and what should I prepare?\"\n}"
+            },
+            "url": "{{baseUrl}}/flights/{{flightId}}/advice"
+          }
+        },
+        {
           "name": "Get flight by id",
           "request": {
             "method": "GET",
