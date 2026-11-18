@@ -93,7 +93,7 @@ const resources = {
         password_missing: 'Password is required.',
         invalid_password_length: 'Password must be at least 15 characters long.',
         invalid_password: 'Password must contain at least one lowercase letter, one uppercase letter, and one number.',
-        success: 'Account created for {{name}}. You can now sign in.',
+        success: 'Account created for {{name}}. Wait for admin approval.',
         failure: 'Unable to create account. Please verify your details and try again.',
       },
       flights: {
