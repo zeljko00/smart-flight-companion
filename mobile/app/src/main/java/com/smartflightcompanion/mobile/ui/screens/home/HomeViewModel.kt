@@ -1,6 +1,7 @@
 package com.smartflightcompanion.mobile.ui.screens.home
 
 import android.app.Application
+import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.smartflightcompanion.mobile.data.AuthRepository
@@ -37,6 +38,7 @@ const val DEFAULT_PAGE_SIZE = 20
 val PAGE_SIZE_OPTIONS = listOf(2, 5, 10, 20, 50)
 private const val NEWS_COUNT = 6
 private const val BOARDING_PASS_CACHE_DIR = "boarding-passes"
+private const val TAG = "HomeViewModel"
 
 enum class SearchMode { Filters, Semantic }
 
@@ -73,7 +75,7 @@ data class BoardingPassesState(
     val downloadError: DownloadError? = null
 )
 
-enum class DownloadError { Failed, NoViewer }
+enum class DownloadError { Failed, SaveFailed, NoViewer }
 
 data class NewsState(
     val items: List<NewsArticle> = emptyList(),
@@ -210,11 +212,15 @@ class HomeViewModel(
             val directory = File(getApplication<Application>().cacheDir, BOARDING_PASS_CACHE_DIR)
             val result = runCatchingNonCancellation { boardingPassesRepository.downloadPdf(id, directory) }
             val file = result.getOrNull()
-            val saved = file != null &&
-                runCatchingNonCancellation { DownloadsSaver.savePdf(getApplication(), file) }.isSuccess
-            updateBoardingPasses {
-                it.copy(downloadingId = null, downloadError = if (result.isFailure) DownloadError.Failed else null)
+            val saveResult = file?.let { runCatchingNonCancellation { DownloadsSaver.savePdf(getApplication(), it) } }
+            saveResult?.exceptionOrNull()?.let { Log.e(TAG, "Saving boarding pass PDF failed", it) }
+            val saved = saveResult?.isSuccess == true
+            val error = when {
+                result.isFailure -> DownloadError.Failed
+                saveResult?.isFailure == true -> DownloadError.SaveFailed
+                else -> null
             }
+            updateBoardingPasses { it.copy(downloadingId = null, downloadError = error) }
             file?.let { _events.send(HomeEvent.OpenPdf(it, savedToDownloads = saved)) }
         }
     }

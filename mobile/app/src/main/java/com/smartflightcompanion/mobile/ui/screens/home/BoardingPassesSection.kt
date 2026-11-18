@@ -41,6 +41,8 @@ fun BoardingPassesSection(state: BoardingPassesState, onDownload: (String) -> Un
         when (state.downloadError) {
             DownloadError.Failed ->
                 StatusMessage(stringResource(R.string.home_boarding_download_error), MaterialTheme.colorScheme.error)
+            DownloadError.SaveFailed ->
+                StatusMessage(stringResource(R.string.home_boarding_save_error), MaterialTheme.colorScheme.error)
             DownloadError.NoViewer ->
                 StatusMessage(stringResource(R.string.home_boarding_no_pdf_viewer), MaterialTheme.colorScheme.error)
             null -> Unit

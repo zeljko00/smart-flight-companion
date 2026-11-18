@@ -125,8 +125,7 @@
     <string name="flight_details_back">Back to flight board</string>
     <string name="flight_details_placeholder">Detailed flight information will be available in an upcoming version of the mobile app.</string>
     <string name="notifications_channel_name">Flight notifications</string>
-    <string name="language_english">English</string>
-    <string name="language_serbian">Serbian</string>
     <string name="theme_switch_to_dark">Switch to dark theme</string>
     <string name="theme_switch_to_light">Switch to light theme</string>
+    <string name="home_boarding_save_error">Could not save the PDF to Downloads.</string>
 </resources>

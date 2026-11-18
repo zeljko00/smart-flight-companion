@@ -7,18 +7,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -47,24 +41,17 @@ fun AppHeader(modifier: Modifier = Modifier) {
 private fun LanguageSwitch() {
     val activity = LocalContext.current as? Activity
     val current = AppSettings.language()
-    var expanded by remember { mutableStateOf(false) }
+    val languages = AppLanguage.entries
+    val next = languages[(languages.indexOf(current) + 1) % languages.size]
 
-    TextButton(onClick = { expanded = true }) {
+    OutlinedButton(
+        onClick = {
+            AppSettings.setLanguage(next)
+            activity?.recreate()
+        },
+        shape = MaterialTheme.shapes.small
+    ) {
         Text(text = current.code.uppercase(), fontWeight = FontWeight.Bold)
-    }
-    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-        AppLanguage.entries.forEach { language ->
-            DropdownMenuItem(
-                text = { Text(stringResource(language.labelRes())) },
-                onClick = {
-                    expanded = false
-                    if (language != current) {
-                        AppSettings.setLanguage(language)
-                        activity?.recreate()
-                    }
-                }
-            )
-        }
     }
 }
 
@@ -78,9 +65,4 @@ private fun ThemeSwitch() {
             tint = MaterialTheme.colorScheme.onBackground
         )
     }
-}
-
-private fun AppLanguage.labelRes(): Int = when (this) {
-    AppLanguage.English -> R.string.language_english
-    AppLanguage.Serbian -> R.string.language_serbian
 }
