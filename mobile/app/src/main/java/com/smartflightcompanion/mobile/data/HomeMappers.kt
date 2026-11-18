@@ -26,7 +26,7 @@ internal fun String?.toOffsetDateTimeOrNull(): OffsetDateTime? =
         null
     }
 
-private fun String?.orFallback(fallback: String): String = this?.trim()?.takeIf { it.isNotEmpty() } ?: fallback
+internal fun String?.orFallback(fallback: String): String = this?.trim()?.takeIf { it.isNotEmpty() } ?: fallback
 
 private fun AirportSummaryDto?.label(): String =
     this?.iata?.trim()?.takeIf { it.isNotEmpty() } ?: this?.name.orFallback(UNKNOWN_AIRPORT)

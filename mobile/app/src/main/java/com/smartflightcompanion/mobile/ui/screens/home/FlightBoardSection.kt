@@ -406,7 +406,7 @@ private fun Pagination(
 }
 
 @Composable
-private fun flightStatusLabel(status: String): String =
+internal fun flightStatusLabel(status: String): String =
     FlightStatus.fromApi(status)?.let { stringResource(it.labelRes()) } ?: status
 
 private fun FlightStatus.labelRes(): Int = when (this) {

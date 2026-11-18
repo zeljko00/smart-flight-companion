@@ -3,6 +3,7 @@ package com.smartflightcompanion.mobile.data.api
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
+import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface FlightsApi {
@@ -20,4 +21,16 @@ interface FlightsApi {
 
     @POST("flights/search/natural-language")
     suspend fun searchNaturalLanguage(@Body request: NaturalLanguageSearchRequest): NaturalLanguageSearchResponseDto
+
+    @GET("flights/{id}")
+    suspend fun flightById(@Path("id") id: String): FlightDetailsResponseDto
+
+    @GET("weather/destination")
+    suspend fun destinationWeather(
+        @Query("lat") lat: Double,
+        @Query("lng") lng: Double
+    ): List<CityWeatherDto>
+
+    @GET("flights/{id}/boarding-guides")
+    suspend fun boardingGuides(@Path("id") id: String): List<BoardingGuideDto>
 }

@@ -15,7 +15,9 @@ data class PagedResultDto<T>(
 data class AirportSummaryDto(
     val name: String?,
     val iata: String?,
-    val address: String?
+    val address: String?,
+    val latitude: Double? = null,
+    val longitude: Double? = null
 )
 
 data class FlightDto(

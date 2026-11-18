@@ -54,11 +54,8 @@ fun AppNavHost() {
         composable(
             route = AppRoute.FlightDetails.path,
             arguments = listOf(navArgument(AppRoute.FlightDetails.ARG_FLIGHT_ID) { type = NavType.StringType })
-        ) { entry ->
-            FlightDetailsScreen(
-                flightId = entry.arguments?.getString(AppRoute.FlightDetails.ARG_FLIGHT_ID).orEmpty(),
-                onBack = { navController.popBackStack() }
-            )
+        ) {
+            FlightDetailsScreen(onBack = { navController.popBackStack() })
         }
     }
 }

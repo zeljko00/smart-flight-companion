@@ -1,15 +1,20 @@
 package com.smartflightcompanion.mobile.data
 
 import com.smartflightcompanion.mobile.data.api.ApiClient
+import com.smartflightcompanion.mobile.data.api.ApiException
 import com.smartflightcompanion.mobile.data.api.FlightsApi
 import com.smartflightcompanion.mobile.data.api.NaturalLanguageSearchRequest
 import com.smartflightcompanion.mobile.data.api.apiCall
+import com.smartflightcompanion.mobile.domain.model.BoardingGuide
+import com.smartflightcompanion.mobile.domain.model.CityWeather
+import com.smartflightcompanion.mobile.domain.model.FlightDetails
 import com.smartflightcompanion.mobile.domain.model.FlightPage
 import com.smartflightcompanion.mobile.domain.model.FlightSearchFilters
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 private const val DATE_FILTER_HOUR_UTC = 12
+private const val HTTP_NOT_FOUND = 404
 
 class FlightsRepository(private val api: FlightsApi = ApiClient.flightsApi) {
 
@@ -38,4 +43,23 @@ class FlightsRepository(private val api: FlightsApi = ApiClient.flightsApi) {
         }
         return response.flights.toFlightPage(page, pageSize)
     }
+
+    /** Returns null when the backend has no such flight. */
+    suspend fun getById(id: String): FlightDetails? =
+        try {
+            apiCall { api.flightById(id) }.flight?.toDomain()
+        } catch (e: ApiException) {
+            if (e.status == HTTP_NOT_FOUND) null else throw e
+        }
+
+    /** Empty when the backend has no forecast (404) for the coordinates. */
+    suspend fun getDestinationWeather(latitude: Double, longitude: Double): List<CityWeather> =
+        try {
+            apiCall { api.destinationWeather(latitude, longitude) }.mapNotNull { it.toDomain() }
+        } catch (e: ApiException) {
+            if (e.status == HTTP_NOT_FOUND) emptyList() else throw e
+        }
+
+    suspend fun getBoardingGuides(flightId: String): List<BoardingGuide> =
+        apiCall { api.boardingGuides(flightId) }.mapNotNull { it.toDomain() }
 }
