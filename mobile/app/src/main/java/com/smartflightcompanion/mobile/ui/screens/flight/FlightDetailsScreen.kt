@@ -19,7 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import com.smartflightcompanion.mobile.R
-import com.smartflightcompanion.mobile.ui.components.AppLogo
+import com.smartflightcompanion.mobile.ui.components.AppHeader
 import com.smartflightcompanion.mobile.ui.components.SfcPanel
 import com.smartflightcompanion.mobile.ui.components.StatusText
 import com.smartflightcompanion.mobile.ui.theme.Spacing
@@ -36,7 +36,7 @@ fun FlightDetailsScreen(flightId: String, onBack: () -> Unit) {
             .padding(Spacing.md),
         verticalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {
-        AppLogo()
+        AppHeader()
         TextButton(onClick = onBack) {
             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
             Text(

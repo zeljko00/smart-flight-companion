@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import com.smartflightcompanion.mobile.data.AuthRepository
 import com.smartflightcompanion.mobile.data.AuthSessionStore
 import com.smartflightcompanion.mobile.data.BoardingPassesRepository
+import com.smartflightcompanion.mobile.data.DownloadsSaver
 import com.smartflightcompanion.mobile.data.FlightsRepository
 import com.smartflightcompanion.mobile.data.NewsRepository
 import com.smartflightcompanion.mobile.data.NotificationsClient
@@ -89,7 +90,7 @@ data class HomeUiState(
 )
 
 sealed interface HomeEvent {
-    data class OpenPdf(val file: File) : HomeEvent
+    data class OpenPdf(val file: File, val savedToDownloads: Boolean) : HomeEvent
 }
 
 class HomeViewModel(
@@ -208,10 +209,13 @@ class HomeViewModel(
         viewModelScope.launch {
             val directory = File(getApplication<Application>().cacheDir, BOARDING_PASS_CACHE_DIR)
             val result = runCatchingNonCancellation { boardingPassesRepository.downloadPdf(id, directory) }
+            val file = result.getOrNull()
+            val saved = file != null &&
+                runCatchingNonCancellation { DownloadsSaver.savePdf(getApplication(), file) }.isSuccess
             updateBoardingPasses {
                 it.copy(downloadingId = null, downloadError = if (result.isFailure) DownloadError.Failed else null)
             }
-            result.getOrNull()?.let { _events.send(HomeEvent.OpenPdf(it)) }
+            file?.let { _events.send(HomeEvent.OpenPdf(it, savedToDownloads = saved)) }
         }
     }
 

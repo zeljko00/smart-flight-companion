@@ -97,6 +97,7 @@
     <string name="home_boarding_downloading">Preuzimanje...</string>
     <string name="home_boarding_download_error">Trenutno nije moguce preuzeti PDF bording karte.</string>
     <string name="home_boarding_no_pdf_viewer">Nije dostupna aplikacija za otvaranje PDF fajlova.</string>
+    <string name="home_boarding_saved">Sacuvano u Downloads.</string>
     <string name="home_boarding_empty">Jos uvek nemate nijednu bording kartu.</string>
     <string name="home_boarding_valid">Vazeca</string>
     <string name="home_boarding_invalid">Nevazeca</string>
@@ -121,4 +122,8 @@
     <string name="flight_details_back">Nazad na red letova</string>
     <string name="flight_details_placeholder">Detaljne informacije o letu bice dostupne u narednoj verziji mobilne aplikacije.</string>
     <string name="notifications_channel_name">Obaveštenja o letovima</string>
+    <string name="language_english">Engleski</string>
+    <string name="language_serbian">Srpski</string>
+    <string name="theme_switch_to_dark">Prebaci na tamnu temu</string>
+    <string name="theme_switch_to_light">Prebaci na svetlu temu</string>
 </resources>

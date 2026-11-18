@@ -35,7 +35,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.smartflightcompanion.mobile.R
 import com.smartflightcompanion.mobile.domain.PasswordError
 import com.smartflightcompanion.mobile.domain.UsernameError
-import com.smartflightcompanion.mobile.ui.components.AppLogo
+import com.smartflightcompanion.mobile.ui.components.AppHeader
 import com.smartflightcompanion.mobile.ui.components.SfcTextField
 import com.smartflightcompanion.mobile.ui.components.StatusMessage
 import com.smartflightcompanion.mobile.ui.theme.LocalSfcExtraColors
@@ -71,7 +71,7 @@ fun WelcomeScreen(
             .padding(Spacing.md),
         verticalArrangement = Arrangement.spacedBy(Spacing.md, Alignment.CenterVertically)
     ) {
-        AppLogo()
+        AppHeader()
 
         Column(verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
             Text(

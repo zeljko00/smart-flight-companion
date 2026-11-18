@@ -5,6 +5,7 @@ import android.content.Context
 import android.Manifest
 import android.content.Intent
 import android.os.Build
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -24,7 +25,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.smartflightcompanion.mobile.ui.components.AppLogo
+import com.smartflightcompanion.mobile.R
+import com.smartflightcompanion.mobile.ui.components.AppHeader
 import com.smartflightcompanion.mobile.ui.theme.Spacing
 import java.io.File
 
@@ -55,7 +57,12 @@ fun HomeScreen(
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
-                is HomeEvent.OpenPdf -> if (!context.openPdf(event.file)) viewModel.onPdfViewerMissing()
+                is HomeEvent.OpenPdf -> {
+                    if (event.savedToDownloads) {
+                        Toast.makeText(context, R.string.home_boarding_saved, Toast.LENGTH_SHORT).show()
+                    }
+                    if (!context.openPdf(event.file)) viewModel.onPdfViewerMissing()
+                }
             }
         }
     }
@@ -69,7 +76,7 @@ fun HomeScreen(
             .padding(Spacing.md),
         verticalArrangement = Arrangement.spacedBy(Spacing.md)
     ) {
-        AppLogo()
+        AppHeader()
         UserInfoBar(user = user, onLogout = viewModel::logout)
         FlightBoardSection(
             state = state,

@@ -5,9 +5,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import com.smartflightcompanion.mobile.data.AppSettings
 
 /** Colors from the web theme that have no Material 3 slot. */
 data class SfcExtraColors(val success: Color)
@@ -42,9 +45,16 @@ private val DarkColorScheme = darkColorScheme(
     error = DarkError
 )
 
+/** The user's theme choice, falling back to the system theme until one is picked. */
+@Composable
+fun isAppInDarkTheme(): Boolean {
+    val selected by AppSettings.darkTheme.collectAsState()
+    return selected ?: isSystemInDarkTheme()
+}
+
 @Composable
 fun SmartFlightCompanionTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    darkTheme: Boolean = isAppInDarkTheme(),
     content: @Composable () -> Unit
 ) {
     val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
