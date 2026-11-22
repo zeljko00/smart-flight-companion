@@ -41,8 +41,19 @@ public sealed class CommentController : ControllerBase
             return BadRequest("Invalid flight ID or content.");
         }
 
-        Guid authorId = Guid.Parse("cf5804db-9f79-4072-91c2-6a555c5e7d50"); // TODO: take ID from session
-        var comment = await _CommentService.Create(authorId, request.FlightId, request.Content, cancellationToken);
+        Guid? authorId = null;
+        var userIdValue = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (Guid.TryParse(userIdValue, out var parsedUserId))
+        {
+            authorId = parsedUserId;
+        }
+        
+        if (!authorId.HasValue)
+        {
+            return BadRequest("Invalid author.");
+        }
+
+        var comment = await _CommentService.Create(authorId.Value, request.FlightId, request.Content, cancellationToken);
         
         if (comment is null)
         {
