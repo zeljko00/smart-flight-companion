@@ -141,16 +141,18 @@ public sealed class FlightRepository : Repository<Flight>, IFlightRepository
                 (flight.FirstClassPrice.HasValue && flight.FirstClassPrice.Value <= price));
         }
 
+        query = query.Where(flight => flight.DepartureTime >= DateTime.UtcNow);
+
         if (departureStart is not null)
         {
             query = query.Where(flight =>
-            flight.ScheduledDepartureTime >= departureStart.Value);
+            flight.DepartureTime >= departureStart.Value);
         }
 
         if (departureEnd is not null)
         {
             query = query.Where(flight =>
-            flight.ScheduledDepartureTime <= departureEnd.Value);
+            flight.DepartureTime <= departureEnd.Value);
         }
 
         var totalCount = await query.CountAsync(cancellationToken);
@@ -158,7 +160,7 @@ public sealed class FlightRepository : Repository<Flight>, IFlightRepository
         IQueryable<Flight> itemsQuery = query
             .Include(flight => flight.DepartureAirport)
             .Include(flight => flight.ArrivalAirport)
-            .OrderBy(flight => flight.ScheduledDepartureTime)
+            .OrderBy(flight => flight.DepartureTime)
             .ThenBy(flight => flight.FlightNumber);
 
         if (page.HasValue && pageSize.HasValue)

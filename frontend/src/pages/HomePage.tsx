@@ -758,12 +758,12 @@ export function HomePage() {
     setAirlineFilter('')
     setStartFilter('')
     setDestinationFilter('')
-    setDepartureTimeFilter(nowValue)
+    setDepartureTimeFilter('')
     setMinDepartureTime(nowValue)
     setMaxPriceFilter('')
     setStatusFilter('')
     setSearchMode('filters')
-    await loadFlights({ departureTime: parseLocalDateInput(nowValue) }, 1, pageSize)
+    await loadFlights({}, 1, pageSize)
   }
 
   const handlePreviousPage = async () => {
@@ -1065,7 +1065,7 @@ export function HomePage() {
                 min={minDepartureTime}
                 onChange={(event) => {
                   const nextValue = event.target.value
-                  setDepartureTimeFilter(nextValue < minDepartureTime ? minDepartureTime : nextValue)
+                  setDepartureTimeFilter(nextValue && nextValue < minDepartureTime ? minDepartureTime : nextValue)
                 }}
               />
             </label>

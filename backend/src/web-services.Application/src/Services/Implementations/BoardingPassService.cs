@@ -201,7 +201,7 @@ public sealed class BoardingPassService : IBoardingPassService
 
     public async Task<BoardingPassDto?> GetById(Guid id, CancellationToken cancellationToken = default)
     {
-        var boardingPass = await _BoardingPassRepository.GetByIdAsync(id, cancellationToken);
+        var boardingPass = await _BoardingPassRepository.GetByIdWithDetailsAsync(id, cancellationToken);
         if (boardingPass is null)
         {
             return null;

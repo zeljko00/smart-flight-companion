@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Debug only: trust the local proxy's self-signed certificate. -->
+<network-security-config>
+    <base-config>
+        <trust-anchors>
+            <certificates src="system" />
+            <certificates src="@raw/proxy_dev_cert" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
