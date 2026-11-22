@@ -21,22 +21,18 @@ enum class AppLanguage(val code: String) {
     }
 }
 
-/** User-selected language and theme, persisted like the web app's `sfc-language` / theme storage. */
 object AppSettings {
     private lateinit var prefs: SharedPreferences
     private val _darkTheme = MutableStateFlow<Boolean?>(null)
 
-    /** `null` means follow the system theme until the user picks one. */
     val darkTheme: StateFlow<Boolean?> = _darkTheme.asStateFlow()
 
-    /** Must run before the first read; safe to call repeatedly. */
     fun init(context: Context) {
         if (::prefs.isInitialized) return
         prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         _darkTheme.value = if (prefs.contains(KEY_DARK_THEME)) prefs.getBoolean(KEY_DARK_THEME, false) else null
     }
 
-    /** Saved language, otherwise the device language when supported, otherwise English. */
     fun language(): AppLanguage =
         AppLanguage.fromCode(prefs.getString(KEY_LANGUAGE, null))
             ?: AppLanguage.fromCode(Locale.getDefault().language)
@@ -52,7 +48,6 @@ object AppSettings {
     }
 }
 
-/** Returns a context whose resources use the app language instead of the device language. */
 fun Context.withAppLanguage(language: AppLanguage): Context {
     val locale = Locale(language.code)
     Locale.setDefault(locale)

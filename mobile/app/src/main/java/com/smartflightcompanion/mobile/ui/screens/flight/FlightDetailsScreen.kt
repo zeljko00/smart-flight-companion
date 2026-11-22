@@ -1,11 +1,16 @@
 package com.smartflightcompanion.mobile.ui.screens.flight
 
+import android.content.ActivityNotFoundException
+import android.content.Intent
+import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
@@ -18,6 +23,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -25,10 +31,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.smartflightcompanion.mobile.R
@@ -50,6 +57,7 @@ import java.time.format.FormatStyle
 import java.text.NumberFormat
 import java.util.Locale
 import com.smartflightcompanion.mobile.domain.model.FlightDetails
+import com.smartflightcompanion.mobile.domain.model.FlightComment
 import com.smartflightcompanion.mobile.domain.model.SeatClass
 import com.smartflightcompanion.mobile.ui.components.AppHeader
 import com.smartflightcompanion.mobile.ui.components.SfcDropdownField
@@ -97,14 +105,111 @@ fun FlightDetailsScreen(
             }
             is FlightLoadState.Loaded -> {
                 OverviewSection(load.flight)
+                if (state.aiAssistant.isAvailable) {
+                    AiAssistantSection(
+                        state = state.aiAssistant,
+                        onDraftChange = viewModel::updateAiDraft,
+                        onAsk = viewModel::askAiAssistant
+                    )
+                }
+                CommentsSection(
+                    state = state.comments,
+                    draft = state.commentDraft,
+                    submitError = state.commentSubmitError,
+                    isSubmitting = state.isSubmittingComment,
+                    onDraftChange = viewModel::updateCommentDraft,
+                    onSubmit = viewModel::submitComment
+                )
                 TechnicalSection(load.flight)
                 ScheduleSection(load.flight)
                 PricingSection(load.flight)
                 AirportsSection(load.flight)
+                MapSection(load.flight)
                 GuidesSection(state.guides)
                 WeatherSection(state.weather)
                 PurchaseSection(load.flight, state.selectedSeat, viewModel::selectSeat)
             }
+
+        }
+    }
+}
+
+@Composable
+private fun CommentsSection(
+    state: CommentsState,
+    draft: String,
+    submitError: CommentSubmitError?,
+    isSubmitting: Boolean,
+    onDraftChange: (String) -> Unit,
+    onSubmit: () -> Unit
+) {
+    SfcPanel(title = stringResource(R.string.flight_details_comments)) {
+        when (state) {
+            CommentsState.Loading -> Loading(stringResource(R.string.flight_details_comments_loading))
+            CommentsState.Error -> StatusText(stringResource(R.string.flight_details_comments_error), isError = true)
+            is CommentsState.Loaded -> {
+                if (state.comments.isEmpty()) {
+                    StatusText(stringResource(R.string.flight_details_comments_empty))
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = COMMENTS_MAX_HEIGHT)
+                            .verticalScroll(rememberScrollState()),
+                        verticalArrangement = Arrangement.spacedBy(Spacing.sm)
+                    ) {
+                        state.comments.forEach { comment -> CommentItem(comment) }
+                    }
+                }
+            }
+        }
+        OutlinedTextField(
+            value = draft,
+            onValueChange = onDraftChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(stringResource(R.string.flight_details_comment_input)) },
+            placeholder = { Text(stringResource(R.string.flight_details_comment_placeholder)) },
+            minLines = 3,
+            maxLines = 5,
+            enabled = !isSubmitting
+        )
+        if (submitError != null) {
+            Text(
+                text = stringResource(
+                    when (submitError) {
+                        CommentSubmitError.Empty -> R.string.flight_details_comment_required
+                        CommentSubmitError.Failed -> R.string.flight_details_comment_submit_error
+                    }
+                ),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+        Button(
+            onClick = onSubmit,
+            enabled = !isSubmitting,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            if (isSubmitting) {
+                CircularProgressIndicator()
+            } else {
+                Text(stringResource(R.string.flight_details_comment_submit))
+            }
+        }
+    }
+}
+
+@Composable
+private fun CommentItem(comment: FlightComment) {
+    Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+        Text(comment.author, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+        Text(comment.content, color = MaterialTheme.colorScheme.onSurface)
+        comment.createdAt?.let {
+            Text(
+                it.formatDateTime(currentLocale()),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }
@@ -219,6 +324,24 @@ private fun AirportsSection(flight: FlightDetails) {
     SfcPanel(title = stringResource(R.string.flight_details_airports)) {
         AirportBlock(stringResource(R.string.flight_details_departure_airport), flight.departureAirport)
         AirportBlock(stringResource(R.string.flight_details_arrival_airport), flight.arrivalAirport)
+    }
+}
+
+@Composable
+private fun MapSection(flight: FlightDetails) {
+    SfcPanel(title = stringResource(R.string.flight_details_map)) {
+        val from = flight.departureAirport
+        val to = flight.arrivalAirport
+        if (from.latitude != null && from.longitude != null && to.latitude != null && to.longitude != null) {
+            RouteMap(
+                departure = GeoPoint(from.latitude, from.longitude),
+                arrival = GeoPoint(to.latitude, to.longitude),
+                departureTitle = "${from.iata} - ${from.name}",
+                arrivalTitle = "${to.iata} - ${to.name}"
+            )
+        } else {
+            StatusText(stringResource(R.string.flight_details_map_unavailable))
+        }
     }
 }
 
@@ -352,7 +475,19 @@ private fun WeatherCondition.labelRes(): Int = when (this) {
 @Composable
 private fun GuideItem(guide: BoardingGuide) {
     val locale = currentLocale()
-    val uriHandler = LocalUriHandler.current
+    val context = LocalContext.current
+    val openErrorText = stringResource(R.string.flight_details_guide_open_error)
+    val openUrl: (String) -> Unit = { url ->
+        val opened = try {
+            context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url.trim())))
+            true
+        } catch (_: ActivityNotFoundException) {
+            false
+        } catch (_: SecurityException) {
+            false
+        }
+        if (!opened) Toast.makeText(context, openErrorText, Toast.LENGTH_SHORT).show()
+    }
     Column(verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
         if (guide.description.isNotBlank()) {
             Text(guide.description, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
@@ -362,12 +497,12 @@ private fun GuideItem(guide: BoardingGuide) {
             DetailRow(stringResource(R.string.flight_details_guide_closes_in), closesInText(closesAt))
         }
         guide.imageUrls.forEachIndexed { index, url ->
-            TextButton(onClick = { uriHandler.openUri(url) }) {
+            TextButton(onClick = { openUrl(url) }) {
                 Text(stringResource(R.string.flight_details_guide_image, index + 1))
             }
         }
         guide.videoUrls.forEach { url ->
-            TextButton(onClick = { uriHandler.openUri(url) }) {
+            TextButton(onClick = { openUrl(url) }) {
                 Text(stringResource(R.string.flight_details_guide_video))
             }
         }
@@ -446,5 +581,6 @@ private fun SeatClass.labelRes(): Int = when (this) {
 }
 
 private const val TBD = "TBD"
+private val COMMENTS_MAX_HEIGHT = 320.dp
 private const val HOURS_PER_DAY = 24
 private const val MINUTES_PER_HOUR = 60

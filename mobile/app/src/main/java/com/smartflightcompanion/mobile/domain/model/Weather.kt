@@ -2,7 +2,6 @@ package com.smartflightcompanion.mobile.domain.model
 
 import java.time.LocalDate
 
-/** Condition groups derived from WMO weather codes, as in the web app. */
 enum class WeatherCondition { ClearSky, MainlyClear, PartlyCloudy, Overcast, Fog, Drizzle, Rain, Snow, Thunderstorm, Unknown;
 
     companion object {

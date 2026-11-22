@@ -16,7 +16,6 @@ import com.smartflightcompanion.mobile.ui.theme.Spacing
 private const val CONTAINER_ALPHA = 0.10f
 private const val BORDER_ALPHA = 0.24f
 
-/** Tinted inline banner used for form-level error and success feedback. */
 @Composable
 fun StatusMessage(text: String, color: Color, modifier: Modifier = Modifier) {
     Surface(

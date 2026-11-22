@@ -27,12 +27,11 @@ data class FlightDetails(
     val scheduledArrival: OffsetDateTime?,
     val departure: OffsetDateTime?,
     val arrival: OffsetDateTime?,
-    /** Published non-negative prices in EUR; seat classes without a price are absent. */
-    val prices: Map<SeatClass, Double>
+    val prices: Map<SeatClass, Double>,
+    val aiExchanges: List<AiExchange> = emptyList()
 ) {
     val isSoldOut: Boolean get() = seatsFree == 0
 
-    /** Actual flight time, or null when either time is unknown or the range is not positive. */
     val duration: Duration?
         get() {
             val start = departure ?: return null
@@ -40,6 +39,13 @@ data class FlightDetails(
             return Duration.between(start, end).takeIf { !it.isNegative && !it.isZero }
         }
 }
+
+data class AiExchange(
+    val id: String,
+    val request: String,
+    val response: String,
+    val timestamp: OffsetDateTime?
+)
 
 data class BoardingGuide(
     val id: String,

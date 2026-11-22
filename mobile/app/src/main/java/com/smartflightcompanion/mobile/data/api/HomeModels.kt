@@ -2,7 +2,6 @@ package com.smartflightcompanion.mobile.data.api
 
 import com.google.gson.JsonElement
 
-// Fields are nullable because Gson bypasses Kotlin null-safety; mappers apply the web app's fallbacks.
 
 data class PagedResultDto<T>(
     val items: List<T>?,
@@ -23,7 +22,6 @@ data class AirportSummaryDto(
 data class FlightDto(
     val id: String?,
     val flightNumber: String?,
-    /** The backend DTO misspells this property; kept for compatibility. */
     val fligtNumber: String?,
     val departureAirport: AirportSummaryDto?,
     val arrivalAirport: AirportSummaryDto?,
@@ -55,7 +53,6 @@ data class BoardingPassDto(
     val flightDepartureAirport: String?,
     val flightArrivalAirport: String?,
     val flightDepartureTime: String?,
-    /** Enum serialized either as a number or as its name depending on server settings. */
     val seat: JsonElement?,
     val price: Double?,
     val issuedAt: String?,

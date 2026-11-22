@@ -10,7 +10,6 @@ data class FlightSummary(
     val fromLabel: String,
     val toLabel: String,
     val departureAt: OffsetDateTime?,
-    /** Lowest non-negative cabin price in EUR, or null when no price is published. */
     val lowestPrice: Double?,
     val status: String
 )
@@ -32,7 +31,6 @@ data class FlightSearchFilters(
     val status: String? = null
 )
 
-/** Status values accepted by the backend filter; also used to localize the status pill. */
 enum class FlightStatus(val apiValue: String) {
     Scheduled("Scheduled"),
     Delayed("Delayed"),

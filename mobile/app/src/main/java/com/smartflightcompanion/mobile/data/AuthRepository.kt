@@ -21,14 +21,12 @@ class AuthRepository(
 
     suspend fun register(request: RegisterRequest): UserDto = authenticate { api.register(request) }
 
-    /** Best-effort server logout; the local session is always cleared. */
     suspend fun logout() {
         try {
             userApi.logout()
         } catch (e: CancellationException) {
             throw e
         } catch (_: Exception) {
-            // Matches the web app: a failed server logout must not keep the user signed in.
         } finally {
             sessionStore.clear()
         }

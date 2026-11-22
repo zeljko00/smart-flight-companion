@@ -29,7 +29,6 @@ import androidx.compose.ui.res.stringResource
 import com.smartflightcompanion.mobile.R
 import com.smartflightcompanion.mobile.ui.theme.Spacing
 
-/** Labeled input with a leading icon, optional password visibility toggle and inline error. */
 @Composable
 fun SfcTextField(
     label: String,

@@ -25,7 +25,6 @@ data class NotificationPayload(
 private const val RECEIVE_METHOD = "ReceiveNotification"
 private const val RECONNECT_DELAY_MS = 5_000L
 
-/** SignalR client for the backend `notifications` hub; mirrors the web notificationsService. */
 class NotificationsClient(
     private val onNotification: (title: String, message: String) -> Unit
 ) {
@@ -39,7 +38,6 @@ class NotificationsClient(
     private var flightIds: Set<String> = emptySet()
     private var stopped = false
 
-    /** Connects (if needed) and makes the hub groups match the given user and flights. */
     fun updateSubscriptions(userId: String, flightIds: Collection<String>) {
         scope.launch {
             mutex.withLock {

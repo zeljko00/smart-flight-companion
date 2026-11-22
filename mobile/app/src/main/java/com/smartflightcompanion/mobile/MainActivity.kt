@@ -24,7 +24,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val darkTheme = isAppInDarkTheme()
-            // System bar icons must follow the in-app theme, not the device theme.
             SideEffect {
                 val style = SystemBarStyle.auto(Color.TRANSPARENT, Color.TRANSPARENT) { darkTheme }
                 enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)

@@ -15,7 +15,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.smartflightcompanion.mobile.ui.theme.Spacing
 
-/** Bordered surface card used for page sections (web `home-page__panel`). */
 @Composable
 fun SfcPanel(
     modifier: Modifier = Modifier,

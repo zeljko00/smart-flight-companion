@@ -33,4 +33,13 @@ interface FlightsApi {
 
     @GET("flights/{id}/boarding-guides")
     suspend fun boardingGuides(@Path("id") id: String): List<BoardingGuideDto>
+
+    @GET("flights/{id}/comments")
+    suspend fun commentsByFlight(@Path("id") id: String): List<CommentDto>
+
+    @POST("comments")
+    suspend fun createComment(@Body request: CreateCommentRequest): CommentDto
+
+    @POST("flights/{id}/advice")
+    suspend fun flightAdvice(@Path("id") id: String, @Body request: FlightAdviceRequest): FlightAdviceResponseDto
 }

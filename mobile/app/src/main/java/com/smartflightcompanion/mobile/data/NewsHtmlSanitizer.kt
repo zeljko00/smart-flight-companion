@@ -1,9 +1,5 @@
 package com.smartflightcompanion.mobile.data
 
-/**
- * Allow-list sanitizer mirroring the web app: keeps basic formatting tags and http(s) links only.
- * Attributes other than `href` on anchors are dropped.
- */
 internal object NewsHtmlSanitizer {
     private val allowedTags = setOf(
         "p", "br", "strong", "b", "em", "i", "u", "ul", "ol", "li", "blockquote", "code", "pre", "a"

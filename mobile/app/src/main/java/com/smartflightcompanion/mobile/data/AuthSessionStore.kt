@@ -12,7 +12,6 @@ data class AuthSession(
     val refreshToken: String
 )
 
-/** In-memory session, matching the web app (tokens are not persisted across app restarts). */
 object AuthSessionStore {
     private val _session = MutableStateFlow<AuthSession?>(null)
     val session: StateFlow<AuthSession?> = _session.asStateFlow()

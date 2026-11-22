@@ -11,10 +11,6 @@ import java.io.File
 
 private const val PDF_MIME_TYPE = "application/pdf"
 
-/**
- * Copies [file] into the device's Downloads collection (visible in the Files app) on Android 10+.
- * Older versions use the app's own Downloads directory, which needs no storage permission.
- */
 object DownloadsSaver {
     suspend fun savePdf(context: Context, file: File) = withContext(Dispatchers.IO) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) saveWithMediaStore(context, file) else saveLegacy(context, file)

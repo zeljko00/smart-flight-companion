@@ -10,7 +10,6 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
-/** Error returned by the backend; [message] is the server-provided text when available. */
 class ApiException(message: String?, val status: Int) : Exception(message)
 
 object ApiClient {
@@ -24,7 +23,6 @@ object ApiClient {
             .build()
     }
 
-    /** Used for login/register/refresh: never carries a bearer token and never retries on 401. */
     private val publicRetrofit: Retrofit by lazy { retrofit(baseHttpClient) }
 
     private val authorizedRetrofit: Retrofit by lazy {
@@ -48,7 +46,6 @@ object ApiClient {
             .build()
 }
 
-/** Runs [block] and converts Retrofit HTTP errors into [ApiException]. */
 suspend fun <T> apiCall(block: suspend () -> T): T =
     try {
         block()
@@ -56,7 +53,6 @@ suspend fun <T> apiCall(block: suspend () -> T): T =
         throw e.toApiException()
     }
 
-/** Mirrors the web client's error extraction: message, first validation error, then title. */
 fun HttpException.toApiException(): ApiException {
     val body = response()?.errorBody()?.string().orEmpty()
     val parsed = runCatching { JsonParser.parseString(body) }.getOrNull()

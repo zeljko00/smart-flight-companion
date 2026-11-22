@@ -42,7 +42,6 @@ fun HomeScreen(
     val user by viewModel.user.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
-    // Covers explicit logout, a failed token refresh and a lost in-memory session after process death.
     LaunchedEffect(user) {
         if (user == null) onSignedOut()
     }
@@ -102,7 +101,6 @@ fun HomeScreen(
     }
 }
 
-/** Opens the PDF in an external viewer; returns false when no app can handle it. */
 private fun Context.openPdf(file: File): Boolean {
     val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", file)
     val intent = Intent(Intent.ACTION_VIEW)

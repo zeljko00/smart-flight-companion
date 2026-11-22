@@ -23,7 +23,6 @@ import com.smartflightcompanion.mobile.data.AppLanguage
 import com.smartflightcompanion.mobile.data.AppSettings
 import com.smartflightcompanion.mobile.ui.theme.isAppInDarkTheme
 
-/** Logo with the language and theme switches (web `AuthHeader`). */
 @Composable
 fun AppHeader(modifier: Modifier = Modifier) {
     Row(

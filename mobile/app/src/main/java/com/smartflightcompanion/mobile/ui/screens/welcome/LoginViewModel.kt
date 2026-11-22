@@ -40,7 +40,6 @@ class LoginViewModel(
     val state: StateFlow<LoginUiState> = _state.asStateFlow()
 
     private val _loggedIn = Channel<UserDto>(Channel.BUFFERED)
-    /** Emits once per successful sign-in of an active user or admin. */
     val loggedIn: Flow<UserDto> = _loggedIn.receiveAsFlow()
 
     fun onUsernameChange(value: String) = _state.update {
@@ -63,7 +62,6 @@ class LoginViewModel(
         val current = _state.value
         if (current.isSubmitting) return
 
-        // Like the web form, errors are shown but do not block submission.
         _state.update {
             it.copy(
                 usernameError = CredentialsValidator.validateUsername(current.username),

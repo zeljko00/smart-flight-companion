@@ -12,7 +12,6 @@ interface AuthApi {
     @POST("auth/register")
     suspend fun register(@Body request: RegisterRequest): AuthenticationResultDto
 
-    /** Blocking on purpose: invoked from OkHttp's [okhttp3.Authenticator] thread. */
     @POST("auth/refresh")
     fun refresh(@Header("Cookie") refreshCookie: String): Call<AuthenticationResultDto>
 }

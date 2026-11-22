@@ -62,7 +62,6 @@ fun WelcomeScreen(
             .safeDrawingPadding()
             .imePadding()
     ) {
-    // Min height = viewport keeps the form vertically centered while still scrolling when it doesn't fit.
     Column(
         modifier = Modifier
             .fillMaxWidth()

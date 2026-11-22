@@ -25,7 +25,6 @@ fun AppNavHost() {
                 onNavigateToRegister = {
                     navController.navigate(AppRoute.Register.path) { launchSingleTop = true }
                 },
-                // Admins also land on Home until the admin console is migrated.
                 onLoggedIn = { navController.navigateToHome() }
             )
         }
@@ -60,7 +59,6 @@ fun AppNavHost() {
     }
 }
 
-/** Home becomes the only destination so Back exits the app instead of returning to auth screens. */
 private fun NavHostController.navigateToHome() {
     navigate(AppRoute.Home.path) {
         popUpTo(graph.id) { inclusive = true }

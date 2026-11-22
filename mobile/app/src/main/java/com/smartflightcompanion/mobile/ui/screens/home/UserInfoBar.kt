@@ -22,7 +22,6 @@ import com.smartflightcompanion.mobile.ui.theme.Spacing
 
 private const val ADMIN_ROLE = "admin"
 
-/** Signed-in user's name with a logout action (web `UserInfo`). */
 @Composable
 fun UserInfoBar(user: UserDto?, onLogout: () -> Unit, modifier: Modifier = Modifier) {
     val fullName = listOfNotNull(user?.firstName, user?.lastName).joinToString(" ").trim()

@@ -22,7 +22,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import com.smartflightcompanion.mobile.ui.theme.Spacing
 
-/** Read-only select field with an optional [label] above it. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun <T> SfcDropdownField(

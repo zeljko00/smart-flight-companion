@@ -21,7 +21,7 @@ android {
         }
 
         // Override with -PapiBaseUrl=... (must end with "/"). Default targets the local nginx proxy.
-        val apiBaseUrl = providers.gradleProperty("apiBaseUrl").getOrElse("https://192.168.100.32/api/")
+        val apiBaseUrl = providers.gradleProperty("apiBaseUrl").getOrElse("https://192.168.100.98/api/")
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
     }
 
@@ -78,6 +78,7 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")
 
     implementation("com.microsoft.signalr:signalr:8.0.7")
+    implementation("org.osmdroid:osmdroid-android:6.1.20")
 
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")

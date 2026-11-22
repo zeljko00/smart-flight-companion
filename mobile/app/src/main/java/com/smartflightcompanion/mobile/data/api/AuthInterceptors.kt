@@ -23,10 +23,6 @@ internal class BearerTokenInterceptor(private val sessionStore: AuthSessionStore
     }
 }
 
-/**
- * On 401, exchanges the refresh token for a new session (mirrors the web client's refresh flow) and
- * retries once. When refreshing fails the session is cleared, which signs the user out.
- */
 internal class TokenRefreshAuthenticator(
     private val sessionStore: AuthSessionStore,
     private val authApiProvider: () -> AuthApi
@@ -41,7 +37,6 @@ internal class TokenRefreshAuthenticator(
 
         synchronized(lock) {
             val session = sessionStore.session.value ?: return null
-            // Another request already refreshed the session while this one was waiting.
             if (session.accessToken != failedToken) {
                 return response.request.withBearer(session.accessToken)
             }

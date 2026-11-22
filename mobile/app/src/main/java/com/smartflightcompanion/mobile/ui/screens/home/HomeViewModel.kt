@@ -42,7 +42,6 @@ private const val TAG = "HomeViewModel"
 
 enum class SearchMode { Filters, Semantic }
 
-/** Editable filter inputs, kept as raw text like the web form. */
 data class FilterInputs(
     val semanticQuery: String = "",
     val airline: String = "",
@@ -111,7 +110,6 @@ class HomeViewModel(
         AuthRepository()
     )
 
-    /** Null once the session ends (logout or failed token refresh). */
     val user: StateFlow<UserDto?> = AuthSessionStore.session
         .map { it?.user }
         .stateIn(viewModelScope, SharingStarted.Eagerly, AuthSessionStore.session.value?.user)
@@ -122,7 +120,6 @@ class HomeViewModel(
     private val _events = Channel<HomeEvent>(Channel.BUFFERED)
     val events: Flow<HomeEvent> = _events.receiveAsFlow()
 
-    /** Filters/query the current results were loaded with; reused for pagination. */
     private var searchMode = SearchMode.Filters
     private var appliedFilters = FlightSearchFilters(departureDate = LocalDate.now())
     private var appliedQuery = ""
@@ -154,7 +151,6 @@ class HomeViewModel(
         if (value.isEmpty() || value.matches(MAX_PRICE_INPUT)) updateFilters { it.copy(maxPrice = value) }
     }
 
-    /** Mirrors the web form: a non-empty AI query takes precedence and clears the standard filters. */
     fun applyFilters() {
         val inputs = _state.value.filters
         val query = inputs.semanticQuery.trim()
@@ -180,11 +176,10 @@ class HomeViewModel(
     }
 
     fun resetFilters() {
-        val today = LocalDate.now()
-        _state.update { it.copy(filters = FilterInputs(departureDate = today)) }
+        _state.update { it.copy(filters = FilterInputs(departureDate = null)) }
         searchMode = SearchMode.Filters
         appliedQuery = ""
-        appliedFilters = FlightSearchFilters(departureDate = today)
+        appliedFilters = FlightSearchFilters()
         loadFlights(page = 1)
     }
 

@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.smartflightcompanion.mobile.ui.theme.Spacing
 
-/** Neutral loading/empty/error note shown inside sections (web `home-page__status`). */
 @Composable
 fun StatusText(text: String, modifier: Modifier = Modifier, isError: Boolean = false) {
     Surface(

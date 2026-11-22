@@ -15,7 +15,6 @@ class BoardingPassesRepository(private val api: UserApi = ApiClient.userApi) {
             .mapNotNull { it.toDomain() }
             .sortedByDescending { it.issuedAt?.toInstant() }
 
-    /** Downloads the PDF into [directory] and returns the written file. */
     suspend fun downloadPdf(id: String, directory: File): File {
         val body = apiCall { api.boardingPassPdf(id) }
         return withContext(Dispatchers.IO) {

@@ -1,15 +1,29 @@
 package com.smartflightcompanion.mobile.data.api
 
-// Fields are nullable because Gson bypasses Kotlin null-safety; mappers apply the web app's fallbacks.
 
 data class FlightDetailsResponseDto(
-    val flight: FlightDetailsDto?
+    val flight: FlightDetailsDto?,
+    val aiExchanges: List<AiExchangeDto>?
+)
+
+data class AiExchangeDto(
+    val id: String?,
+    val request: String?,
+    val response: String?,
+    val timestamp: String?
+)
+
+data class FlightAdviceRequest(
+    val query: String
+)
+
+data class FlightAdviceResponseDto(
+    val advice: String?
 )
 
 data class FlightDetailsDto(
     val id: String?,
     val flightNumber: String?,
-    /** The backend DTO misspells this property; kept for compatibility. */
     val fligtNumber: String?,
     val airline: String?,
     val status: String?,

@@ -1,8 +1,10 @@
 package com.smartflightcompanion.mobile.data
 
+import com.smartflightcompanion.mobile.data.api.AiExchangeDto
 import com.smartflightcompanion.mobile.data.api.AirportSummaryDto
 import com.smartflightcompanion.mobile.data.api.BoardingGuideDto
 import com.smartflightcompanion.mobile.data.api.FlightDetailsDto
+import com.smartflightcompanion.mobile.domain.model.AiExchange
 import com.smartflightcompanion.mobile.domain.model.AirportDetails
 import com.smartflightcompanion.mobile.domain.model.BoardingGuide
 import com.smartflightcompanion.mobile.domain.model.FlightDetails
@@ -27,7 +29,7 @@ private fun AirportSummaryDto?.toDomain() = AirportDetails(
     longitude = this?.longitude?.takeIf { it.isFinite() }
 )
 
-internal fun FlightDetailsDto.toDomain(): FlightDetails? {
+internal fun FlightDetailsDto.toDomain(aiExchanges: List<AiExchangeDto>? = null): FlightDetails? {
     val flightId = id?.takeIf { it.isNotBlank() } ?: return null
     val prices = buildMap {
         economyPrice?.takeIf { it >= 0 }?.let { put(SeatClass.Economy, it) }
@@ -51,7 +53,20 @@ internal fun FlightDetailsDto.toDomain(): FlightDetails? {
         scheduledArrival = scheduledArrivalTime.toOffsetDateTimeOrNull(),
         departure = departureTime.toOffsetDateTimeOrNull(),
         arrival = arrivalTime.toOffsetDateTimeOrNull(),
-        prices = prices
+        prices = prices,
+        aiExchanges = aiExchanges.orEmpty()
+            .mapNotNull { it.toDomain() }
+            .sortedWith(compareBy(nullsLast()) { it.timestamp })
+    )
+}
+
+private fun AiExchangeDto.toDomain(): AiExchange? {
+    val exchangeId = id?.takeIf { it.isNotBlank() } ?: return null
+    return AiExchange(
+        id = exchangeId,
+        request = request?.trim().orEmpty(),
+        response = formatAiResponse(response.orEmpty()),
+        timestamp = timestamp.toOffsetDateTimeOrNull()
     )
 }
 

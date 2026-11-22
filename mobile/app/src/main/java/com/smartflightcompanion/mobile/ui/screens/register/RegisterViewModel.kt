@@ -22,7 +22,6 @@ private const val USER_ROLE = "user"
 sealed interface RegisterStatus {
     data object None : RegisterStatus
     data object PasswordMismatch : RegisterStatus
-    /** [serverMessage] is null when the failure did not come from the backend. */
     data class Failure(val serverMessage: String?) : RegisterStatus
     data class Success(val name: String) : RegisterStatus
 }
@@ -48,7 +47,6 @@ class RegisterViewModel(
     val state: StateFlow<RegisterUiState> = _state.asStateFlow()
 
     private val _registeredAsUser = Channel<Unit>(Channel.BUFFERED)
-    /** Emits when the new account is an active USER and may go straight to Home. */
     val registeredAsUser: Flow<Unit> = _registeredAsUser.receiveAsFlow()
 
     fun onFirstNameChange(value: String) = _state.update { it.copy(firstName = value) }

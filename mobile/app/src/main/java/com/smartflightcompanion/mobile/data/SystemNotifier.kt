@@ -16,7 +16,6 @@ import com.smartflightcompanion.mobile.R
 
 private const val CHANNEL_ID = "flight_notifications"
 
-/** Shows backend notifications as Android system notifications. */
 class SystemNotifier(context: Context) {
     private val appContext = context.applicationContext
 

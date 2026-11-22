@@ -16,7 +16,6 @@ import com.smartflightcompanion.mobile.ui.theme.Spacing
 private const val PILL_CONTAINER_ALPHA = 0.10f
 private const val PILL_BORDER_ALPHA = 0.25f
 
-/** Small rounded tag (web `home-page__status-pill`), tinted with [color]. */
 @Composable
 fun StatusPill(
     text: String,
